@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentNest", "FluentNest.csproj", "{4AA84915-4E63-48B5-B27B-579A56954B67}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentNest", "FluentNest\FluentNest.csproj", "{4AA84915-4E63-48B5-B27B-579A56954B67}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestModel", "..\TestModel\TestModel.csproj", "{B94072A6-42D4-4C73-8EA9-5D9CDA4C2FCB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestModel", "TestModel\TestModel.csproj", "{B94072A6-42D4-4C73-8EA9-5D9CDA4C2FCB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{7F4479CC-E444-4A63-AD47-762C7390E2FD}"
 EndProject
