@@ -1,4 +1,4 @@
-version: 1.0.{build}-rc1
+version: 1.0.{build}
 
 assembly_info: 
   patch: true 
@@ -10,13 +10,6 @@ assembly_info:
 before_build:
  - nuget restore
  
-install:
- - choco install elasticsearch
-
 build:
-  publish_nuget: true
-  publish_nuget_symbols: true
-  include_nuget_references: true
-  
-  
+  publish_nuget: true  
  
