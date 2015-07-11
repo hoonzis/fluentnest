@@ -14,7 +14,7 @@ namespace Tests
 
         public GroupByTests()
         {
-            var node = new Uri("http://localhost:9600");
+            var node = new Uri("http://localhost:9200");
 
             var settings = new ConnectionSettings(
                 node,
