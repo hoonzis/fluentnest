@@ -44,4 +44,3 @@ before_build:
 build:
   publish_nuget: true
   project: FluentNest.sln
- 
