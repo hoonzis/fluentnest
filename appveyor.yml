@@ -9,7 +9,7 @@ assembly_info:
   
 before_build:
 - nuget restore
-- ps: run_es.ps1
+- ps: .\run_es.ps1
 
 build:
   publish_nuget: true
