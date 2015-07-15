@@ -15,3 +15,10 @@ build:
   project: FluentNest.sln
  
 test: off
+
+deploy:
+  provider: NuGet
+  api_key:
+    secure: 800c50e6-8f17-4ab9-8869-0993a102ff84
+  skip_symbols: true
+  artifact: /.*\.nupkg/
