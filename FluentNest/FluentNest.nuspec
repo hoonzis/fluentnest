@@ -13,7 +13,7 @@
     <copyright>Copyright 2015</copyright>
     <tags>ElasticSearch</tags>
 	 <dependencies>
-      <dependency id="NEST" version="1.6.1" />
+      <dependency id="NEST" version="1.5.0" />
     </dependencies>
   </metadata>
 </package>
