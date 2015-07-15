@@ -33,7 +33,8 @@ namespace Tests
                     Name = "Car" + i,
                     Price = 10,
                     Sold = i % 2 == 0 ? true : false,
-                    Length = i
+                    Length = i,
+                    CarType = "Car" + i%2
                 };
                 client.Index(car);
             }
@@ -72,20 +73,22 @@ namespace Tests
         }
 
         [Fact]
-        public void MultipleSumsInSingleAggregation()
+        public void MultipleAggregationsInSingleAggregation()
         {
             AddSimpleTestData();
             var notionalSumAgg = Sums.SumOnField<Car>(x => x.Price);
 
             var result = client.Search<Car>(s => s
                 .Take(100)
-                .Aggregations(a => notionalSumAgg.AndAvgBy(x => x.Length)));
+                .Aggregations(a => notionalSumAgg.AndAvgBy(x => x.Length).AndCountBy(x=>x.CarType)));
 
             var priceSum = result.Aggs.GetSum<Car>(x => x.Price);
             var avgLength = result.Aggs.GetAvg<Car>(x => x.Length);
+            var count = result.Aggs.GetCount<Car>(x => x.CarType);
 
             Check.That(priceSum).Equals(100d);
             Check.That(avgLength).Equals(4.5d);
+            Check.That(count).Equals(10d);
         }
     }
 }

@@ -15,6 +15,11 @@ namespace FluentNest
             return agg.Sum(fieldGetter.GetName(), x => x.Field(fieldGetter));
         }
 
+        public static AggregationDescriptor<T> AndCountBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
+        {
+            return agg.ValueCount(fieldGetter.GetName(), x => x.Field(fieldGetter));
+        }
+
         public static DateHistogramAggregationDescriptor<T> SumBy<T>(this DateHistogramAggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
         {
             return agg.Aggregations(x => x.Sum(fieldGetter.GetName(), dField => dField.Field(fieldGetter)));
@@ -65,6 +70,13 @@ namespace FluentNest
         {
             var aggName = fieldGetter.GetName();
             var itemsTerms = aggs.Average(aggName);
+            return itemsTerms.Value;
+        }
+
+        public static double? GetCount<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
+        {
+            var aggName = fieldGetter.GetName();
+            var itemsTerms = aggs.ValueCount(aggName);
             return itemsTerms.Value;
         }
     }
