@@ -8,6 +8,7 @@ assembly_info:
   assembly_informational_version: "{version}"
   
 before_build:
+- nuget restore
 - ps: >-
     Invoke-WebRequest "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.6.0.zip" -OutFile .\es16.zip;
 
@@ -39,7 +40,7 @@ before_build:
     .\bin\service.bat --service-start
 
     cd ..
- - nuget restore
+
 build:
   publish_nuget: true
   project: FluentNest.sln
