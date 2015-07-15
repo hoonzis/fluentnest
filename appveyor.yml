@@ -9,37 +9,7 @@ assembly_info:
   
 before_build:
 - nuget restore
-- ps: >-
-    Invoke-WebRequest "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.6.0.zip" -OutFile .\es16.zip;
-
-    $destFolder = "es16";
-
-    $shell = new-object -com shell.application;
-
-
-    $zip = $shell.NameSpace("$pwd\es16.zip");
-
-    if (Test-Path $pwd\$destFolder )
-
-    {
-        del $pwd\$destFolder -Force -Recurse
-    }
-
-    md ".\es16";
-
-    foreach($item in $zip.items())
-
-    {
-        $shell.Namespace("$pwd\es16").copyhere($item);
-    it kind of worked
-
-    cd $destFolder
-
-    .\bin\service.bat --service-install
-
-    .\bin\service.bat --service-start
-
-    cd ..
+- ps: >- .\run_es.ps1
 
 build:
   publish_nuget: true
