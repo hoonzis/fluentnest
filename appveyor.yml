@@ -40,7 +40,6 @@ before_build:
 
     cd ..
  - nuget restore
- 
 build:
   publish_nuget: true
   project: FluentNest.sln
