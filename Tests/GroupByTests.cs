@@ -47,7 +47,7 @@ namespace Tests
         public void NestedGroupBy()
         {
             AddSimpleTestData();
-            var sumOnPrice = Sums.SumOnField<Car>(s => s.Price);
+            var sumOnPrice = Statistics.SumBy<Car>(s => s.Price);
 
             var result =
                 client.Search<Car>(
@@ -68,7 +68,7 @@ namespace Tests
         public void GetDictionaryFromGroupBy()
         {
             AddSimpleTestData();
-            var sumOnPrice = Sums.SumOnField<Car>(s => s.Price);
+            var sumOnPrice = Statistics.SumBy<Car>(s => s.Price);
 
             var result =
                 client.Search<Car>(search => search.Aggregations(x => sumOnPrice.GroupBy(s => s.EngineType)));

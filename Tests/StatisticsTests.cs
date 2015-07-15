@@ -34,7 +34,8 @@ namespace Tests
                     Price = 10,
                     Sold = i % 2 == 0 ? true : false,
                     Length = i,
-                    CarType = "Car" + i%2
+                    CarType = "Car" + i%2,
+                    EngineType = "Engine" + i%2
                 };
                 client.Index(car);
             }
@@ -46,7 +47,7 @@ namespace Tests
         {
 
             AddSimpleTestData();
-            var standardSum = Sums.SumOnField<Car>(x => x.Price);
+            var standardSum = Statistics.SumBy<Car>(x => x.Price);
             var result =
                 client.Search<Car>(
                     search =>
@@ -60,7 +61,7 @@ namespace Tests
         public void TestConditionalSum()
         {
             AddSimpleTestData();
-            var sumCond = Sums.ConditionalSumOnField<Car>(x => x.Price, x => x.Sold == true);
+            var sumCond = Statistics.CondSumBy<Car>(x => x.Price, x => x.Sold == true);
 
             var result =
                 client.Search<Car>(
@@ -68,7 +69,7 @@ namespace Tests
                         search.Take(10)
                         .Aggregations(x => sumCond));
 
-            var sum = result.Aggs.GetConditionalSum<Car>(x => x.Price, x => x.Sold);
+            var sum = result.Aggs.GetCondSum<Car>(x => x.Price, x => x.Sold);
             Check.That(sum).Equals(50d);
         }
 
@@ -76,19 +77,56 @@ namespace Tests
         public void MultipleAggregationsInSingleAggregation()
         {
             AddSimpleTestData();
-            var notionalSumAgg = Sums.SumOnField<Car>(x => x.Price);
+            var engineTypeSum = Statistics.CondCountBy<Car>(x => x.Name, c => c.EngineType == "Engine1");
+
+            var notionalSumAgg = engineTypeSum.AndSumBy(x => x.Price)
+                .AndAvgBy(x => x.Length)
+                .AndCountBy(x => x.CarType);
+
 
             var result = client.Search<Car>(s => s
                 .Take(100)
-                .Aggregations(a => notionalSumAgg.AndAvgBy(x => x.Length).AndCountBy(x=>x.CarType)));
+                .Aggregations(x => notionalSumAgg));
+                    
 
             var priceSum = result.Aggs.GetSum<Car>(x => x.Price);
             var avgLength = result.Aggs.GetAvg<Car>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
+            var typeOneCount = result.Aggs.GetCondCount<Car>(x => x.Name, x => x.EngineType);
+            
+            Check.That(priceSum).Equals(100d);
+            Check.That(avgLength).Equals(4.5d);
+            Check.That(count).Equals(10);
+            Check.That(typeOneCount).Equals(5);
+        }
+
+        [Fact]
+        public void MultipleAggregationsInSingleAggregation_ReversingOrder()
+        {
+            AddSimpleTestData();
+            var agg = Statistics.SumBy<Car>(x => x.Price)
+                .AndAvgBy(x => x.Length)
+                .AndCountBy(x => x.CarType)
+                .AndCondCountBy(x => x.Name, c => c.EngineType == "Engine1")
+                .AndCondSumBy(x => x.Price, c => c.CarType == "Car1");
+
+
+            var result = client.Search<Car>(s => s
+                .Take(100)
+                .Aggregations(x => agg));
+
+
+            var priceSum = result.Aggs.GetSum<Car>(x => x.Price);
+            var avgLength = result.Aggs.GetAvg<Car>(x => x.Length);
+            var count = result.Aggs.GetCount<Car>(x => x.CarType);
+            var typeOneCount = result.Aggs.GetCondCount<Car>(x => x.Name, x => x.EngineType);
+            var car1PriceSum = result.Aggs.GetCondSum<Car>(x => x.Price, x => x.CarType);
 
             Check.That(priceSum).Equals(100d);
             Check.That(avgLength).Equals(4.5d);
-            Check.That(count).Equals(10d);
+            Check.That(count).Equals(10);
+            Check.That(typeOneCount).Equals(5);
+            Check.That(car1PriceSum).Equals(50d);
         }
     }
 }

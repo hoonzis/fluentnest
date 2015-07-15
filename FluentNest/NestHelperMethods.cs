@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 using Nest;
 
 namespace FluentNest
@@ -46,21 +44,7 @@ namespace FluentNest
             return v;
         }
 
-        public static AggregationDescriptor<T> GroupBy<T>(this AggregationDescriptor<T> innerAggregation, String key) where T : class
-        {
-            AggregationDescriptor<T> v = new AggregationDescriptor<T>();
-            v.Terms(key, tr =>
-            {
-                TermsAggregationDescriptor<T> trmAggDescriptor = new TermsAggregationDescriptor<T>();
-                trmAggDescriptor.Field(key);
-                return trmAggDescriptor.Aggregations(x => innerAggregation);
-            });
-
-            return v;
-        }
-
         
-
         public static AggregationDescriptor<T> DateHistogram<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter, DateInterval dateInterval) where T : class
         {
             return agg.DateHistogram(GetName(fieldGetter), x => x.Field(fieldGetter).Interval(dateInterval));
