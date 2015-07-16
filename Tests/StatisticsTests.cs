@@ -84,7 +84,8 @@ namespace Tests
 
             var notionalSumAgg = engineTypeSum.AndSumBy(x => x.Price)
                 .AndAvgBy(x => x.Length)
-                .AndCountBy(x => x.CarType);
+                .AndCountBy(x => x.CarType)
+                .AndCardinalityBy(x => x.EngineType);
 
 
             var result = client.Search<Car>(s => s
@@ -96,6 +97,7 @@ namespace Tests
             var avgLength = result.Aggs.GetAvg<Car>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
             var typeOneCount = result.Aggs.GetCondCount<Car>(x => x.Name, x => x.EngineType);
+            var engineCardinality = result.Aggs.GetCardinality<Car>(x => x.EngineType);
 
             //we can get back cond count without specifying the condition - in that case it will return the first one
             var typeOneCountAgain = result.Aggs.GetCondCount<Car>(x => x.Name);
@@ -105,6 +107,7 @@ namespace Tests
             Check.That(count).Equals(10);
             Check.That(typeOneCount).Equals(5);
             Check.That(typeOneCountAgain).Equals(5);
+            Check.That(engineCardinality).Equals(2);
         }
 
         [Fact]

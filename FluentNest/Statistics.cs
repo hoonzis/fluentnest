@@ -21,6 +21,11 @@ namespace FluentNest
             return agg.ValueCount(fieldGetter.GetName(), x => x.Field(fieldGetter));
         }
 
+        public static AggregationDescriptor<T> AndCardinalityBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
+        {
+            return agg.Cardinality(fieldGetter.GetName(), x => x.Field(fieldGetter));
+        }
+
         public static AggregationDescriptor<T> AndCondCountBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule) where T : class
         {
             var fieldName = fieldGetter.GetName();
@@ -85,6 +90,15 @@ namespace FluentNest
             var aggName = fieldGetter.GetName();
             var itemsTerms = aggs.Sum(aggName);
             return itemsTerms.Value;
+        }
+
+        public static int GetCardinality<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
+        {
+            var aggName = fieldGetter.GetName();
+            var itemsTerms = aggs.Cardinality(aggName);
+            if(itemsTerms == null || !itemsTerms.Value.HasValue)
+                throw new InvalidOperationException("There is not cardinality avaialble");
+            return (int) itemsTerms.Value.Value;
         }
 
         public static double? GetCondSum<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter, Expression<Func<T, Object>> filterRule = null)
