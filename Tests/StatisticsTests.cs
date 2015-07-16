@@ -70,7 +70,10 @@ namespace Tests
                         .Aggregations(x => sumCond));
 
             var sum = result.Aggs.GetCondSum<Car>(x => x.Price, x => x.Sold);
+            //getting the cond sum without specifying the condition
+            var sumTwo = result.Aggs.GetCondSum<Car>(x => x.Price);
             Check.That(sum).Equals(50d);
+            Check.That(sumTwo).Equals(50d);
         }
 
         [Fact]
@@ -93,11 +96,15 @@ namespace Tests
             var avgLength = result.Aggs.GetAvg<Car>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
             var typeOneCount = result.Aggs.GetCondCount<Car>(x => x.Name, x => x.EngineType);
+
+            //we can get back cond count without specifying the condition - in that case it will return the first one
+            var typeOneCountAgain = result.Aggs.GetCondCount<Car>(x => x.Name);
             
             Check.That(priceSum).Equals(100d);
             Check.That(avgLength).Equals(4.5d);
             Check.That(count).Equals(10);
             Check.That(typeOneCount).Equals(5);
+            Check.That(typeOneCountAgain).Equals(5);
         }
 
         [Fact]

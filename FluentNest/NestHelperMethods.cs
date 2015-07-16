@@ -186,6 +186,11 @@ namespace FluentNest
                 var lambda = expression as LambdaExpression;
                 return GetFieldNameFromAccessor(lambda.Body);
             }
+            else if (expression is UnaryExpression)
+            {
+                var unary = expression as UnaryExpression;
+                return GetFieldNameFromAccessor(unary.Operand);
+            }
             
             throw  new NotImplementedException();
         }

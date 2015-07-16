@@ -87,13 +87,33 @@ namespace FluentNest
             return itemsTerms.Value;
         }
 
-        public static double? GetCondSum<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter, Expression<Func<T, Object>> filterRule)
+        public static double? GetCondSum<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter, Expression<Func<T, Object>> filterRule = null)
         {
-            var condAggName = filterRule.GetFieldNameFromAccessor();
             var sumAggName = fieldGetter.GetName();
-            var filterAgg = aggs.Filter(condAggName);
-            var sumAgg = filterAgg.Sum(sumAggName);
-            return sumAgg.Value;
+            if (filterRule == null)
+            {
+                foreach (var aggregation in aggs.Aggregations)
+                {
+                    if (aggregation.Value is SingleBucket)
+                    {
+                        var bucket = aggregation.Value as SingleBucket;
+                        var countAgg = bucket.Sum(sumAggName);
+                        if (countAgg != null)
+                        {
+                            if (!countAgg.Value.HasValue)
+                                return null;
+                            return (int)countAgg.Value.Value;
+                        }
+                    }
+                }
+                throw new InvalidOperationException("");
+            }
+            else {
+                var condAggName = filterRule.GetFieldNameFromAccessor();
+                var filterAgg = aggs.Filter(condAggName);
+                var sumAgg = filterAgg.Sum(sumAggName);
+                return sumAgg.Value;
+            }
         }
 
         public static AggregationDescriptor<T> AndAvgBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
@@ -117,15 +137,36 @@ namespace FluentNest
             return (int)itemsTerms.Value;
         }
 
-        public static int? GetCondCount<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter, Expression<Func<T, Object>> filterRule)
+        public static int? GetCondCount<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter, Expression<Func<T, Object>> filterRule=null)
         {
-            var condAggName = filterRule.GetFieldNameFromAccessor();
-            var sumAggName = fieldGetter.GetName();
-            var filterAgg = aggs.Filter(condAggName);
-            var sumAgg = filterAgg.Sum(sumAggName);
-            if (!sumAgg.Value.HasValue)
-                return null;
-            return (int)sumAgg.Value;
+            var countAggName = fieldGetter.GetName();
+            if (filterRule == null)
+            {
+                foreach (var aggregation in aggs.Aggregations)
+                {
+                    if (aggregation.Value is SingleBucket)
+                    {
+                        var bucket = aggregation.Value as SingleBucket;
+                        var countAgg = bucket.ValueCount(countAggName);
+                        if (countAgg != null)
+                        {
+                            if (!countAgg.Value.HasValue)
+                                return null;
+                            return (int) countAgg.Value.Value;
+                        }
+                    }
+                }
+                throw new InvalidOperationException("Couldn't find any conditioanal counts in this aggregation");
+            }
+            else
+            {
+                var condAggName = filterRule.GetFieldNameFromAccessor();
+                var filterAgg = aggs.Filter(condAggName);
+                var sumAgg = filterAgg.Sum(countAggName);
+                if (!sumAgg.Value.HasValue)
+                    return null;
+                return (int) sumAgg.Value;
+            }
         }
     }
 }

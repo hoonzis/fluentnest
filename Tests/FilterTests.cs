@@ -13,7 +13,7 @@ namespace Tests
 
         public FilterTests()
         {
-            var node = new Uri("http://localhost:9200");
+            var node = new Uri("http://localhost:9600");
 
             var settings = new ConnectionSettings(
                 node,
