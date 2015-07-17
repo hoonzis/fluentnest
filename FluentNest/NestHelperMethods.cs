@@ -15,21 +15,7 @@ namespace FluentNest
 
             return Char.ToLowerInvariant(str[0]) + str.Substring(1);
         }
-
-        public static AggregationDescriptor<T> GroupBy<T>(this AggregationDescriptor<T> innerAggregation,Expression<Func<T,Object>> fieldGetter) where T:class 
-        {
-            AggregationDescriptor<T> v = new AggregationDescriptor<T>();
-            var fieldName = GetName(fieldGetter);
-            v.Terms(fieldName, tr =>
-            {
-                TermsAggregationDescriptor<T> trmAggDescriptor = new TermsAggregationDescriptor<T>();
-                trmAggDescriptor.Field(fieldGetter);
-                return trmAggDescriptor.Aggregations(x => innerAggregation);
-            });
-
-            return v;
-        }
-
+        
         public static AggregationDescriptor<T> IntoDateHistogram<T>(this AggregationDescriptor<T> innerAggregation, Expression<Func<T, Object>> fieldGetter,DateInterval interval) where T : class
         {
             AggregationDescriptor<T> v = new AggregationDescriptor<T>();
@@ -43,7 +29,6 @@ namespace FluentNest
 
             return v;
         }
-
         
         public static AggregationDescriptor<T> DateHistogram<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter, DateInterval dateInterval) where T : class
         {
@@ -62,41 +47,6 @@ namespace FluentNest
 
          
             return body.Member.Name;
-        }
-
-        public static IEnumerable<KeyItem> GetGroupBy<T>(this BucketAggregationBase aggs, Expression<Func<T, Object>> fieldGetter)
-        {
-            var aggName = GetName(fieldGetter);
-            var itemsTerms = aggs.Terms(aggName);
-            return itemsTerms.Items;
-        }
-
-        public static IDictionary<String,KeyItem> GetDictioanry<T>(this BucketAggregationBase aggs, Expression<Func<T, Object>> fieldGetter)
-        {
-            var aggName = GetName(fieldGetter);
-            var itemsTerms = aggs.Terms(aggName);
-            return itemsTerms.Items.ToDictionary(x => x.Key);
-        }
-        
-        public static IEnumerable<KeyItem> GetGroupBy<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
-        {
-            var aggName = GetName(fieldGetter);
-            var itemsTerms = aggs.Terms(aggName);
-            return itemsTerms.Items;
-        }
-
-        public static IDictionary<String, KeyItem> GetDictioanry<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
-        {
-            var aggName = GetName(fieldGetter);
-            var itemsTerms = aggs.Terms(aggName);
-            return itemsTerms.Items.ToDictionary(x => x.Key);
-        }
-
-        public static IDictionary<String, K> GetDictioanry<T,K>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter, Func<KeyItem,K> objectTransformer)
-        {
-            var aggName = GetName(fieldGetter);
-            var itemsTerms = aggs.Terms(aggName);
-            return itemsTerms.Items.ToDictionary(x => x.Key,v=>objectTransformer(v));
         }
 
         public static IList<HistogramItem> GetDateHistogram<T>(this KeyItem item, Expression<Func<T, Object>> fieldGetter)

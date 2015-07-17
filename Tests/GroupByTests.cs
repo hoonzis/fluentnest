@@ -78,5 +78,19 @@ namespace Tests
             Check.That(carTypes).HasSize(2);
             Check.That(carTypes.Keys).ContainsExactly("engine0", "engine1");
         }
+
+        [Fact]
+        public void GroupByStringKeys()
+        {
+            AddSimpleTestData();
+            var sumOnPrice = Statistics.SumBy<Car>(s => s.Price);
+
+            var result =
+                client.Search<Car>(search => search.Aggregations(x => sumOnPrice.GroupBy("engineType")));
+
+
+            var carTypes = result.Aggs.GetGroupBy<Car>("engineType");
+            Check.That(carTypes).HasSize(2);
+        }
     }
 }
