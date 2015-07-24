@@ -53,8 +53,8 @@ namespace Tests
                     search =>
                         search.Take(10).Aggregations(x => standardSum));
 
-            var sum = result.Aggs.GetSum<Car>(x => x.Price).Value;
-            Check.That(sum).Equals(100d);
+            var sum = result.Aggs.GetSum<Car, Decimal>(x => x.Price);
+            Check.That(sum).Equals(100m);
         }
 
         [Fact]
@@ -93,7 +93,7 @@ namespace Tests
                 .Aggregations(x => notionalSumAgg));
                     
 
-            var priceSum = result.Aggs.GetSum<Car>(x => x.Price);
+            var priceSum = result.Aggs.GetSum<Car,Decimal>(x => x.Price);
             var avgLength = result.Aggs.GetAvg<Car>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
             var typeOneCount = result.Aggs.GetCondCount<Car>(x => x.Name, x => x.EngineType);
@@ -102,7 +102,7 @@ namespace Tests
             //we can get back cond count without specifying the condition - in that case it will return the first one
             var typeOneCountAgain = result.Aggs.GetCondCount<Car>(x => x.Name);
             
-            Check.That(priceSum).Equals(100d);
+            Check.That(priceSum).Equals(100m);
             Check.That(avgLength).Equals(4.5d);
             Check.That(count).Equals(10);
             Check.That(typeOneCount).Equals(5);
@@ -126,13 +126,13 @@ namespace Tests
                 .Aggregations(x => agg));
 
 
-            var priceSum = result.Aggs.GetSum<Car>(x => x.Price);
+            var priceSum = result.Aggs.GetSum<Car, Decimal>(x => x.Price);
             var avgLength = result.Aggs.GetAvg<Car>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
             var typeOneCount = result.Aggs.GetCondCount<Car>(x => x.Name, x => x.EngineType);
             var car1PriceSum = result.Aggs.GetCondSum<Car>(x => x.Price, x => x.CarType);
 
-            Check.That(priceSum).Equals(100d);
+            Check.That(priceSum).Equals(100m);
             Check.That(avgLength).Equals(4.5d);
             Check.That(count).Equals(10);
             Check.That(typeOneCount).Equals(5);

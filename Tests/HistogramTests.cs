@@ -76,7 +76,7 @@ namespace Tests
 
             var histogram = esResult.Aggs.GetDateHistogram<Car>(x => x.Timestamp);
             Check.That(histogram).HasSize(10);
-            Check.That(histogram.All(x => x.GetSum<Car>(s => s.Price).Value == 10d)).IsTrue();
+            Check.That(histogram.All(x => x.GetSum<Car,Decimal>(s => s.Price).Value == 10m)).IsTrue();
         }
 
         [Fact]

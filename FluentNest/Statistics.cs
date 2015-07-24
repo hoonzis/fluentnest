@@ -85,11 +85,13 @@ namespace FluentNest
             return filtered;
         }
 
-        public static double? GetSum<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
+        public static Nullable<K> GetSum<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter) where K:struct
         {
             var aggName = fieldGetter.GetName();
             var itemsTerms = aggs.Sum(aggName);
-            return itemsTerms.Value;
+            if (itemsTerms == null || !itemsTerms.Value.HasValue)
+                return null;
+            return (K)Convert.ChangeType(itemsTerms.Value, typeof (K));
         }
 
         public static int GetCardinality<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)

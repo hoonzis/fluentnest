@@ -86,5 +86,29 @@ namespace Tests
             Check.That(result.Documents).HasSize(5);
 
         }
+
+        [Fact]
+        public void TestRangeFilters_And_And()
+        {
+            AddSimpleTestData();
+
+            var startDate = new DateTime(2010, 1, 1);
+            var endDate = new DateTime(2010, 5, 1);
+         
+            var result = client.Search<Car>(s => s.Query(
+                    q=>q.Filtered(fil=>fil.Filter(
+                        x => x.And(
+                            left=>left.Range(f=>f.OnField(fd=>fd.Timestamp).Greater(startDate)),
+                            right=>right.Range(f=>f.OnField(fd=>fd.Timestamp).Lower(endDate))
+                        )
+                    )
+                )
+            ));
+            Check.That(result.Documents).HasSize(3);
+
+            //Much better
+            result = client.Search<Car>(s => s.FilteredOn(f => f.Timestamp > startDate && f.Timestamp < endDate));
+            Check.That(result.Documents).HasSize(3);
+        }
     }
 }

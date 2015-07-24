@@ -55,6 +55,13 @@ namespace FluentNest
             return itemsTerms.Items.ToDictionary(x => x.Key);
         }
 
+        public static IEnumerable<K> GetGroupBy<T,K>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter, Func<KeyItem, K> objectTransformer)
+        {
+            var aggName = fieldGetter.GetName();
+            var itemsTerms = aggs.Terms(aggName);
+            return itemsTerms.Items.Select(objectTransformer);
+        }
+
         public static IEnumerable<KeyItem> GetGroupBy<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
         {
             var aggName = fieldGetter.GetName();
@@ -79,7 +86,7 @@ namespace FluentNest
         {
             var aggName = fieldGetter.GetName();
             var itemsTerms = aggs.Terms(aggName);
-            return itemsTerms.Items.ToDictionary(x => x.Key, v => objectTransformer(v));
+            return itemsTerms.Items.ToDictionary(x => x.Key, objectTransformer);
         }
     }
 }
