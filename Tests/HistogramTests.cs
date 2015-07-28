@@ -66,6 +66,23 @@ namespace Tests
         }
 
         [Fact]
+        public void HistogramOfSumsStandardWay()
+        {
+            AddSimpleTestData();
+            var result = client.Search<Car>(s => s.Aggregations(a => a.DateHistogram("by_month",
+                d => d.Field(x => x.Timestamp)
+                        .Interval(DateInterval.Month)
+                        .Aggregations(
+                            aggs => aggs.Sum("priceSum", dField => dField.Field(field => field.Price))))));
+
+            var histogram = result.Aggs.DateHistogram("by_month");
+            Check.That(histogram.Items).HasSize(10);
+            var firstMonth = histogram.Items[0];
+            var priceSum = firstMonth.Sum("priceSum");
+            Check.That(priceSum.Value.Value).Equals(10d);
+        }
+
+        [Fact]
         public void SumInMonthlyHistogram()
         {
             AddSimpleTestData();
