@@ -35,6 +35,14 @@ namespace FluentNest
             return v;
         }
 
+
+        public static AggregationDescriptor<T> GroupBy<T>(this AggregationDescriptor<T> innerAggregation, IEnumerable<String> keys) where T : class
+        {
+            var reversedAndLowered = keys.Select(x => x.FirstCharacterToLower()).Reverse().ToList();
+            var aggregations = reversedAndLowered.Aggregate(innerAggregation, (s, i) => s.GroupBy(i));
+            return aggregations;
+        }
+
         public static IEnumerable<KeyItem> GetGroupBy<T>(this BucketAggregationBase aggs, Expression<Func<T, Object>> fieldGetter)
         {
             var aggName = fieldGetter.GetName();
@@ -42,7 +50,7 @@ namespace FluentNest
             return itemsTerms.Items;
         }
 
-        public static IEnumerable<KeyItem> GetGroupBy<T>(this BucketAggregationBase aggs, String key)
+        public static IEnumerable<KeyItem> GetGroupBy(this BucketAggregationBase aggs, string key)
         {
             var itemsTerms = aggs.Terms(key);
             return itemsTerms.Items;
@@ -69,7 +77,7 @@ namespace FluentNest
             return itemsTerms.Items;
         }
 
-        public static IEnumerable<KeyItem> GetGroupBy<T>(this AggregationsHelper aggs, String key)
+        public static IEnumerable<KeyItem> GetGroupBy(this AggregationsHelper aggs, string key)
         {
             var itemsTerms = aggs.Terms(key);
             return itemsTerms.Items;
