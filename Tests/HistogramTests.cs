@@ -108,7 +108,7 @@ namespace Tests
                 .IntoDateHistogram(date => date.Timestamp, DateInterval.Month);
 
             var result = client.Search<Car>(
-                    search => search.FilteredOn(f => f.Timestamp < end && f.Timestamp > start).Aggregations(x =>agg);
+                    search => search.FilteredOn(f => f.Timestamp < end && f.Timestamp > start).Aggregations(x =>agg));
 
             var histogram = result.Aggs.GetDateHistogram<Car>(x => x.Timestamp);
 
