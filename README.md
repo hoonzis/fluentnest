@@ -1,11 +1,25 @@
 # FluentNest
+[![Nuget Package](https://img.shields.io/nuget/v/fluentnest.svg)](https://www.nuget.org/packages/fluentnest)
+[![Build status](https://ci.appveyor.com/api/projects/status/wrorpoekyw416hn1?svg=true)](https://ci.appveyor.com/project/hoonzis/fluentnest)
+
 LINQ-like query language for ElasticSearch built on top of NEST.
 
 NEST for querying ElasticSearch is great, but sometimes still hard to read and not very LINQ-like. This library contains set of methods that give you more LINQ-like feeling. Currently mainly aggregations and filters are covered.
 
 Aggregations nested in Groups
 -----------------------------
-Quite often you might want to calculate a sum per group. Standard way of doing this with NEST would be:
+Quite often you might want to calculate a sum per group. With FluentNest you can write:
+
+```Csharp
+groupedSum = Statistics
+	.SumBy<Car>(s => s.Price)
+	.GroupBy(s => s.EngineType);
+	
+var result = client.Search<Car>(search => search.Aggregations(x => groupedSum);
+```
+
+Just for a comparison, here is the same query using only NEST:
+
 ```Csharp
 var result = client.Search<Car>(s => s
 	.Aggregations(fstAgg => fstAgg
@@ -21,15 +35,6 @@ var result = client.Search<Car>(s => s
 );
 ```
 
-With **FluentNest** you can write:
-
-```Csharp
-groupedSum = Statistics
-	.SumBy<Car>(s => s.Price)
-	.GroupBy(s => s.EngineType);
-	
-var result = client.Search<Car>(search => search.Aggregations(x => groupedSum);
-```
 
 Nested groups are very easy as well:
 
