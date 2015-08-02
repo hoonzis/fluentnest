@@ -4,7 +4,7 @@
 
 LINQ-like query language for ElasticSearch built on top of NEST.
 
-NEST for querying ElasticSearch is great, but sometimes still hard to read and not very LINQ-like. This library contains set of methods that give you more LINQ-like feeling. Currently mainly aggregations and filters are covered. More details are available [on my blog](https://hoonzis.github.io/fluent-interface-for-elastic-search/). 
+NEST for querying ElasticSearch is great, but sometimes still hard to read and not very LINQ-like. This library contains set of methods that give you more LINQ-like feeling. Currently mainly aggregations and filters are covered. More details are available [on my blog](http://www.hoonzis.com/fluent-interface-for-elastic-search/). 
 
 Aggregations nested in Groups
 -----------------------------
