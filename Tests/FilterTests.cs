@@ -11,6 +11,16 @@ namespace Tests
     {
         private ElasticClient client;
 
+        class User
+        {
+            [ElasticProperty(OmitNorms = true, Index = FieldIndexOption.NotAnalyzed)]
+            public String Email { get; set; }
+
+            public String Name { get; set; }
+
+        }
+
+        
         public FilterTests()
         {
             var node = new Uri("http://localhost:9600");
@@ -19,13 +29,16 @@ namespace Tests
                 node,
                 defaultIndex: "my-application"
             );
-
             client = new ElasticClient(settings);
         }
 
         private void AddSimpleTestData()
         {
             client.DeleteIndex(x => x.Index<Car>());
+            client.DeleteIndex(x => x.Index("test"));
+            var createIndexResult = client.CreateIndex("test", x => x.AddMapping<User>(c => c.MapFromAttributes()));
+
+            Check.That(createIndexResult.Acknowledged).IsTrue();
             for (int i = 0; i < 10; i++)
             {
                 var car = new Car
@@ -34,10 +47,22 @@ namespace Tests
                     Name = "Car" + i,
                     Price = 10,
                     Sold = i % 2 == 0 ? true : false,
-                    CarType = "Type" + i%2
+                    CarType = "Type" + i%2,
+                    BARType = "Baris@Bar" + i%2
                 };
                 client.Index(car);
             }
+
+            for (int i = 0; i < 10; i++)
+            {
+                var user = new User
+                {
+                    Email = "Email@email"+i%2+".com",
+                    Name = "name"
+                };
+                client.Index(user, c => c.Index("test"));
+            }
+            client.Flush(x => x.Index("test"));
             client.Flush(x => x.Index<Car>());
         }
 
@@ -48,10 +73,10 @@ namespace Tests
             AddSimpleTestData();
             var startDate = new DateTime(2010, 1, 1);
             var endDate = new DateTime(2010, 3, 1);
-            var carType = "Type0";
+           
 
             var result = client.Search<Car>(s => s
-                .FilterOn(x => x.Timestamp >= startDate && x.Timestamp <= endDate && x.CarType == carType));
+                .FilterOn(x => x.Timestamp >= startDate && x.Timestamp <= endDate && x.CarType == "type0"));
 
             Check.That(result.Documents).HasSize(2);
         }
@@ -72,17 +97,18 @@ namespace Tests
         {
             AddSimpleTestData();
 
+            var carType = "Type0".ToLower();
             //Standard Nest way of getting the docuements. Values are lowered by ES
-            var result = client.Search<Car>(s => s.Filter(x => x.Term(f => f.CarType, "type0")));
+            var result = client.Search<Car>(s => s.Filter(x => x.Term(f => f.CarType, carType)));
             Check.That(result.Documents).HasSize(5);
 
             //Little bit better
-            result = client.Search<Car>(s => s.FilterOn(x => x.CarType, "Type0"));
+            result = client.Search<Car>(s => s.FilterOn(x => x.CarType, carType));
             Check.That(result.Documents).HasSize(5);
 
 
             //Best way
-            result = client.Search<Car>(s => s.FilterOn(x => x.CarType == "Type0"));
+            result = client.Search<Car>(s => s.FilterOn(x => x.CarType == carType));
             Check.That(result.Documents).HasSize(5);
 
         }
@@ -109,6 +135,29 @@ namespace Tests
             //Much better
             result = client.Search<Car>(s => s.FilteredOn(f => f.Timestamp > startDate && f.Timestamp < endDate));
             Check.That(result.Documents).HasSize(3);
+        }
+
+        [Fact]
+        public void FilterOnSpecialCharacter()
+        {
+            AddSimpleTestData();
+
+            var allUsers = client.Search<User>(s => s.Index("test"));
+            Check.That(allUsers.Documents).HasSize(10);
+
+
+            var result =
+                client.Search<User>(
+                    s => s.Index("test").Query(q => q.Filtered(f => f.Filter(fil => fil.Term(term => term.Name, "name")))));
+            Check.That(result.Documents).HasSize(10);
+
+            result =
+                client.Search<User>(
+                    s => s.Index("test").Query(q => q.Filtered(f => f.Filter(fil => fil.Term(term => term.Email, "Email@email1.com")))));
+            Check.That(result.Documents).HasSize(5);
+
+            result = client.Search<User>(s => s.Index("test").FilteredOn(f => f.Email == "Email@email1.com"));
+            Check.That(result.Documents).HasSize(5);
         }
     }
 }

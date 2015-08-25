@@ -63,10 +63,6 @@ namespace FluentNest
 
         public static SearchDescriptor<T> FilterOn<T>(this SearchDescriptor<T> searchDescriptor,Expression<Func<T, Object>> fieldGetter, object value) where T:class
         {
-            if (value is String)
-            {
-                value = ((String)value).ToLower();
-            }
             return searchDescriptor.Filter(x => x.Term(fieldGetter, value));
         }
 
@@ -100,10 +96,6 @@ namespace FluentNest
         {
             var binaryExpression = expression as BinaryExpression;
             var value = GetValue(binaryExpression.Right);
-            if (value is String)
-            {
-                value = ((String) value).ToLower();
-            }
             var filterDescriptor = new FilterDescriptor<T>();
             var fieldName = GetFieldNameFromAccessor(binaryExpression);
             return filterDescriptor.Term(fieldName,value);
@@ -179,7 +171,7 @@ namespace FluentNest
         }
 
         public static SearchDescriptor<T> FilteredOn<T>(this SearchDescriptor<T> searchDescriptor, Expression<Func<T, bool>> filterRule) where T : class
-        {
+        {           
             var binaryExpression = filterRule.Body as BinaryExpression;
             return searchDescriptor.Query(q => q.Filtered(fil=>fil.Filter(f=>GenerateFilterDescription<T>(binaryExpression))));
         }

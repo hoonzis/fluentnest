@@ -80,7 +80,7 @@ namespace Tests
         public void MultipleAggregationsInSingleAggregation()
         {
             AddSimpleTestData();
-            var engineTypeSum = Statistics.CondCountBy<Car>(x => x.Name, c => c.EngineType == "Engine1");
+            var engineTypeSum = Statistics.CondCountBy<Car>(x => x.Name, c => c.EngineType == "engine1");
 
             var notionalSumAgg = engineTypeSum.AndSumBy(x => x.Price)
                 .AndAvgBy(x => x.Length)
@@ -117,8 +117,8 @@ namespace Tests
             var agg = Statistics.SumBy<Car>(x => x.Price)
                 .AndAvgBy(x => x.Length)
                 .AndCountBy(x => x.CarType)
-                .AndCondCountBy(x => x.Name, c => c.EngineType == "Engine1")
-                .AndCondSumBy(x => x.Price, c => c.CarType == "Car1");
+                .AndCondCountBy(x => x.Name, c => c.EngineType == "engine1")
+                .AndCondSumBy(x => x.Price, c => c.CarType == "car1");
 
 
             var result = client.Search<Car>(s => s
