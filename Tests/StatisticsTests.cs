@@ -35,7 +35,8 @@ namespace Tests
                     Sold = i % 2 == 0 ? true : false,
                     Length = i,
                     CarType = "Car" + i%2,
-                    EngineType = "Engine" + i%2
+                    EngineType = "Engine" + i%2,
+                    Weight = i%2 == 0 ? (decimal?)10m : null
                 };
                 client.Index(car);
             }
@@ -137,6 +138,20 @@ namespace Tests
             Check.That(count).Equals(10);
             Check.That(typeOneCount).Equals(5);
             Check.That(car1PriceSum).Equals(50d);
+        }
+
+        [Fact]
+        public void SumOfNullableDecimal()
+        {
+            AddSimpleTestData();
+            var standardSum = Statistics.SumBy<Car>(x => x.Weight);
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(x => standardSum));
+
+            var sum = result.Aggs.GetGenericSum<Car>(x => x.Weight);
+            Check.That(sum).Equals(50d);
         }
     }
 }

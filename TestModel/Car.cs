@@ -12,5 +12,6 @@ namespace TestModel
         public DateTime Timestamp { get; set; }
         public String CarType { get; set; }
         public String EngineType { get; set; }
+        public decimal? Weight { get; set; } 
     }
 }

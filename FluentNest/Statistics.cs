@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 using Nest;
 
 namespace FluentNest
@@ -92,6 +87,15 @@ namespace FluentNest
             if (itemsTerms == null || !itemsTerms.Value.HasValue)
                 return null;
             return (K)Convert.ChangeType(itemsTerms.Value, typeof (K));
+        }
+
+        public static Object GetGenericSum<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
+        {
+            var aggName = fieldGetter.GetName();
+            var itemsTerms = aggs.Sum(aggName);
+            if (itemsTerms == null || !itemsTerms.Value.HasValue)
+                return null;
+            return itemsTerms.Value;
         }
 
         public static int GetCardinality<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
