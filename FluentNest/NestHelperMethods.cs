@@ -161,6 +161,11 @@ namespace FluentNest
             {
                 return GenerateBoolFilter<T>(expression);
             }
+            else if (expType == ExpressionType.Lambda)
+            {
+                var lambda = expression as LambdaExpression;
+                return GenerateFilterDescription<T>(lambda.Body);
+            }
             throw  new NotImplementedException();
         }
 
@@ -172,8 +177,21 @@ namespace FluentNest
 
         public static SearchDescriptor<T> FilteredOn<T>(this SearchDescriptor<T> searchDescriptor, Expression<Func<T, bool>> filterRule) where T : class
         {           
-            var binaryExpression = filterRule.Body as BinaryExpression;
+            var binaryExpression = filterRule.Body as BinaryExpression;            
             return searchDescriptor.Query(q => q.Filtered(fil=>fil.Filter(f=>GenerateFilterDescription<T>(binaryExpression))));
+        }
+
+        public static FilterContainer AndFilteredOn<T>(this FilterContainer queryDescriptor, Expression<Func<T, bool>> filterRule) where T : class
+        {
+            var filterDescriptor = new FilterDescriptor<T>();
+            var binaryExpression = filterRule.Body as BinaryExpression;
+            var newPartOfQuery = GenerateFilterDescription<T>(binaryExpression);
+            return filterDescriptor.And(newPartOfQuery, queryDescriptor);            
+        }
+
+        public static FilterContainer CreateFilter<T>(Expression<Func<T, bool>> filterRule) where T : class
+        {
+            return GenerateFilterDescription<T>(filterRule);
         }
 
         private static object GetValue(Expression member)

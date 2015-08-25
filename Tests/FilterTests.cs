@@ -48,7 +48,6 @@ namespace Tests
                     Price = 10,
                     Sold = i % 2 == 0 ? true : false,
                     CarType = "Type" + i%2,
-                    BARType = "Baris@Bar" + i%2
                 };
                 client.Index(car);
             }
@@ -58,7 +57,7 @@ namespace Tests
                 var user = new User
                 {
                     Email = "Email@email"+i%2+".com",
-                    Name = "name"
+                    Name = "name"+i%3
                 };
                 client.Index(user, c => c.Index("test"));
             }
@@ -145,19 +144,27 @@ namespace Tests
             var allUsers = client.Search<User>(s => s.Index("test"));
             Check.That(allUsers.Documents).HasSize(10);
 
-
+            //these two searches should provide the same result
             var result =
-                client.Search<User>(
-                    s => s.Index("test").Query(q => q.Filtered(f => f.Filter(fil => fil.Term(term => term.Name, "name")))));
-            Check.That(result.Documents).HasSize(10);
-
-            result =
                 client.Search<User>(
                     s => s.Index("test").Query(q => q.Filtered(f => f.Filter(fil => fil.Term(term => term.Email, "Email@email1.com")))));
             Check.That(result.Documents).HasSize(5);
 
             result = client.Search<User>(s => s.Index("test").FilteredOn(f => f.Email == "Email@email1.com"));
             Check.That(result.Documents).HasSize(5);
+        }
+
+        [Fact]
+        public void TestConsecutiveFilters()
+        {
+            AddSimpleTestData();
+
+            var filter = NestHelperMethods
+                .CreateFilter<User>(x => x.Name == "name1")
+                .AndFilteredOn<User>(x => x.Email == "Email@email1.com");
+
+            var allUsers = client.Search<User>(s => s.Index("test").Filter(filter));
+            Check.That(allUsers.Documents).HasSize(2);            
         }
     }
 }
