@@ -71,25 +71,91 @@ namespace FluentNest
             var binaryExpression = expression as BinaryExpression;
             var fieldName = GetFieldNameFromAccessor(binaryExpression);
             var value = GetValue(binaryExpression.Right);
-            var filterDescriptor = new FilterDescriptor<T>();
+            
 
+            if (value is DateTime)
+            {
+                return GenerateComparisonFilter<T>((DateTime)value, type, fieldName);
+            }
+            else if (value is double)
+            {
+                return GenerateComparisonFilter<T>((double)value, type, fieldName);
+            }
+            else if (value is int)
+            {
+                return GenerateComparisonFilter<T>((long)(int)value, type, fieldName);
+            }
+            else if (value is long)
+            {
+                return GenerateComparisonFilter<T>((long)value, type, fieldName);
+            }
+            throw new InvalidOperationException("Comparison on non-supported type");
+        }
+
+        public static FilterContainer GenerateComparisonFilter<T>(DateTime value, ExpressionType type, string fieldName) where T : class
+        {
+            var filterDescriptor = new FilterDescriptor<T>();
             if (type == ExpressionType.LessThan)
             {
-                return filterDescriptor.Range(x => x.Lower((DateTime) value).OnField(fieldName));
+                return filterDescriptor.Range(x => x.Lower(value).OnField(fieldName));
             }
-            else if(type == ExpressionType.GreaterThan)
+            else if (type == ExpressionType.GreaterThan)
             {
-                return filterDescriptor.Range(x => x.Greater((DateTime)value).OnField(fieldName));
+                return filterDescriptor.Range(x => x.Greater(value).OnField(fieldName));
             }
             else if (type == ExpressionType.LessThanOrEqual)
             {
-                return filterDescriptor.Range(x => x.LowerOrEquals((DateTime)value).OnField(fieldName));
+                return filterDescriptor.Range(x => x.LowerOrEquals(value).OnField(fieldName));
             }
             else if (type == ExpressionType.GreaterThanOrEqual)
             {
-                return filterDescriptor.Range(x => x.GreaterOrEquals((DateTime)value).OnField(fieldName));
+                return filterDescriptor.Range(x => x.GreaterOrEquals(value).OnField(fieldName));
             }
-            throw  new NotImplementedException();
+            throw new NotImplementedException();
+        }
+
+        public static FilterContainer GenerateComparisonFilter<T>(long value, ExpressionType type, string fieldName) where T : class
+        {
+            var filterDescriptor = new FilterDescriptor<T>();
+            if (type == ExpressionType.LessThan)
+            {
+                return filterDescriptor.Range(x => x.Lower(value).OnField(fieldName));
+            }
+            else if (type == ExpressionType.GreaterThan)
+            {
+                return filterDescriptor.Range(x => x.Greater(value).OnField(fieldName));
+            }
+            else if (type == ExpressionType.LessThanOrEqual)
+            {
+                return filterDescriptor.Range(x => x.LowerOrEquals(value).OnField(fieldName));
+            }
+            else if (type == ExpressionType.GreaterThanOrEqual)
+            {
+                return filterDescriptor.Range(x => x.GreaterOrEquals(value).OnField(fieldName));
+            }
+            throw new NotImplementedException();
+        }
+
+        public static FilterContainer GenerateComparisonFilter<T>(double value, ExpressionType type, string fieldName) where T : class
+        {
+            var filterDescriptor = new FilterDescriptor<T>();
+            if (type == ExpressionType.LessThan)
+            {
+                return filterDescriptor.Range(x => x.Lower(value).OnField(fieldName));
+            }
+            else if (type == ExpressionType.GreaterThan)
+            {
+                return filterDescriptor.Range(x => x.Greater(value).OnField(fieldName));
+            }
+            else if (type == ExpressionType.LessThanOrEqual)
+            {
+                return filterDescriptor.Range(x => x.LowerOrEquals(value).OnField(fieldName));
+            }
+            else if (type == ExpressionType.GreaterThanOrEqual)
+            {
+                return filterDescriptor.Range(x => x.GreaterOrEquals(value).OnField(fieldName));
+            }
+            throw new NotImplementedException();
         }
 
         public static FilterContainer GenerateEqualityFilter<T>(this Expression expression) where T : class
@@ -179,6 +245,11 @@ namespace FluentNest
         {           
             var binaryExpression = filterRule.Body as BinaryExpression;            
             return searchDescriptor.Query(q => q.Filtered(fil=>fil.Filter(f=>GenerateFilterDescription<T>(binaryExpression))));
+        }
+
+        public static SearchDescriptor<T> FilteredOn<T>(this SearchDescriptor<T> searchDescriptor, FilterContainer container) where T : class
+        {
+            return searchDescriptor.Query(q => q.Filtered(fil => fil.Filter(f => container)));
         }
 
         public static FilterContainer AndFilteredOn<T>(this FilterContainer queryDescriptor, Expression<Func<T, bool>> filterRule) where T : class

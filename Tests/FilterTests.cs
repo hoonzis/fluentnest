@@ -18,6 +18,8 @@ namespace Tests
 
             public String Name { get; set; }
 
+            public int Age { get; set; }
+
         }
 
         
@@ -57,7 +59,8 @@ namespace Tests
                 var user = new User
                 {
                     Email = "Email@email"+i%2+".com",
-                    Name = "name"+i%3
+                    Name = "name"+i%3,
+                    Age = i+1
                 };
                 client.Index(user, c => c.Index("test"));
             }
@@ -160,11 +163,32 @@ namespace Tests
             AddSimpleTestData();
 
             var filter = NestHelperMethods
-                .CreateFilter<User>(x => x.Name == "name1")
+                .CreateFilter<User>(x => x.Name == "name1" && x.Age >= 5)
                 .AndFilteredOn<User>(x => x.Email == "Email@email1.com");
 
             var allUsers = client.Search<User>(s => s.Index("test").Filter(filter));
-            Check.That(allUsers.Documents).HasSize(2);            
+            Check.That(allUsers.Documents).HasSize(1);            
+        }
+
+        [Fact]
+        public void MultipleFiltersAndSomeAggregations()
+        {
+            AddSimpleTestData();
+
+            var sc = new SearchDescriptor<User>();
+            sc = sc.Index("test");
+
+            var filter = NestHelperMethods
+                .CreateFilter<User>(x => x.Name == "name1" && x.Age >= 5)
+                .AndFilteredOn<User>(x => x.Email == "Email@email1.com");
+
+            var ageSum  = Statistics.SumBy<User>(x => x.Age);
+            sc = sc.FilteredOn(filter);
+            sc.Aggregations(agg => ageSum);
+            var filterdAggregation = client.Search<User>(sc);
+            var sumValue = filterdAggregation.Aggs.GetSum<User, int>(x => x.Age);
+            //only one out of 10 docs will be ok with this criteria
+            Check.That(sumValue).Equals(8);
         }
     }
 }
