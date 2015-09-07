@@ -44,7 +44,7 @@ namespace Tests
         }
 
         [Fact]
-        public void TestSimpleSum()
+        public void SumTest()
         {
 
             AddSimpleTestData();
@@ -56,6 +56,36 @@ namespace Tests
 
             var sum = result.Aggs.GetSum<Car, Decimal>(x => x.Price);
             Check.That(sum).Equals(100m);
+        }
+
+        [Fact]
+        public void CountTest()
+        {
+
+            AddSimpleTestData();
+            var count = Statistics.CountBy<Car>(x => x.Price);
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(x => count));
+
+            var val = result.Aggs.GetCount<Car>(x => x.Price);
+            Check.That(val).Equals(10);
+        }
+
+        [Fact]
+        public void CardinalityTest()
+        {
+
+            AddSimpleTestData();
+            var cardAgg = Statistics.CardinalityBy<Car>(x => x.EngineType);
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(x => cardAgg));
+
+            var card = result.Aggs.GetCardinality<Car>(x => x.EngineType);
+            Check.That(card).Equals(2);
         }
 
         [Fact]

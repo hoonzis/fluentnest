@@ -45,6 +45,22 @@ namespace FluentNest
             return sumAggs;
         }
 
+        public static AggregationDescriptor<T> CardinalityBy<T>(Expression<Func<T, object>> fieldGetter) where T : class
+        {
+            AggregationDescriptor<T> v = new AggregationDescriptor<T>();
+            var fieldName = fieldGetter.GetName();
+            var sumAggs = v.Cardinality(fieldName, tr => tr.Field(fieldGetter));
+            return sumAggs;
+        }
+
+        public static AggregationDescriptor<T> CountBy<T>(Expression<Func<T, object>> fieldGetter) where T : class
+        {
+            AggregationDescriptor<T> v = new AggregationDescriptor<T>();
+            var fieldName = fieldGetter.GetName();
+            var sumAggs = v.ValueCount(fieldName, tr => tr.Field(fieldGetter));
+            return sumAggs;
+        }
+
         public static AggregationDescriptor<T> CondSumBy<T>(Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule) where T : class
         {
             AggregationDescriptor<T> v = new AggregationDescriptor<T>();
