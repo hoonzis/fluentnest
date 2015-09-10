@@ -20,6 +20,8 @@ namespace Tests
 
             public int Age { get; set; }
 
+            public bool? Enabled { get; set; }
+
         }
 
         
@@ -60,7 +62,8 @@ namespace Tests
                 {
                     Email = "Email@email"+i%2+".com",
                     Name = "name"+i%3,
-                    Age = i+1
+                    Age = i+1,
+                    Enabled = i%2 == 0 ? true : false
                 };
                 client.Index(user, c => c.Index("test"));
             }
@@ -168,6 +171,18 @@ namespace Tests
 
             var allUsers = client.Search<User>(s => s.Index("test").Filter(filter));
             Check.That(allUsers.Documents).HasSize(1);            
+        }
+
+        [Fact]
+        public void TestBooleanFilter()
+        {
+            AddSimpleTestData();
+
+            var filter = NestHelperMethods
+                .CreateFilter<User>(x => x.Enabled == true);
+
+            var allUsers = client.Search<User>(s => s.Index("test").Filter(filter));
+            Check.That(allUsers.Documents).HasSize(5);
         }
 
         [Fact]
