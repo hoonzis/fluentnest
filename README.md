@@ -111,3 +111,19 @@ var agg = Statistics
 var result = client.Search<Car>(s => s.Aggregations(a =>agg);
 var histogram = result.Aggs.GetDateHistogram<Car>(x => x.Timestamp);
 ```
+
+Distinct values
+---------------
+Getting distinct values by certain property is translated into a Terms query behind the scenes. Like other operations it is chainable. A helper getter will return the value as the correct type.
+This works for enums as well - in the following example the second line gets all the *EngineType* enum values stored in ES.
+
+```Csharp
+var agg = Statistics
+    .DistinctBy<Car>(x => x.CarType)
+    .AndDistinctBy(x => x.EngineType);
+
+var result = client.Search<Car>(search => search.Aggregations(x => agg));
+
+var distinctCarTypes = result.Aggs.GetDistinct<Car, String>(x => x.CarType).ToList();
+var engineTypes = result.Aggs.GetDistinct<Car, EngineType>(x => x.EngineType).ToList();
+```

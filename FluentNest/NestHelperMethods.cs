@@ -272,5 +272,10 @@ namespace FluentNest
             var getter = getterLambda.Compile();
             return getter();
         }
+
+        public static T Parse<T>(string value)
+        {
+            return (T)Enum.Parse(typeof(T), value);
+        }
     }
 }

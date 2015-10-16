@@ -123,13 +123,22 @@ namespace Tests
         public void DistinctTest()
         {
             AddSimpleTestData();
-            var agg = GroupBys.DistinctBy<Car>(x => x.CarType);
+            var agg = Statistics
+                .DistinctBy<Car>(x => x.CarType)
+                .AndDistinctBy(x => x.EngineType);
+
             var result = client.Search<Car>(search => search.Aggregations(x => agg));
 
-            var distinctValues = result.Aggs.GetDistinct<Car,String>(x => x.CarType);
+            var distinctCarTypes = result.Aggs.GetDistinct<Car, String>(x => x.CarType).ToList();
+            var engineTypes = result.Aggs.GetDistinct<Car, EngineType>(x => x.EngineType).ToList();
 
-            Check.That(distinctValues).HasSize(3);
-            Check.That(distinctValues).ContainsExactly("type0", "type1", "type2");
+            Check.That(distinctCarTypes).IsNotNull();
+            Check.That(distinctCarTypes).HasSize(3);
+            Check.That(distinctCarTypes).ContainsExactly("type0", "type1", "type2");
+
+            Check.That(engineTypes).IsNotNull();
+            Check.That(engineTypes).HasSize(2);
+            Check.That(engineTypes).ContainsExactly(EngineType.Diesel, EngineType.Standard);
         }
     }
 }

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using Nest;
 
@@ -94,6 +96,26 @@ namespace FluentNest
                     f.Filter(fd => filterRule.Body.GenerateFilterDescription<T>())
                         .Aggregations(innerAgg => innerAgg.ValueCount(fieldName, field => field.Field(fieldGetter))));
             return filtered;
+        }
+
+        public static AggregationDescriptor<T> DistinctBy<T>(Expression<Func<T, Object>> fieldGetter) where T : class
+        {
+            AggregationDescriptor<T> v = new AggregationDescriptor<T>();
+            var fieldName = fieldGetter.GetName();
+            v.Terms(fieldName, tr =>
+            {
+                TermsAggregationDescriptor<T> trmAggDescriptor = new TermsAggregationDescriptor<T>();
+                trmAggDescriptor.Field(fieldGetter);
+                return trmAggDescriptor;
+            });
+
+            return v;
+        }
+
+        public static AggregationDescriptor<T> AndDistinctBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
+        {
+            var fieldName = fieldGetter.GetName();
+            return agg.Terms(fieldName, x => x.Field(fieldGetter));
         }
 
         public static Nullable<K> GetSum<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter) where K:struct
@@ -202,6 +224,24 @@ namespace FluentNest
                 if (!sumAgg.Value.HasValue)
                     return null;
                 return (int) sumAgg.Value;
+            }
+        }
+
+        public static IEnumerable<V> GetDistinct<T, V>(this AggregationsHelper aggs, Expression<Func<T, V>> fieldGetter)
+        {
+            var aggName = fieldGetter.GetName();
+            var itemsTerms = aggs.Terms(aggName);
+            if ((typeof(V).IsEnum))
+            {
+                return itemsTerms.Items.Select((x => NestHelperMethods.Parse<V>(x.Key)));
+            }
+            else if (typeof(V) == typeof(String))
+            {
+                return itemsTerms.Items.Select((x => (V)(Object)(x.Key)));
+            }
+            else
+            {
+                return itemsTerms.Items.Select((x => (V)(Object)(x.Key)));
             }
         }
     }
