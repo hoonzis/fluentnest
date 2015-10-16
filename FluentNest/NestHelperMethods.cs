@@ -186,8 +186,8 @@ namespace FluentNest
             }
             else if (expression is BinaryExpression)
             {
-                name = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
-                return FirstCharacterToLower(name);
+                var binaryExpression = expression as BinaryExpression;
+                return GetFieldNameFromAccessor(binaryExpression.Left);
             }
             else if (expression is LambdaExpression)
             {

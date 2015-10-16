@@ -3,6 +3,12 @@
 
 namespace TestModel
 {
+    public enum EngineType
+    {
+        Diesel,
+        Standard
+    }
+
     public class Car
     {
         public String Name { get; set; }
@@ -11,7 +17,7 @@ namespace TestModel
         public bool Sold { get; set; }
         public DateTime Timestamp { get; set; }
         public String CarType { get; set; }
-        public String EngineType { get; set; }
+        public EngineType EngineType { get; set; }
         public decimal? Weight { get; set; } 
     }
 }

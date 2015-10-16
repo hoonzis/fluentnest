@@ -1,48 +1,13 @@
 ﻿using System;
 using FluentNest;
-using Nest;
 using NFluent;
 using TestModel;
 using Xunit;
 
 namespace Tests
 {
-    public class StatisticsTests
+    public class StatisticsTests :TestsBase
     {
-        private ElasticClient client;
-
-        public StatisticsTests()
-        {
-            var node = new Uri("http://localhost:9600");
-
-            var settings = new ConnectionSettings(
-                node,
-                defaultIndex: "my-application"
-            );
-
-            client = new ElasticClient(settings);
-        }
-        
-        private void AddSimpleTestData()
-        {
-            client.DeleteIndex(x => x.Index<Car>());
-            for (int i = 0; i < 10; i++)
-            {
-                var car = new Car
-                {
-                    Name = "Car" + i,
-                    Price = 10,
-                    Sold = i % 2 == 0 ? true : false,
-                    Length = i,
-                    CarType = "Car" + i%2,
-                    EngineType = "Engine" + i%2,
-                    Weight = i%2 == 0 ? (decimal?)10m : null
-                };
-                client.Index(car);
-            }
-            client.Flush(x => x.Index<Car>());
-        }
-
         [Fact]
         public void SumTest()
         {
@@ -111,7 +76,7 @@ namespace Tests
         public void MultipleAggregationsInSingleAggregation()
         {
             AddSimpleTestData();
-            var engineTypeSum = Statistics.CondCountBy<Car>(x => x.Name, c => c.EngineType == "engine1");
+            var engineTypeSum = Statistics.CondCountBy<Car>(x => x.Name, c => c.EngineType == EngineType.Diesel);
 
             var notionalSumAgg = engineTypeSum.AndSumBy(x => x.Price)
                 .AndAvgBy(x => x.Length)
@@ -148,8 +113,8 @@ namespace Tests
             var agg = Statistics.SumBy<Car>(x => x.Price)
                 .AndAvgBy(x => x.Length)
                 .AndCountBy(x => x.CarType)
-                .AndCondCountBy(x => x.Name, c => c.EngineType == "engine1")
-                .AndCondSumBy(x => x.Price, c => c.CarType == "car1");
+                .AndCondCountBy(x => x.Name, c => c.EngineType == EngineType.Diesel)
+                .AndCondSumBy(x => x.Price, c => c.CarType == "type1");
 
 
             var result = client.Search<Car>(s => s
@@ -167,7 +132,7 @@ namespace Tests
             Check.That(avgLength).Equals(4.5d);
             Check.That(count).Equals(10);
             Check.That(typeOneCount).Equals(5);
-            Check.That(car1PriceSum).Equals(50d);
+            Check.That(car1PriceSum).Equals(30d);
         }
 
         [Fact]
