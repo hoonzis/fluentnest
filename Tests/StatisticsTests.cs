@@ -145,7 +145,7 @@ namespace Tests
                     search =>
                         search.Take(10).Aggregations(x => standardSum));
 
-            var sum = result.Aggs.GetGenericSum<Car>(x => x.Weight);
+            var sum = result.Aggs.GetSum<Car>(x => x.Weight);
             Check.That(sum).Equals(50d);
         }
     }

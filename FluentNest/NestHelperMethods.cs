@@ -215,7 +215,16 @@ namespace FluentNest
                 var filterDescriptor = new FilterDescriptor<T>();
                 return filterDescriptor.And(leftFilter, rightFilter);
 
-            }else if (expType == ExpressionType.Equal)
+            }
+            else if (expType == ExpressionType.Or || expType == ExpressionType.OrElse)
+            {
+                var binaryExpression = expression as BinaryExpression;
+                var leftFilter = GenerateFilterDescription<T>(binaryExpression.Left);
+                var rightFilter = GenerateFilterDescription<T>(binaryExpression.Right);
+                var filterDescriptor = new FilterDescriptor<T>();
+                return filterDescriptor.Or(leftFilter, rightFilter);
+            }
+            else if (expType == ExpressionType.Equal)
             {
                 return GenerateEqualityFilter<T>(expression);
             }

@@ -122,18 +122,16 @@ namespace FluentNest
         {
             var aggName = fieldGetter.GetName();
             var itemsTerms = aggs.Sum(aggName);
-            if (itemsTerms == null || !itemsTerms.Value.HasValue)
+            if (itemsTerms?.Value == null)
                 return null;
             return (K)Convert.ChangeType(itemsTerms.Value, typeof (K));
         }
 
-        public static Object GetGenericSum<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
+        public static double? GetSum<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
         {
             var aggName = fieldGetter.GetName();
             var itemsTerms = aggs.Sum(aggName);
-            if (itemsTerms == null || !itemsTerms.Value.HasValue)
-                return null;
-            return itemsTerms.Value;
+            return itemsTerms?.Value;
         }
 
         public static int GetCardinality<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
