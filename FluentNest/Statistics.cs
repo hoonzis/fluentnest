@@ -122,7 +122,7 @@ namespace FluentNest
         {
             var aggName = fieldGetter.GetName();
             var itemsTerms = aggs.Sum(aggName);
-            if (itemsTerms?.Value == null)
+            if (itemsTerms== null || itemsTerms.Value == null)
                 return null;
             return (K)Convert.ChangeType(itemsTerms.Value, typeof (K));
         }
@@ -131,7 +131,7 @@ namespace FluentNest
         {
             var aggName = fieldGetter.GetName();
             var itemsTerms = aggs.Sum(aggName);
-            if (itemsTerms?.Value == null)
+            if (itemsTerms == null || itemsTerms.Value == null)
                 return (K)(Object) 0;
             return (K)Convert.ChangeType(itemsTerms.Value, typeof(K));
         }
@@ -140,7 +140,9 @@ namespace FluentNest
         {
             var aggName = fieldGetter.GetName();
             var itemsTerms = aggs.Sum(aggName);
-            return itemsTerms?.Value;
+            if (itemsTerms == null)
+                return null;
+            return itemsTerms.Value;
         }
 
         public static int GetCardinality<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
