@@ -127,6 +127,15 @@ namespace FluentNest
             return (K)Convert.ChangeType(itemsTerms.Value, typeof (K));
         }
 
+        public static K GetSumOrZero<T, K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter) where K : struct
+        {
+            var aggName = fieldGetter.GetName();
+            var itemsTerms = aggs.Sum(aggName);
+            if (itemsTerms?.Value == null)
+                return (K)(Object) 0;
+            return (K)Convert.ChangeType(itemsTerms.Value, typeof(K));
+        }
+
         public static double? GetSum<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
         {
             var aggName = fieldGetter.GetName();

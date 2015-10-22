@@ -202,8 +202,11 @@ namespace Tests
             sc.Aggregations(agg => ageSum);
             var filterdAggregation = client.Search<User>(sc);
             var sumValue = filterdAggregation.Aggs.GetSum<User, int>(x => x.Age);
+            var sum2 = filterdAggregation.Aggs.GetSumOrZero<User, int>(x => x.Age);
             //only one out of 10 docs will be ok with this criteria
             Check.That(sumValue).Equals(8);
+            Check.That(sum2).Equals(8);
         }
     }
 }
+
