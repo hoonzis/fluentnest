@@ -286,5 +286,10 @@ namespace FluentNest
         {
             return (T)Enum.Parse(typeof(T), value);
         }
+
+        public static AggsContainer<T> AsContainer<T> (this AggregationsHelper aggs)
+        {
+            return new AggsContainer<T>(aggs);
+        }
     }
 }

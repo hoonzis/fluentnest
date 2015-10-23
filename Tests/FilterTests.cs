@@ -198,12 +198,14 @@ namespace Tests
                 .AndFilteredOn<User>(x => x.Email == "Email@email1.com");
 
             var ageSum  = Statistics.SumBy<User>(x => x.Age);
-            sc = sc.FilteredOn(filter);
-            sc.Aggregations(agg => ageSum);
+
+            sc = sc.FilteredOn(filter).Aggregations(agg => ageSum);
+
             var filterdAggregation = client.Search<User>(sc);
             var sumValue = filterdAggregation.Aggs.GetSum<User, int>(x => x.Age);
-            var sum2 = filterdAggregation.Aggs.GetSumOrZero<User, int>(x => x.Age);
-            //only one out of 10 docs will be ok with this criteria
+
+            var aggsContainer = filterdAggregation.Aggs.AsContainer<User>();
+            var sum2 = aggsContainer.GetSum(x => x.Age);
             Check.That(sumValue).Equals(8);
             Check.That(sum2).Equals(8);
         }

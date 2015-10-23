@@ -31,7 +31,7 @@ namespace Tests
                 var engineTypes = carType.GetGroupBy<Car,CarType>(x => x.EngineType, k => new CarType
                 {
                     Type = k.Key,
-                    Price = k.GetSum<Car,Decimal>(x=>x.Price) ?? 0m
+                    Price = k.GetSum<Car,Decimal>(x=>x.Price)
                 });
                 Check.That(engineTypes).HasSize(2);
                 Check.That(engineTypes.First().Price).Equals(20m);

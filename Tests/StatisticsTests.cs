@@ -120,19 +120,32 @@ namespace Tests
             var result = client.Search<Car>(s => s
                 .Take(100)
                 .Aggregations(x => agg));
-
-
+            
             var priceSum = result.Aggs.GetSum<Car, Decimal>(x => x.Price);
             var avgLength = result.Aggs.GetAvg<Car>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
             var typeOneCount = result.Aggs.GetCondCount<Car>(x => x.Name, x => x.EngineType);
             var car1PriceSum = result.Aggs.GetCondSum<Car>(x => x.Price, x => x.CarType);
 
+            var aggsContainer = result.Aggs.AsContainer<Car>();
+            var priceSum2 = aggsContainer.GetSum(x => x.Price);
+            var avgLength2 = aggsContainer.GetAvg(x => x.Length);
+            var count2 = aggsContainer.GetCount(x => x.CarType);
+            var typeOneCount2 = aggsContainer.GetCondCount(x => x.Name, x => x.EngineType);
+            var car1PriceSum2 = aggsContainer.GetCondSum(x => x.Price, x => x.CarType);
+
+
             Check.That(priceSum).Equals(100m);
             Check.That(avgLength).Equals(4.5d);
             Check.That(count).Equals(10);
             Check.That(typeOneCount).Equals(5);
             Check.That(car1PriceSum).Equals(30d);
+
+            Check.That(priceSum2).Equals(100m);
+            Check.That(avgLength2).Equals(4.5d);
+            Check.That(count2).Equals(10);
+            Check.That(typeOneCount2).Equals(5);
+            Check.That(car1PriceSum2).Equals(30d);
         }
 
         [Fact]
