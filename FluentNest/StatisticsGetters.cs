@@ -16,16 +16,17 @@ namespace FluentNest
             var itemsTerms = aggs.Sum(aggName);
             if (itemsTerms == null || itemsTerms.Value == null)
                 throw new InvalidOperationException(string.Format("Sum of field:{0} not found", aggName));
-            return (K)Convert.ChangeType(itemsTerms.Value, typeof(K));
-        }
-
-        public static double? GetSum<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
-        {
-            var aggName = fieldGetter.GetName();
-            var itemsTerms = aggs.Sum(aggName);
-            if (itemsTerms == null)
-                return null;
-            return itemsTerms.Value;
+            var type = typeof (K);
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof (Nullable<>))
+            {
+                var undType = Nullable.GetUnderlyingType(type);
+                var valueAsUndType = Convert.ChangeType(itemsTerms.Value, undType);
+                return (K) (Object)valueAsUndType;
+            }
+            else
+            {
+                return (K)Convert.ChangeType(itemsTerms.Value, typeof(K));
+            }
         }
 
         public static int GetCardinality<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)

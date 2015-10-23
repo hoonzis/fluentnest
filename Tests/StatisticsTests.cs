@@ -158,8 +158,14 @@ namespace Tests
                     search =>
                         search.Take(10).Aggregations(x => standardSum));
 
-            var sum = result.Aggs.GetSum<Car>(x => x.Weight);
-            Check.That(sum).Equals(50d);
+            var sum = result.Aggs.GetSum<Car,decimal?>(x => x.Weight);
+
+            var container = result.Aggs.AsContainer<Car>();
+
+            var sum2 = container.GetSum(x => x.Weight);
+
+            Check.That(sum).Equals(50m);
+            Check.That(sum2).Equals(50m);
         }
     }
 }

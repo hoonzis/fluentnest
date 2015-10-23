@@ -22,11 +22,6 @@ namespace FluentNest
             return aggs.GetSum(fieldGetter);
         }
 
-        public double? GetSum(Expression<Func<T, Object>> fieldGetter)
-        {
-            return aggs.GetSum(fieldGetter);
-        }
-
         public int GetCardinality(Expression<Func<T, Object>> fieldGetter)
         {
             return aggs.GetCardinality(fieldGetter);
