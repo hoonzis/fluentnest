@@ -52,10 +52,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AggsContainer.cs" />
     <Compile Include="GroupBys.cs" />
     <Compile Include="NestHelperMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Statistics.cs" />
+    <Compile Include="StatisticsGetters.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
