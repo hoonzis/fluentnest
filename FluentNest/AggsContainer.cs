@@ -27,9 +27,9 @@ namespace FluentNest
             return aggs.GetCardinality(fieldGetter);
         }
 
-        public double? GetCondSum(Expression<Func<T, Object>> fieldGetter, Expression<Func<T, Object>> filterRule = null)
+        public K GetCondSum<K>(Expression<Func<T, K>> fieldGetter, Expression<Func<T, Object>> filterRule = null)
         {
-            return aggs.GetCondSum(fieldGetter, filterRule);
+            return aggs.GetCondSum<T,K>(fieldGetter, filterRule);
         }
 
         public double? GetAvg(Expression<Func<T, Object>> fieldGetter)

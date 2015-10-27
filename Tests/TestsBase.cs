@@ -33,7 +33,8 @@ namespace Tests
                     CarType = "Type" + i % 3,
                     Length = i,
                     EngineType = i % 2 == 0 ? EngineType.Diesel : EngineType.Standard,
-                    Weight = 5
+                    Weight = 5,
+                    ConditionalRanking = i%2 ==0 ? null : (int?)i
                 };
                 client.Index(car);
             }

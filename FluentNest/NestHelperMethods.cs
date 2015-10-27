@@ -167,9 +167,23 @@ namespace FluentNest
             return filterDescriptor.Term(fieldName,value);
         }
 
+        public static FilterContainer GenerateNotEqualFilter<T>(this Expression expression) where T : class
+        {
+            var binaryExpression = expression as BinaryExpression;
+            var value = GetValue(binaryExpression.Right);
+            var fieldName = GetFieldNameFromAccessor(binaryExpression);
+            var filterDescriptor = new FilterDescriptor<T>();
+            //here we handle binary expressions in the from .field != null
+            if (value == null)
+            {
+                return filterDescriptor.Exists(fieldName);
+            }
+            throw new NotImplementedException();
+        }
+
         public static FilterContainer GenerateBoolFilter<T>(this Expression expression) where T : class
         {
-            var value = GetValue(expression);
+            var value = GetValue(expression);           
             var filterDescriptor = new FilterDescriptor<T>();
             var fieldName = GetFieldNameFromAccessor(expression);
             return filterDescriptor.Term(fieldName, value);
@@ -234,12 +248,26 @@ namespace FluentNest
             }
             else if (expType == ExpressionType.MemberAccess)
             {
+                var memberExpression = expression as MemberExpression;
+                //here we handle binary expressions in the from .field.hasValue
+                if (memberExpression.Member.Name == "HasValue")
+                {
+                    var fieldName = GetFieldNameFromAccessor(memberExpression);
+                    var parentFieldExpression = (memberExpression.Expression as MemberExpression);
+                    var parentFieldName = GetFieldNameFromAccessor(parentFieldExpression);
+
+                    var filterDescriptor = new FilterDescriptor<T>();
+                    return filterDescriptor.Exists(parentFieldName);
+                }
                 return GenerateBoolFilter<T>(expression);
             }
             else if (expType == ExpressionType.Lambda)
             {
                 var lambda = expression as LambdaExpression;
                 return GenerateFilterDescription<T>(lambda.Body);
+            }else if (expType == ExpressionType.NotEqual)
+            {
+                return GenerateNotEqualFilter<T>(expression);
             }
             throw  new NotImplementedException();
         }

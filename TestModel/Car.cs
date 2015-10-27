@@ -19,5 +19,6 @@ namespace TestModel
         public String CarType { get; set; }
         public EngineType EngineType { get; set; }
         public decimal? Weight { get; set; } 
+        public int? ConditionalRanking { get; set; }
     }
 }

@@ -65,11 +65,11 @@ namespace Tests
                         search.Take(10)
                         .Aggregations(x => sumCond));
 
-            var sum = result.Aggs.GetCondSum<Car>(x => x.Price, x => x.Sold);
+            var sum = result.Aggs.GetCondSum<Car,decimal>(x => x.Price, x => x.Sold);
             //getting the cond sum without specifying the condition
-            var sumTwo = result.Aggs.GetCondSum<Car>(x => x.Price);
-            Check.That(sum).Equals(50d);
-            Check.That(sumTwo).Equals(50d);
+            var sumTwo = result.Aggs.GetCondSum<Car,decimal>(x => x.Price);
+            Check.That(sum).Equals(50m);
+            Check.That(sumTwo).Equals(50m);
         }
 
         [Fact]
@@ -125,7 +125,7 @@ namespace Tests
             var avgLength = result.Aggs.GetAvg<Car>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
             var typeOneCount = result.Aggs.GetCondCount<Car>(x => x.Name, x => x.EngineType);
-            var car1PriceSum = result.Aggs.GetCondSum<Car>(x => x.Price, x => x.CarType);
+            var car1PriceSum = result.Aggs.GetCondSum<Car,decimal>(x => x.Price, x => x.CarType);
 
             var aggsContainer = result.Aggs.AsContainer<Car>();
             var priceSum2 = aggsContainer.GetSum(x => x.Price);
@@ -139,13 +139,13 @@ namespace Tests
             Check.That(avgLength).Equals(4.5d);
             Check.That(count).Equals(10);
             Check.That(typeOneCount).Equals(5);
-            Check.That(car1PriceSum).Equals(30d);
+            Check.That(car1PriceSum).Equals(30m);
 
             Check.That(priceSum2).Equals(100m);
             Check.That(avgLength2).Equals(4.5d);
             Check.That(count2).Equals(10);
             Check.That(typeOneCount2).Equals(5);
-            Check.That(car1PriceSum2).Equals(30d);
+            Check.That(car1PriceSum2).Equals(30m);
         }
 
         [Fact]
@@ -166,6 +166,27 @@ namespace Tests
 
             Check.That(sum).Equals(50m);
             Check.That(sum2).Equals(50m);
+        }
+
+        [Fact]
+        public void Condition_Equals_Not_Null_Test()
+        {
+            AddSimpleTestData();
+            var standardSum = Statistics.CondSumBy<Car>(x => x.Weight,x=>x.ConditionalRanking.HasValue);
+
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(x => standardSum));
+
+            var sum = result.Aggs.GetCondSum<Car,decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
+
+            var container = result.Aggs.AsContainer<Car>();
+
+            var sum2 = container.GetCondSum(x => x.Weight,c=>c.ConditionalRanking.HasValue);
+
+            Check.That(sum).Equals(25m);
+            Check.That(sum2).Equals(25m);
         }
     }
 }

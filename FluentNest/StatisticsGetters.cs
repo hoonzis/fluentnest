@@ -10,23 +10,34 @@ namespace FluentNest
 {
     public static class StatisticsGetters
     {
-        public static K GetSum<T, K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter)
+
+        /// <summary>
+        /// Takes a value metric and forces a conversion to certain type
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="K"></typeparam>
+        /// <param name="agg"></param>
+        /// <returns></returns>
+        private static K ValueAsUndType<K>(ValueMetric agg)
         {
-            var aggName = fieldGetter.GetName();
-            var itemsTerms = aggs.Sum(aggName);
-            if (itemsTerms == null || itemsTerms.Value == null)
-                throw new InvalidOperationException(string.Format("Sum of field:{0} not found", aggName));
-            var type = typeof (K);
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof (Nullable<>))
+            var type = typeof(K);
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 var undType = Nullable.GetUnderlyingType(type);
-                var valueAsUndType = Convert.ChangeType(itemsTerms.Value, undType);
-                return (K) (Object)valueAsUndType;
+                var valueAsUndType = Convert.ChangeType(agg.Value, undType);
+                return (K)(Object)valueAsUndType;
             }
             else
             {
-                return (K)Convert.ChangeType(itemsTerms.Value, typeof(K));
+                return (K)Convert.ChangeType(agg.Value, typeof(K));
             }
+        }
+
+        public static K GetSum<T, K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter)
+        {
+            var aggName = fieldGetter.GetName();
+            var sumAggs = aggs.Sum(aggName);
+            return ValueAsUndType<K>(sumAggs);
         }
 
         public static int GetCardinality<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
@@ -38,7 +49,7 @@ namespace FluentNest
             return (int)itemsTerms.Value.Value;
         }
 
-        public static double? GetCondSum<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter, Expression<Func<T, Object>> filterRule = null)
+        public static K GetCondSum<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter, Expression<Func<T, Object>> filterRule = null)
         {
             var sumAggName = fieldGetter.GetName();
             if (filterRule == null)
@@ -48,26 +59,22 @@ namespace FluentNest
                     if (aggregation.Value is SingleBucket)
                     {
                         var bucket = aggregation.Value as SingleBucket;
-                        var countAgg = bucket.Sum(sumAggName);
-                        if (countAgg != null)
-                        {
-                            if (!countAgg.Value.HasValue)
-                                return null;
-                            return (int)countAgg.Value.Value;
-                        }
+                        var sumAgg = bucket.Sum(sumAggName);
+                        return ValueAsUndType<K>(sumAgg);
                     }
                 }
-                throw new InvalidOperationException("");
+                throw new InvalidOperationException("Didn't find given aggregation in any conditional aggregations in this Aggregation Helper");
             }
             else
             {
                 var condAggName = filterRule.GetFieldNameFromAccessor();
                 var filterAgg = aggs.Filter(condAggName);
                 var sumAgg = filterAgg.Sum(sumAggName);
-                return sumAgg.Value;
+
+                return ValueAsUndType<K>(sumAgg);
             }
         }
-
+        
         public static double? GetAvg<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
         {
             var aggName = fieldGetter.GetName();
