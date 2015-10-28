@@ -23,6 +23,35 @@ namespace Tests
             Check.That(sum).Equals(100m);
         }
 
+
+        [Fact]
+        public void ConditionalStats_Without_FluentNest()
+        {
+            AddSimpleTestData();
+            var result = client.Search<Car>(search => search
+                .Aggregations(agg => agg
+                    .Filter("filterOne", f => f.Filter(innerFilter => innerFilter.Term(fd => fd.EngineType, EngineType.Diesel))
+                    .Aggregations(innerAgg => innerAgg.Sum("sumAgg", innerField => 
+                        innerField.Field(field => field.Price)))
+                    )
+                    .Filter("filterTwo", f => f.Filter(innerFilter => innerFilter.Term(fd => fd.CarType, "Type1"))
+                    .Aggregations(innerAgg => innerAgg.Sum("sumAgg", innerField =>
+                        innerField.Field(field => field.Price)))
+                    )
+                )
+            );
+
+            var sumAgg = result.Aggs.Filter("filterOne");
+            Check.That(sumAgg).IsNotNull();
+            var sumValue = sumAgg.Sum("sumAgg");
+            Check.That(sumValue.Value).Equals(50d);
+
+            var sumAgg2 = result.Aggs.Filter("filterTwo");
+            Check.That(sumAgg).IsNotNull();
+            var sumValue2 = sumAgg2.Sum("sumAgg");
+            Check.That(sumValue.Value).Equals(50d);
+        }
+
         [Fact]
         public void CountTest()
         {
