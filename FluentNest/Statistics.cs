@@ -24,7 +24,7 @@ namespace FluentNest
         public static AggregationDescriptor<T> AndCondCountBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule) where T : class
         {
             var fieldName = fieldGetter.GetName();
-            var filterName = filterRule.GetFieldNameFromAccessor();
+            var filterName = NestHelperMethods.GenerateFilterName(filterRule);
             agg.Filter(filterName,
                 f =>
                     f.Filter(fd => filterRule.Body.GenerateFilterDescription<T>())
@@ -65,7 +65,7 @@ namespace FluentNest
         {
             AggregationDescriptor<T> v = new AggregationDescriptor<T>();
             var fieldName = fieldGetter.GetName();
-            var filterName = filterRule.GetFieldNameFromAccessor();
+            var filterName = NestHelperMethods.GenerateFilterName(filterRule);
             var filtered = v.Filter(filterName,
                 f =>
                     f.Filter(fd => filterRule.Body.GenerateFilterDescription<T>())
@@ -76,7 +76,7 @@ namespace FluentNest
         public static AggregationDescriptor<T> AndCondSumBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule) where T : class
         {
             var fieldName = fieldGetter.GetName();
-            var filterName = filterRule.GetFieldNameFromAccessor();
+            var filterName = NestHelperMethods.GenerateFilterName(filterRule);
             agg.Filter(filterName,
                 f =>
                     f.Filter(fd => filterRule.Body.GenerateFilterDescription<T>())
@@ -88,7 +88,7 @@ namespace FluentNest
         {
             AggregationDescriptor<T> v = new AggregationDescriptor<T>();
             var fieldName = fieldGetter.GetName();
-            var filterName = filterRule.GetFieldNameFromAccessor();
+            var filterName = NestHelperMethods.GenerateFilterName(filterRule);
             var filtered = v.Filter(filterName,
                 f =>
                     f.Filter(fd => filterRule.Body.GenerateFilterDescription<T>())

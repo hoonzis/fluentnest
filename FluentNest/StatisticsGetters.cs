@@ -67,8 +67,8 @@ namespace FluentNest
             }
             else
             {
-                var condAggName = filterRule.GetFieldNameFromAccessor();
-                var filterAgg = aggs.Filter(condAggName);
+                var filterName = NestHelperMethods.GenerateFilterName(filterRule);
+                var filterAgg = aggs.Filter(filterName);
                 var sumAgg = filterAgg.Sum(sumAggName);
 
                 return ValueAsUndType<K>(sumAgg);
@@ -114,7 +114,7 @@ namespace FluentNest
             }
             else
             {
-                var condAggName = filterRule.GetFieldNameFromAccessor();
+                var condAggName = NestHelperMethods.GenerateFilterName(filterRule);
                 var filterAgg = aggs.Filter(condAggName);
                 var sumAgg = filterAgg.Sum(countAggName);
                 if (!sumAgg.Value.HasValue)

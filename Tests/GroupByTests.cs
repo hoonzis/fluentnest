@@ -9,7 +9,7 @@ using TestModel;
 using Xunit;
 
 namespace Tests
-{
+{   
     public class GroupByTests :TestsBase
     {
         [Fact]

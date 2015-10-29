@@ -76,12 +76,12 @@ namespace Tests
         public void DateComparisonAndTerm()
         {
             AddSimpleTestData();
+
             var startDate = new DateTime(2010, 1, 1);
             var endDate = new DateTime(2010, 3, 1);
            
+            var result = client.Search<Car>(s => s.FilterOn(x => x.Timestamp >= startDate && x.Timestamp <= endDate && x.CarType == "type0"));
 
-            var result = client.Search<Car>(s => s
-                .FilterOn(x => x.Timestamp >= startDate && x.Timestamp <= endDate && x.CarType == "type0"));
 
             Check.That(result.Documents).HasSize(2);
         }
