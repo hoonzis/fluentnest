@@ -8,7 +8,7 @@ NEST for querying ElasticSearch is great, but complex queries are hard to read a
 
 Statistics
 ----------
-You can defined and obtain multiple statistics in the same time. The "And" notation can be used to obtain ask for multiple statistics on the same level. Note that once that the type of the entity is specified (**<Car>**) all subsequent queries are fixed to it automatically.
+To define an aggregation descriptor with single statistic value one can use the **Statistics** class. The **And...** notation can be used to obtain multiple statistics on the same level. Note that once that the type of the indexed entity is specified (*Car* in the example bellow) all subsequent queries are fixed to it automatically.
 
 ```Csharp
 var aggs = Statistics
@@ -23,7 +23,7 @@ var aggs = Statistics
 	var typeCount = result.Aggs.GetCondSum<Car>(x => x.Name, c=>c.EngineType);
 ```
 
-Since all the queries are always done on the same entity type, one can case the result into typed container:
+Since all the queries are always done on the same entity type, one can also convert the result into typed container:
 
 ```Csharp
 var container = result.Aggs.AsContainer<Car>();
@@ -52,10 +52,10 @@ var result = client.Search<Car>(s => s.FilteredOn(f => f.Timestamp > startDate &
 var result = client.Search<Car>(s => s.FilteredOn(f=> f.Ranking.HasValue || f.IsAllowed);
 var result = client.Search<Car>(s => s.FilteredOn(f=> f.Ranking!=null || f.IsAllowed == true);
 ```
-**HasValue** on a nullable as well as **!=null** are compiled into an **Exists** filter. Boolean values or expressions of style **==true** are compiled into bool filters. Note that the same expressions can be used for conditional statistics as well. Comparisons to walues are compiled into **Terms** filters.
+**HasValue** on a nullable as well as **!=null** are compiled into an **Exists** filter. Boolean values or expressions of style **==true** are compiled into bool filters. Note that the same expressions can be used for conditional statistics as well as for general filters which affect the whole query. Comparisons of values are compiled into **Terms** filters.
 
-Stats in Groups
----------------
+Statistics in Groups
+--------------------
 Quite often you might want to calculate a sum per group. With FluentNest you can write:
 
 ```CSharp
@@ -92,7 +92,7 @@ groupedSum = Statistics
 	.GroupBy(s => s.EngineType)
 ```
 
-Helper methods are available to unwrap what you need from the ElasticSearch query result.
+Helper methods are available to unwrap the groups from the ElasticSearch query result.
 
 ```Csharp
 var carTypes = result.Aggs.GetGroupBy<Car>(x => x.CarType);
@@ -130,8 +130,7 @@ var histogram = result.Aggs.GetDateHistogram<Car>(x => x.Timestamp);
 
 Distinct values
 ---------------
-Getting distinct values by certain property is translated into a **Terms** query. Like other operations it is chainable. A helper getter will return the value as the correct type.
-This works for enums as well - in the following example the second line gets all the *EngineType* enum values stored in ES.
+Getting distinct values by certain property is translated into a **Terms** query. Like other operations it is chainable. A helper getter will return the value as the correct type. This works for enums as well - in the following example the second line gets all the *EngineType* enum values stored in ES.
 
 ```Csharp
 var agg = Statistics
