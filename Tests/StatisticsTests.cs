@@ -107,7 +107,7 @@ namespace Tests
             var engineTypeSum = new AggregationDescriptor<Car>().CountBy(x => x.Name, c => c.EngineType == EngineType.Diesel);
 
             var notionalSumAgg = engineTypeSum.SumBy(x => x.Price)
-                .AndAvgBy(x => x.Length)
+                .AvgBy(x => x.Length)
                 .CountBy(x => x.CarType)
                 .CardinalityBy(x => x.EngineType);
 
@@ -137,7 +137,7 @@ namespace Tests
         {
             AddSimpleTestData();
             var agg = new AggregationDescriptor<Car>().SumBy(x => x.Price)
-                .AndAvgBy(x => x.Length)
+                .AvgBy(x => x.Length)
                 .CountBy(x => x.CarType)
                 .CountBy(x => x.Name, c => c.EngineType == EngineType.Diesel)
                 .SumBy(x => x.Price, c => c.CarType == "type1");
