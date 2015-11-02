@@ -67,7 +67,7 @@ namespace Tests
         }
 
         [Fact]
-        public void DynammicGroupByListOfKeys()
+        public void DynamicGroupByListOfKeys()
         {
             AddSimpleTestData();
             var agg = new AggregationDescriptor<Car>()
