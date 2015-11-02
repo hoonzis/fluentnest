@@ -16,8 +16,8 @@ namespace Tests
         public void NestedGroupBy()
         {
             AddSimpleTestData();
-            var agg = Statistics
-                .SumBy<Car>(s => s.Price)
+            var agg = new AggregationDescriptor<Car>()
+                .SumBy(s => s.Price)
                 .GroupBy(s => s.EngineType)
                 .GroupBy(b => b.CarType);
 
@@ -42,11 +42,10 @@ namespace Tests
         public void GetDictionaryFromGroupBy()
         {
             AddSimpleTestData();
-            var sumOnPrice = Statistics.SumBy<Car>(s => s.Price);
+            var sumOnPrice = new AggregationDescriptor<Car>().SumBy(s => s.Price);
 
             var result =
                 client.Search<Car>(search => search.Aggregations(x => sumOnPrice.GroupBy(s => s.EngineType)));
-
 
             var carTypes = result.Aggs.GetDictioanry<Car,EngineType>(x => x.EngineType);
             Check.That(carTypes).HasSize(2);
@@ -57,8 +56,8 @@ namespace Tests
         public void GroupByStringKeys()
         {
             AddSimpleTestData();
-            var agg = Statistics
-                .SumBy<Car>(s => s.Price)
+            var agg = new AggregationDescriptor<Car>()
+                .SumBy(s => s.Price)
                 .GroupBy("engineType");
 
             var result = client.Search<Car>(search => search.Aggregations(x => agg));
@@ -71,8 +70,8 @@ namespace Tests
         public void DynammicGroupByListOfKeys()
         {
             AddSimpleTestData();
-            var agg = Statistics
-                .SumBy<Car>(s => s.Price)
+            var agg = new AggregationDescriptor<Car>()
+                .SumBy(s => s.Price)
                 .GroupBy(new List<string> {"engineType", "carType"});
 
             var result = client.Search<Car>(search => search.Aggregations(x => agg));

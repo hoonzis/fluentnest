@@ -1,5 +1,6 @@
 ﻿using System;
 using FluentNest;
+using Nest;
 using NFluent;
 using TestModel;
 using Xunit;
@@ -13,7 +14,7 @@ namespace Tests
         {
 
             AddSimpleTestData();
-            var standardSum = Statistics.SumBy<Car>(x => x.Price);
+            var standardSum = new AggregationDescriptor<Car>().SumBy(x => x.Price);
             var result =
                 client.Search<Car>(
                     search =>
@@ -86,7 +87,7 @@ namespace Tests
         public void TestConditionalSum()
         {
             AddSimpleTestData();
-            var sumCond = Statistics.CondSumBy<Car>(x => x.Price, x => x.Sold == true);
+            AggregationDescriptor<Car> sumCond = new AggregationDescriptor<Car>().SumBy(x => x.Price, x => x.Sold == true);
 
             var result =
                 client.Search<Car>(
@@ -107,7 +108,7 @@ namespace Tests
             AddSimpleTestData();
             var engineTypeSum = Statistics.CondCountBy<Car>(x => x.Name, c => c.EngineType == EngineType.Diesel);
 
-            var notionalSumAgg = engineTypeSum.AndSumBy(x => x.Price)
+            var notionalSumAgg = engineTypeSum.SumBy(x => x.Price)
                 .AndAvgBy(x => x.Length)
                 .AndCountBy(x => x.CarType)
                 .AndCardinalityBy(x => x.EngineType);
@@ -139,11 +140,11 @@ namespace Tests
         public void MultipleAggregationsInSingleAggregation_ReversingOrder()
         {
             AddSimpleTestData();
-            var agg = Statistics.SumBy<Car>(x => x.Price)
+            var agg = new AggregationDescriptor<Car>().SumBy(x => x.Price)
                 .AndAvgBy(x => x.Length)
                 .AndCountBy(x => x.CarType)
                 .AndCondCountBy(x => x.Name, c => c.EngineType == EngineType.Diesel)
-                .AndCondSumBy(x => x.Price, c => c.CarType == "type1");
+                .SumBy(x => x.Price, c => c.CarType == "type1");
 
 
             var result = client.Search<Car>(s => s
@@ -181,7 +182,7 @@ namespace Tests
         public void SumOfNullableDecimal()
         {
             AddSimpleTestData();
-            var standardSum = Statistics.SumBy<Car>(x => x.Weight);
+            var standardSum = new AggregationDescriptor<Car>().SumBy(x => x.Weight);
             var result =
                 client.Search<Car>(
                     search =>
@@ -201,7 +202,7 @@ namespace Tests
         public void Condition_Equals_Not_Null_Test()
         {
             AddSimpleTestData();
-            var standardSum = Statistics.CondSumBy<Car>(x => x.Weight,x=>x.ConditionalRanking.HasValue);
+            var standardSum = new AggregationDescriptor<Car>().SumBy(x => x.Weight,x=>x.ConditionalRanking.HasValue);
 
             var result =
                 client.Search<Car>(
@@ -222,9 +223,9 @@ namespace Tests
         public void Two_Conditional_Sums_Similar_Condition_One_More_Restrained()
         {
             AddSimpleTestData();
-            var aggs = Statistics
-                .CondSumBy<Car>(x => x.Weight, x => x.ConditionalRanking.HasValue)
-                .AndCondSumBy(x => x.Weight, x => x.ConditionalRanking.HasValue && x.CarType == "Type1");
+            var aggs = new AggregationDescriptor<Car>()
+                .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue)
+                .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue && x.CarType == "Type1");
 
             var result =
                 client.Search<Car>(
