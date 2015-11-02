@@ -34,7 +34,7 @@ namespace Tests
                     .Aggregations(innerAgg => innerAgg.Sum("sumAgg", innerField => 
                         innerField.Field(field => field.Price)))
                     )
-                    .Filter("filterTwo", f => f.Filter(innerFilter => innerFilter.Term(fd => fd.CarType, "Type1"))
+                    .Filter("filterTwo", f => f.Filter(innerFilter => innerFilter.Term(fd => fd.CarType, "type1"))
                     .Aggregations(innerAgg => innerAgg.Sum("sumAgg", innerField =>
                         innerField.Field(field => field.Price)))
                     )
@@ -47,9 +47,9 @@ namespace Tests
             Check.That(sumValue.Value).Equals(50d);
 
             var sumAgg2 = result.Aggs.Filter("filterTwo");
-            Check.That(sumAgg).IsNotNull();
+            Check.That(sumAgg2).IsNotNull();
             var sumValue2 = sumAgg2.Sum("sumAgg");
-            Check.That(sumValue.Value).Equals(50d);
+            Check.That(sumValue2.Value).Equals(30d);
         }
 
         [Fact]
