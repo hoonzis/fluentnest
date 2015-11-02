@@ -75,35 +75,16 @@ namespace FluentNest
             return itemsTerms.Value;
         }
 
-        public static int? GetCount<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter)
-        {
-            var aggName = fieldGetter.GetName();
-            var itemsTerms = aggs.ValueCount(aggName);
-            if (!itemsTerms.Value.HasValue)
-                return null;
-            return (int)itemsTerms.Value;
-        }
-
-        public static int? GetCondCount<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        public static int? GetCount<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
             var countAggName = fieldGetter.GetName();
             if (filterRule == null)
             {
-                foreach (var aggregation in aggs.Aggregations)
-                {
-                    if (aggregation.Value is SingleBucket)
-                    {
-                        var bucket = aggregation.Value as SingleBucket;
-                        var countAgg = bucket.ValueCount(countAggName);
-                        if (countAgg != null)
-                        {
-                            if (!countAgg.Value.HasValue)
-                                return null;
-                            return (int)countAgg.Value.Value;
-                        }
-                    }
-                }
-                throw new InvalidOperationException("Couldn't find any conditioanal counts in this aggregation");
+                var aggName = fieldGetter.GetName();
+                var itemsTerms = aggs.ValueCount(aggName);
+                if (!itemsTerms.Value.HasValue)
+                    return null;
+                return (int)itemsTerms.Value;
             }
             else
             {

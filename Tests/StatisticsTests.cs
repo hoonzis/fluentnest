@@ -115,17 +115,13 @@ namespace Tests
             var priceSum = result.Aggs.GetSum<Car,decimal>(x => x.Price);
             var avgLength = result.Aggs.GetAvg<Car>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
-            var typeOneCount = result.Aggs.GetCondCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
+            var typeOneCount = result.Aggs.GetCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
             var engineCardinality = result.Aggs.GetCardinality<Car>(x => x.EngineType);
-
-            //we can get back cond count without specifying the condition - in that case it will return the first one
-            var typeOneCountAgain = result.Aggs.GetCondCount<Car>(x => x.Name);
             
             Check.That(priceSum).Equals(100m);
             Check.That(avgLength).Equals(4.5d);
             Check.That(count).Equals(10);
             Check.That(typeOneCount).Equals(5);
-            Check.That(typeOneCountAgain).Equals(5);
             Check.That(engineCardinality).Equals(2);
         }
 
@@ -146,14 +142,14 @@ namespace Tests
             var priceSum = result.Aggs.GetSum<Car, decimal>(x => x.Price);
             var avgLength = result.Aggs.GetAvg<Car>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
-            var typeOneCount = result.Aggs.GetCondCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
+            var typeOneCount = result.Aggs.GetCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
             var car1PriceSum = result.Aggs.GetSum<Car,decimal>(x => x.Price, x => x.CarType == "type1");
 
             var aggsContainer = result.Aggs.AsContainer<Car>();
             var priceSum2 = aggsContainer.GetSum(x => x.Price);
             var avgLength2 = aggsContainer.GetAvg(x => x.Length);
             var count2 = aggsContainer.GetCount(x => x.CarType);
-            var typeOneCount2 = aggsContainer.GetCondCount(x => x.Name, x => x.EngineType == EngineType.Diesel);
+            var typeOneCount2 = aggsContainer.GetCount(x => x.Name, x => x.EngineType == EngineType.Diesel);
             var car1PriceSum2 = aggsContainer.GetSum(x => x.Price, x => x.CarType == "type1");
 
 

@@ -17,11 +17,6 @@ namespace FluentNest
             this.aggs = aggs;
         }
 
-        public K GetSum<K>(Expression<Func<T, K>> fieldGetter)
-        {
-            return aggs.GetSum(fieldGetter);
-        }
-
         public int GetCardinality(Expression<Func<T, object>> fieldGetter)
         {
             return aggs.GetCardinality(fieldGetter);
@@ -37,14 +32,9 @@ namespace FluentNest
             return aggs.GetAvg(fieldGetter);
         }
 
-        public int? GetCount(Expression<Func<T, object>> fieldGetter)
+        public int? GetCount(Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
-            return aggs.GetCount(fieldGetter);
-        }
-
-        public int? GetCondCount(Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
-        {
-            return aggs.GetCondCount(fieldGetter, filterRule);
+            return aggs.GetCount(fieldGetter, filterRule);
         }
 
         public IEnumerable<V> GetDistinct<V>(Expression<Func<T, V>> fieldGetter)
