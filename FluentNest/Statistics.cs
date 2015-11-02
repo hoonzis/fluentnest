@@ -22,25 +22,25 @@ namespace FluentNest
             return agg;
         }
 
-        public static AggregationDescriptor<T> AndCountBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
+        public static AggregationDescriptor<T> CountBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
         {
             return agg.ValueCount(fieldGetter.GetName(), x => x.Field(fieldGetter));
         }
 
-        public static AggregationDescriptor<T> AndCardinalityBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
-        {
-            return agg.Cardinality(fieldGetter.GetName(), x => x.Field(fieldGetter));
-        }
-
-        public static AggregationDescriptor<T> AndCondCountBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule) where T : class
+        public static AggregationDescriptor<T> CountBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule) where T : class
         {
             var fieldName = fieldGetter.GetName();
-            var filterName = NestHelperMethods.GenerateFilterName(filterRule);
+            var filterName = filterRule.GenerateFilterName();
             agg.Filter(filterName,
                 f =>
                     f.Filter(fd => filterRule.Body.GenerateFilterDescription<T>())
                         .Aggregations(innerAgg => innerAgg.ValueCount(fieldName, field => field.Field(fieldGetter))));
             return agg;
+        }
+
+        public static AggregationDescriptor<T> AndCardinalityBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
+        {
+            return agg.Cardinality(fieldGetter.GetName(), x => x.Field(fieldGetter));
         }
 
         public static AggregationDescriptor<T> CardinalityBy<T>(Expression<Func<T, object>> fieldGetter) where T : class
@@ -49,26 +49,6 @@ namespace FluentNest
             var fieldName = fieldGetter.GetName();
             var sumAggs = v.Cardinality(fieldName, tr => tr.Field(fieldGetter));
             return sumAggs;
-        }
-
-        public static AggregationDescriptor<T> CountBy<T>(Expression<Func<T, object>> fieldGetter) where T : class
-        {
-            AggregationDescriptor<T> v = new AggregationDescriptor<T>();
-            var fieldName = fieldGetter.GetName();
-            var sumAggs = v.ValueCount(fieldName, tr => tr.Field(fieldGetter));
-            return sumAggs;
-        }
-
-        public static AggregationDescriptor<T> CondCountBy<T>(Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule) where T : class
-        {
-            AggregationDescriptor<T> v = new AggregationDescriptor<T>();
-            var fieldName = fieldGetter.GetName();
-            var filterName = NestHelperMethods.GenerateFilterName(filterRule);
-            var filtered = v.Filter(filterName,
-                f =>
-                    f.Filter(fd => filterRule.Body.GenerateFilterDescription<T>())
-                        .Aggregations(innerAgg => innerAgg.ValueCount(fieldName, field => field.Field(fieldGetter))));
-            return filtered;
         }
 
         public static AggregationDescriptor<T> DistinctBy<T>(Expression<Func<T, Object>> fieldGetter) where T : class

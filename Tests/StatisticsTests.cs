@@ -56,9 +56,8 @@ namespace Tests
         [Fact]
         public void CountTest()
         {
-
             AddSimpleTestData();
-            var count = Statistics.CountBy<Car>(x => x.Price);
+            var count = new AggregationDescriptor<Car>().CountBy(x => x.Price);
             var result =
                 client.Search<Car>(
                     search =>
@@ -71,7 +70,6 @@ namespace Tests
         [Fact]
         public void CardinalityTest()
         {
-
             AddSimpleTestData();
             var cardAgg = Statistics.CardinalityBy<Car>(x => x.EngineType);
             var result =
@@ -106,20 +104,18 @@ namespace Tests
         public void MultipleAggregationsInSingleAggregation()
         {
             AddSimpleTestData();
-            var engineTypeSum = Statistics.CondCountBy<Car>(x => x.Name, c => c.EngineType == EngineType.Diesel);
+            var engineTypeSum = new AggregationDescriptor<Car>().CountBy(x => x.Name, c => c.EngineType == EngineType.Diesel);
 
             var notionalSumAgg = engineTypeSum.SumBy(x => x.Price)
                 .AndAvgBy(x => x.Length)
-                .AndCountBy(x => x.CarType)
+                .CountBy(x => x.CarType)
                 .AndCardinalityBy(x => x.EngineType);
-
 
             var result = client.Search<Car>(s => s
                 .Take(100)
                 .Aggregations(x => notionalSumAgg));
-                    
 
-            var priceSum = result.Aggs.GetSum<Car,Decimal>(x => x.Price);
+            var priceSum = result.Aggs.GetSum<Car,decimal>(x => x.Price);
             var avgLength = result.Aggs.GetAvg<Car>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
             var typeOneCount = result.Aggs.GetCondCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
@@ -142,10 +138,9 @@ namespace Tests
             AddSimpleTestData();
             var agg = new AggregationDescriptor<Car>().SumBy(x => x.Price)
                 .AndAvgBy(x => x.Length)
-                .AndCountBy(x => x.CarType)
-                .AndCondCountBy(x => x.Name, c => c.EngineType == EngineType.Diesel)
+                .CountBy(x => x.CarType)
+                .CountBy(x => x.Name, c => c.EngineType == EngineType.Diesel)
                 .SumBy(x => x.Price, c => c.CarType == "type1");
-
 
             var result = client.Search<Car>(s => s
                 .Take(100)
