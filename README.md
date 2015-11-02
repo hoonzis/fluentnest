@@ -8,27 +8,27 @@ NEST for querying ElasticSearch is great, but complex queries are hard to read a
 
 Statistics
 ----------
-To define an aggregation descriptor with single statistic value one can use the **Statistics** class. The **And...** notation can be used to obtain multiple statistics on the same level. Note that once that the type of the indexed entity is specified (*Car* in the example bellow) all subsequent queries are fixed to it automatically.
+After instantiating an AggregationDescriptor<T>, it is possible to specify multiple aggregations through the extension methods defined in the Statistics class.
 
 ```Csharp
-var aggs = Statistics
-	.SumBy<Car>(x=>x.Price)
-	.AndCardinalityBy(x=>x.EngineType)
-	.AndCondCountBy(x=>x.Name, c=>c.EngineType == "Engine1");
+var aggs = new AggregationDescriptor<Car>()
+	.SumBy<Car>(x => x.Price)
+	.CardinalityBy(x => x.EngineType)
+	.CountBy(x => x.Name, c => c.EngineType == "Engine1");
 
-	var result = client.Search<Car>(search => search.Aggregations(a=>aggs));
+	var result = client.Search<Car>(search => search.Aggregations(a => aggs));
 
-	var priceSum = result.Aggs.GetSumBy<Car>(x => x.Price);
-	var allTypes = result.Aggs.GetCardinalityBy<Car>(x => x.EngineType);
-	var typeCount = result.Aggs.GetCondSum<Car>(x => x.Name, c=>c.EngineType);
+	var priceSum = result.Aggs.GetSum<Car, decimal>(x => x.Price);
+	var allTypes = result.Aggs.GetCardinality<Car>(x => x.EngineType);
+	var typeCount = result.Aggs.GetCount<Car>(x => x.Name, c => c.EngineType == EngineType.Diesel);
 ```
 
-Since all the queries are always done on the same entity type, one can also convert the result into typed container:
+Since all the queries are always done on the same entity type, one can also convert the result into a typed container:
 
 ```Csharp
 var container = result.Aggs.AsContainer<Car>();
-var priceSum = container.GetSumBy(x => x.Price);
-var allTypes = container.GetCardinalityBy(x => x.EngineType);
+var priceSum = container.GetSum(x => x.Price);
+var allTypes = container.GetCardinality(x => x.EngineType);
 ```
 
 Conditional statistics
@@ -36,11 +36,11 @@ Conditional statistics
 Conditional sums can be quite complicated with NEST. One has to define a **Filter** aggregation with nested inner **Sum** or other aggregation. Here is quicker way with FluentNest:
 
 ```CSharp
-var aggs = Statistics
-	.CondSumBy<Car>(x=>x.Price, c=>c.EngineType == "Engine1")
-	.AndCondSumBy(x=>x.Sales, c=>c.CarType == "Car1");
+var aggs = new AggregationDescriptor<Car>()
+	.SumBy(x=>x.Price, c => c.EngineType == EngineType.Diesel)
+	.SumBy(x=>x.Sales, c => c.CarType == "Car1");
 
-var result = client.Search<Car>(search => search.Aggregations(a=>aggs));
+var result = client.Search<Car>(search => search.Aggregations(a => aggs));
 ```
 
 Filtering - expressions to queries
@@ -59,7 +59,7 @@ Statistics in Groups
 Quite often you might want to calculate a sum per group. With FluentNest you can write:
 
 ```CSharp
-groupedSum = Statistics
+groupedSum = new AggregationDescriptor<Car>()
 	.SumBy<Car>(s => s.Price)
 	.GroupBy(s => s.EngineType);
 
@@ -86,7 +86,7 @@ var result = client.Search<Car>(s => s
 Nested groups are very easy as well:
 
 ```Csharp
-groupedSum = Statistics
+groupedSum = new AggregationDescriptor<Car>()
 	.SumBy<Car>(s => s.Price)
 	.GroupBy(s => s.CarType)
 	.GroupBy(s => s.EngineType)
@@ -108,7 +108,7 @@ Dynamic nested grouping
 In some cases you might need to group dynamically on multiple criteria specified at run-time. For such cases there is an overload of **GroupBy** which takes the name of the field for grouping. This overload can be used to obtain nested grouping on a list of fields:
 
 ```CSharp
-var agg = Statistics
+var agg = new AggregationDescriptor<Car>()
 	.SumBy<Car>(s => s.Price)
 	.GroupBy(new List<string> {"engineType", "carType"});
 
@@ -120,7 +120,7 @@ Hitograms
 Histogram is another useful aggregation supported by ElasticSearch. Here is a way to get a **Sum** by month.
 
 ```CSharp
-var agg = Statistics
+var agg = new AggregationDescriptor<Car>()
 	.SumBy<Car>(x => x.Price)
 	.IntoDateHistogram(date => date.Timestamp, DateInterval.Month);
 
@@ -133,9 +133,9 @@ Distinct values
 Getting distinct values by certain property is translated into a **Terms** query. Like other operations it is chainable. A helper getter will return the value as the correct type. This works for enums as well - in the following example the second line gets all the *EngineType* enum values stored in ES.
 
 ```Csharp
-var agg = Statistics
+var agg = new AggregationDescriptor<Car>()
     .DistinctBy<Car>(x => x.CarType)
-    .AndDistinctBy(x => x.EngineType);
+    .DistinctBy(x => x.EngineType);
 
 var result = client.Search<Car>(search => search.Aggregations(x => agg));
 
