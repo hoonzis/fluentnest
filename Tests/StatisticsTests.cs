@@ -71,7 +71,7 @@ namespace Tests
         public void CardinalityTest()
         {
             AddSimpleTestData();
-            var cardAgg = Statistics.CardinalityBy<Car>(x => x.EngineType);
+            var cardAgg = new AggregationDescriptor<Car>().AndCardinalityBy(x => x.EngineType);
             var result =
                 client.Search<Car>(
                     search =>
@@ -146,7 +146,7 @@ namespace Tests
                 .Take(100)
                 .Aggregations(x => agg));
             
-            var priceSum = result.Aggs.GetSum<Car, Decimal>(x => x.Price);
+            var priceSum = result.Aggs.GetSum<Car, decimal>(x => x.Price);
             var avgLength = result.Aggs.GetAvg<Car>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
             var typeOneCount = result.Aggs.GetCondCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
