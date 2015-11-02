@@ -43,21 +43,7 @@ namespace FluentNest
             return agg.Cardinality(fieldGetter.GetName(), x => x.Field(fieldGetter));
         }
 
-        public static AggregationDescriptor<T> DistinctBy<T>(Expression<Func<T, Object>> fieldGetter) where T : class
-        {
-            AggregationDescriptor<T> v = new AggregationDescriptor<T>();
-            var fieldName = fieldGetter.GetName();
-            v.Terms(fieldName, tr =>
-            {
-                TermsAggregationDescriptor<T> trmAggDescriptor = new TermsAggregationDescriptor<T>();
-                trmAggDescriptor.Field(fieldGetter);
-                return trmAggDescriptor;
-            });
-
-            return v;
-        }
-
-        public static AggregationDescriptor<T> AndDistinctBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
+        public static AggregationDescriptor<T> DistinctBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
         {
             var fieldName = fieldGetter.GetName();
             return agg.Terms(fieldName, x => x.Field(fieldGetter));

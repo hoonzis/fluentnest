@@ -124,9 +124,9 @@ namespace Tests
         public void Distinct_Test()
         {
             AddSimpleTestData();
-            var agg = Statistics
-                .DistinctBy<Car>(x => x.CarType)
-                .AndDistinctBy(x => x.EngineType);
+            var agg = new AggregationDescriptor<Car>()
+                .DistinctBy(x => x.CarType)
+                .DistinctBy(x => x.EngineType);
 
             var result = client.Search<Car>(search => search.Aggregations(x => agg));
 
@@ -146,9 +146,9 @@ namespace Tests
         public void Simple_Filtered_Distinct_Test()
         {
             AddSimpleTestData();
-            var agg = Statistics
-                .DistinctBy<Car>(x => x.CarType)
-                .AndDistinctBy(x => x.EngineType);
+            var agg = new AggregationDescriptor<Car>()
+                .DistinctBy(x => x.CarType)
+                .DistinctBy(x => x.EngineType);
 
             var filter = NestHelperMethods.CreateFilter<Car>(x => x.CarType == "type0");
             var result = client.Search<Car>(search => search.FilteredOn(filter).Aggregations(x => agg));
@@ -169,9 +169,9 @@ namespace Tests
         public void Distinct_Time_And_Term_Filter_Test()
         {
             AddSimpleTestData();
-            var agg = Statistics
-                .DistinctBy<Car>(x => x.CarType)
-                .AndDistinctBy(x => x.EngineType);
+            var agg = new AggregationDescriptor<Car>()
+                .DistinctBy(x => x.CarType)
+                .DistinctBy(x => x.EngineType);
 
             var filter = NestHelperMethods.CreateFilter<Car>(x => x.Timestamp > new DateTime(2010,2,1) && x.Timestamp < new DateTime(2010, 8, 1));
             filter = filter.AndFilteredOn<Car>(x => x.CarType == "type0");
