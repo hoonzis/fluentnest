@@ -93,11 +93,8 @@ namespace Tests
                         search.Take(10)
                         .Aggregations(x => sumCond));
 
-            var sum = result.Aggs.GetCondSum<Car,decimal>(x => x.Price, x => x.Sold == true);
-            //getting the cond sum without specifying the condition
-            var sumTwo = result.Aggs.GetCondSum<Car,decimal>(x => x.Price);
+            var sum = result.Aggs.GetSum<Car,decimal>(x => x.Price, x => x.Sold == true);
             Check.That(sum).Equals(50m);
-            Check.That(sumTwo).Equals(50m);
         }
 
         [Fact]
@@ -107,7 +104,7 @@ namespace Tests
             var engineTypeSum = new AggregationDescriptor<Car>().CountBy(x => x.Name, c => c.EngineType == EngineType.Diesel);
 
             var notionalSumAgg = engineTypeSum.SumBy(x => x.Price)
-                .AvgBy(x => x.Length)
+                .AverageBy(x => x.Length)
                 .CountBy(x => x.CarType)
                 .CardinalityBy(x => x.EngineType);
 
@@ -137,7 +134,7 @@ namespace Tests
         {
             AddSimpleTestData();
             var agg = new AggregationDescriptor<Car>().SumBy(x => x.Price)
-                .AvgBy(x => x.Length)
+                .AverageBy(x => x.Length)
                 .CountBy(x => x.CarType)
                 .CountBy(x => x.Name, c => c.EngineType == EngineType.Diesel)
                 .SumBy(x => x.Price, c => c.CarType == "type1");
@@ -150,14 +147,14 @@ namespace Tests
             var avgLength = result.Aggs.GetAvg<Car>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
             var typeOneCount = result.Aggs.GetCondCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
-            var car1PriceSum = result.Aggs.GetCondSum<Car,decimal>(x => x.Price, x => x.CarType == "type1");
+            var car1PriceSum = result.Aggs.GetSum<Car,decimal>(x => x.Price, x => x.CarType == "type1");
 
             var aggsContainer = result.Aggs.AsContainer<Car>();
             var priceSum2 = aggsContainer.GetSum(x => x.Price);
             var avgLength2 = aggsContainer.GetAvg(x => x.Length);
             var count2 = aggsContainer.GetCount(x => x.CarType);
             var typeOneCount2 = aggsContainer.GetCondCount(x => x.Name, x => x.EngineType == EngineType.Diesel);
-            var car1PriceSum2 = aggsContainer.GetCondSum(x => x.Price, x => x.CarType == "type1");
+            var car1PriceSum2 = aggsContainer.GetSum(x => x.Price, x => x.CarType == "type1");
 
 
             Check.That(priceSum).Equals(100m);
@@ -204,11 +201,11 @@ namespace Tests
                     search =>
                         search.Take(10).Aggregations(x => standardSum));
 
-            var sum = result.Aggs.GetCondSum<Car,decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
+            var sum = result.Aggs.GetSum<Car,decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
 
             var container = result.Aggs.AsContainer<Car>();
 
-            var sum2 = container.GetCondSum(x => x.Weight,c=>c.ConditionalRanking.HasValue);
+            var sum2 = container.GetSum(x => x.Weight,c=>c.ConditionalRanking.HasValue);
 
             Check.That(sum).Equals(25m);
             Check.That(sum2).Equals(25m);
@@ -227,8 +224,8 @@ namespace Tests
                     search =>
                         search.Take(10).Aggregations(x => aggs));
 
-            var sum = result.Aggs.GetCondSum<Car,decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
-            var sum2 = result.Aggs.GetCondSum<Car, decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue && c.CarType == "Type1");
+            var sum = result.Aggs.GetSum<Car,decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
+            var sum2 = result.Aggs.GetSum<Car, decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue && c.CarType == "Type1");
 
             Check.That(sum).Equals(25m);
             Check.That(sum2).Equals(0m);

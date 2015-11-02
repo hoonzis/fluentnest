@@ -38,18 +38,18 @@ namespace FluentNest
             return agg;
         }
 
-        public static AggregationDescriptor<T> CardinalityBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
+        public static AggregationDescriptor<T> CardinalityBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
         {
             return agg.Cardinality(fieldGetter.GetName(), x => x.Field(fieldGetter));
         }
 
-        public static AggregationDescriptor<T> DistinctBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
+        public static AggregationDescriptor<T> DistinctBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
         {
             var fieldName = fieldGetter.GetName();
             return agg.Terms(fieldName, x => x.Field(fieldGetter));
         }
 
-        public static AggregationDescriptor<T> AverageBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
+        public static AggregationDescriptor<T> AverageBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
         {
             return agg.Average(fieldGetter.GetName(), x => x.Field(fieldGetter));
         }
