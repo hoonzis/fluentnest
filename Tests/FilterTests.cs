@@ -197,7 +197,7 @@ namespace Tests
                 .CreateFilter<User>(x => x.Name == "name1" && x.Age >= 5)
                 .AndFilteredOn<User>(x => x.Email == "Email@email1.com");
 
-            var ageSum  = Statistics.SumBy<User>(x => x.Age);
+            var ageSum  = new AggregationDescriptor<User>().SumBy(x => x.Age);
 
             sc = sc.FilteredOn(filter).Aggregations(agg => ageSum);
 
