@@ -33,13 +33,6 @@ namespace FluentNest
             }
         }
 
-        //public static K GetSum<T, K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter)
-        //{
-        //    var aggName = fieldGetter.GetName();
-        //    var sumAggs = aggs.Sum(aggName);
-        //    return ValueAsUndType<K>(sumAggs);
-        //}
-
         public static int GetCardinality<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter)
         {
             var aggName = fieldGetter.GetName();
