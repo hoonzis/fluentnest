@@ -68,7 +68,7 @@ namespace FluentNest
             }
         }
         
-        public static double? GetAvg<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter)
+        public static double? GetAverage<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter)
         {
             var aggName = fieldGetter.GetName();
             var itemsTerms = aggs.Average(aggName);
