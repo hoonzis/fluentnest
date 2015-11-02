@@ -71,7 +71,7 @@ namespace Tests
         public void CardinalityTest()
         {
             AddSimpleTestData();
-            var cardAgg = new AggregationDescriptor<Car>().AndCardinalityBy(x => x.EngineType);
+            var cardAgg = new AggregationDescriptor<Car>().CardinalityBy(x => x.EngineType);
             var result =
                 client.Search<Car>(
                     search =>
@@ -109,7 +109,7 @@ namespace Tests
             var notionalSumAgg = engineTypeSum.SumBy(x => x.Price)
                 .AndAvgBy(x => x.Length)
                 .CountBy(x => x.CarType)
-                .AndCardinalityBy(x => x.EngineType);
+                .CardinalityBy(x => x.EngineType);
 
             var result = client.Search<Car>(s => s
                 .Take(100)

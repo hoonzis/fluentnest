@@ -38,7 +38,7 @@ namespace FluentNest
             return agg;
         }
 
-        public static AggregationDescriptor<T> AndCardinalityBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
+        public static AggregationDescriptor<T> CardinalityBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter) where T : class
         {
             return agg.Cardinality(fieldGetter.GetName(), x => x.Field(fieldGetter));
         }
