@@ -27,9 +27,19 @@ namespace FluentNest
             return aggs.GetSum<T,K>(fieldGetter, filterRule);
         }
 
-        public double? GetAverage(Expression<Func<T, object>> fieldGetter)
+        public K GetAverage<K>(Expression<Func<T, K>> fieldGetter)
         {
-            return aggs.GetAverage(fieldGetter);
+            return aggs.GetAverage<T,K>(fieldGetter);
+        }
+
+        public K GetMin<K>(Expression<Func<T, K>> fieldGetter)
+        {
+            return aggs.GetMin<T, K>(fieldGetter);
+        }
+
+        public K GetMax<K>(Expression<Func<T, K>> fieldGetter)
+        {
+            return aggs.GetMax<T, K>(fieldGetter);
         }
 
         public int? GetCount(Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)

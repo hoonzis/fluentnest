@@ -61,11 +61,32 @@ namespace FluentNest
             }
         }
         
-        public static double? GetAverage<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter)
+        public static K GetAverage<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter)
         {
             var aggName = fieldGetter.GetName();
-            var itemsTerms = aggs.Average(aggName);
-            return itemsTerms.Value;
+            var avgAgg = aggs.Average(aggName);
+            return ValueAsUndType<K>(avgAgg);
+        }
+
+        public static K GetMin<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter)
+        {
+            var aggName = fieldGetter.GetName();
+            var minAgg = aggs.Min(aggName);
+            return ValueAsUndType<K>(minAgg);
+        }
+
+        public static K GetMax<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter)
+        {
+            var aggName = fieldGetter.GetName();
+            var maxAgg = aggs.Max(aggName);
+            return ValueAsUndType<K>(maxAgg);
+        }
+
+        public static IList<PercentileItem> GetPercentile<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter)
+        {
+            var aggName = fieldGetter.GetName();
+            var itemsTerms = aggs.Percentiles(aggName);
+            return itemsTerms.Items;
         }
 
         public static int? GetCount<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)

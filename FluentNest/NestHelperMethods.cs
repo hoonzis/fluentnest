@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq.Expressions;
+using System.Reflection;
 using Nest;
 
 namespace FluentNest
@@ -170,24 +170,16 @@ namespace FluentNest
 
         public static FilterContainer GenerateNotEqualFilter<T>(this Expression expression) where T : class
         {
-            var binaryExpression = expression as BinaryExpression;
-            var value = GetValue(binaryExpression.Right);
-            var fieldName = GenerateFilterName(binaryExpression);
+            var equalityFilter = GenerateEqualityFilter<T>(expression);
             var filterDescriptor = new FilterDescriptor<T>();
-            //here we handle binary expressions in the from .field != null
-            if (value == null)
-            {
-                return filterDescriptor.Exists(fieldName);
-            }
-            throw new NotImplementedException();
+            return filterDescriptor.Not(x => equalityFilter);
         }
 
         public static FilterContainer GenerateBoolFilter<T>(this Expression expression) where T : class
         {
-            var value = GetValue(expression);           
             var filterDescriptor = new FilterDescriptor<T>();
             var fieldName = GenerateFilterName(expression);
-            return filterDescriptor.Term(fieldName, value);
+            return filterDescriptor.Term(fieldName, true);
         }
 
 
@@ -250,7 +242,15 @@ namespace FluentNest
                     var filterDescriptor = new FilterDescriptor<T>();
                     return filterDescriptor.Exists(parentFieldName);
                 }
-                return GenerateBoolFilter<T>(expression);
+                var isProperty = memberExpression.Member.MemberType == MemberTypes.Property;
+                if (isProperty)
+                {
+                    var propertyType = ((PropertyInfo) memberExpression.Member).PropertyType;
+                    if (propertyType == typeof (bool))
+                    {
+                        return GenerateBoolFilter<T>(memberExpression);
+                    }
+                }
             }
             else if (expType == ExpressionType.Lambda)
             {

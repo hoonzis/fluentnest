@@ -22,6 +22,8 @@ namespace Tests
 
             public bool? Enabled { get; set; }
 
+            public bool Active { get; set; }
+
         }
 
         
@@ -63,7 +65,8 @@ namespace Tests
                     Email = "Email@email"+i%2+".com",
                     Name = "name"+i%3,
                     Age = i+1,
-                    Enabled = i%2 == 0 ? true : false
+                    Enabled = i%2 == 0 ? true : false,
+                    Active = i % 2 == 0 ? true : false
                 };
                 client.Index(user, c => c.Index("test"));
             }
@@ -208,6 +211,42 @@ namespace Tests
             var sum2 = aggsContainer.GetSum(x => x.Age);
             Check.That(sumValue).Equals(8);
             Check.That(sum2).Equals(8);
+        }
+
+        [Fact]
+        public void Or_Filter_Test()
+        {
+            AddSimpleTestData();
+
+            var filter = NestHelperMethods
+                .CreateFilter<User>(x => x.Name == "name1" || x.Age >= 5);
+
+            var allUsers = client.Search<User>(s => s.Index("test").Filter(filter));
+            Check.That(allUsers.Documents).HasSize(7);
+        }
+
+        [Fact]
+        public void Noq_equal_Filter_Test()
+        {
+            AddSimpleTestData();
+
+            var filter = NestHelperMethods
+                .CreateFilter<User>(x => x.Name != "name1" && x.Name != "name2");
+
+            var allUsers = client.Search<User>(s => s.Index("test").Filter(filter));
+            Check.That(allUsers.Documents).HasSize(4);
+        }
+
+        [Fact]
+        public void Bool_filter_test()
+        {
+            AddSimpleTestData();
+
+            var filter = NestHelperMethods
+                .CreateFilter<User>(x => x.Active);
+
+            var allUsers = client.Search<User>(s => s.Index("test").Filter(filter));
+            Check.That(allUsers.Documents).HasSize(5);
         }
     }
 }
