@@ -78,8 +78,10 @@ namespace Tests
                     search =>
                         search.Take(10).Aggregations(x => cardAgg));
 
+            var container = result.Aggs.AsContainer<Car>();
             var card = result.Aggs.GetCardinality<Car>(x => x.EngineType);
             Check.That(card).Equals(2);
+            Check.That(container.GetCardinality(x=>x.EngineType)).Equals(2);
         }
 
         [Fact]
@@ -239,7 +241,11 @@ namespace Tests
                         search.Take(10).Aggregations(agg => agg.PercentilesBy(x=>x.Price)));
 
             var percentiles = result.Aggs.GetPercentile<Car>(x => x.Price);
+            var container = result.Aggs.AsContainer<Car>();
+
             Check.That(percentiles).HasSize(7);
+            Check.That(container.GetPercentile(x => x.Price)).HasSize(7);
+
             Check.That(percentiles.Single(x => x.Percentile == 50.0).Value).Equals(10d);
         }
 

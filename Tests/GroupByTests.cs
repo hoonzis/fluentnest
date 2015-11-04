@@ -129,9 +129,11 @@ namespace Tests
                 .DistinctBy(x => x.EngineType);
 
             var result = client.Search<Car>(search => search.Aggregations(x => agg));
-
-            var distinctCarTypes = result.Aggs.GetDistinct<Car, String>(x => x.CarType).ToList();
+            
             var engineTypes = result.Aggs.GetDistinct<Car, EngineType>(x => x.EngineType).ToList();
+
+            var container = result.Aggs.AsContainer<Car>();
+            var distinctCarTypes = container.GetDistinct(x => x.CarType).ToList();
 
             Check.That(distinctCarTypes).IsNotNull();
             Check.That(distinctCarTypes).HasSize(3);
