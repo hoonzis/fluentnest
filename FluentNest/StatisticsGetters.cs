@@ -24,6 +24,10 @@ namespace FluentNest
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 var undType = Nullable.GetUnderlyingType(type);
+                if (!agg.Value.HasValue)
+                {
+                    return (K)(Object)null;
+                }
                 var valueAsUndType = Convert.ChangeType(agg.Value, undType);
                 return (K)(Object)valueAsUndType;
             }

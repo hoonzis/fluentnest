@@ -51,5 +51,10 @@ namespace FluentNest
         {
             return aggs.GetDistinct(fieldGetter);
         }
+
+        public IList<PercentileItem> GetPercentile<V>(Expression<Func<T, Object>> fieldGetter)
+        {
+            return aggs.GetPercentile<T>(fieldGetter);
+        }
     }
 }

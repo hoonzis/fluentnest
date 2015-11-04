@@ -20,5 +20,6 @@ namespace TestModel
         public EngineType EngineType { get; set; }
         public decimal? Weight { get; set; } 
         public int? ConditionalRanking { get; set; }
+        public decimal? PriceLimit { get; set; }
     }
 }

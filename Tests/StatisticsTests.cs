@@ -272,5 +272,21 @@ namespace Tests
             var min = container.GetMin(x => x.Length);
             Check.That(min).Equals(0d);
         }
+
+        [Fact]
+        public void Agg_On_NUllable_Field_With_No_Result()
+        {
+            //all price limit values are null - the result should be null
+            AddSimpleTestData();
+
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(agg => agg.MinBy(x => x.PriceLimit)));
+
+            var container = result.Aggs.AsContainer<Car>();
+            var min = container.GetMin(x => x.PriceLimit);
+            Check.That(min).IsNull();
+        }
     }
 }
