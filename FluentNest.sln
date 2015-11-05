@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentNest", "FluentNest\FluentNest.csproj", "{4AA84915-4E63-48B5-B27B-579A56954B67}"
 EndProject
@@ -17,21 +17,35 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{4AA84915-4E63-48B5-B27B-579A56954B67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4AA84915-4E63-48B5-B27B-579A56954B67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4AA84915-4E63-48B5-B27B-579A56954B67}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4AA84915-4E63-48B5-B27B-579A56954B67}.Debug|x64.Build.0 = Debug|Any CPU
 		{4AA84915-4E63-48B5-B27B-579A56954B67}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4AA84915-4E63-48B5-B27B-579A56954B67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4AA84915-4E63-48B5-B27B-579A56954B67}.Release|x64.ActiveCfg = Release|Any CPU
+		{4AA84915-4E63-48B5-B27B-579A56954B67}.Release|x64.Build.0 = Release|Any CPU
 		{B94072A6-42D4-4C73-8EA9-5D9CDA4C2FCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B94072A6-42D4-4C73-8EA9-5D9CDA4C2FCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B94072A6-42D4-4C73-8EA9-5D9CDA4C2FCB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B94072A6-42D4-4C73-8EA9-5D9CDA4C2FCB}.Debug|x64.Build.0 = Debug|Any CPU
 		{B94072A6-42D4-4C73-8EA9-5D9CDA4C2FCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B94072A6-42D4-4C73-8EA9-5D9CDA4C2FCB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B94072A6-42D4-4C73-8EA9-5D9CDA4C2FCB}.Release|x64.ActiveCfg = Release|Any CPU
+		{B94072A6-42D4-4C73-8EA9-5D9CDA4C2FCB}.Release|x64.Build.0 = Release|Any CPU
 		{7F4479CC-E444-4A63-AD47-762C7390E2FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7F4479CC-E444-4A63-AD47-762C7390E2FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F4479CC-E444-4A63-AD47-762C7390E2FD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7F4479CC-E444-4A63-AD47-762C7390E2FD}.Debug|x64.Build.0 = Debug|Any CPU
 		{7F4479CC-E444-4A63-AD47-762C7390E2FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7F4479CC-E444-4A63-AD47-762C7390E2FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F4479CC-E444-4A63-AD47-762C7390E2FD}.Release|x64.ActiveCfg = Release|Any CPU
+		{7F4479CC-E444-4A63-AD47-762C7390E2FD}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
