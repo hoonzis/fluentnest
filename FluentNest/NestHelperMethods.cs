@@ -35,7 +35,7 @@ namespace FluentNest
             return agg.DateHistogram(GetName(fieldGetter), x => x.Field(fieldGetter).Interval(dateInterval));
         }
 
-        public static string GetName<T,K>(this Expression<Func<T, K>> exp)
+        private static string GetName<T,K>(this Expression<Func<T, K>> exp)
         {
             MemberExpression body = exp.Body as MemberExpression;
 
@@ -48,6 +48,21 @@ namespace FluentNest
          
             return body.Member.Name;
         }
+
+        public static string GetAggName<T, K>(this Expression<Func<T, K>> exp, AggType type)
+        {
+            MemberExpression body = exp.Body as MemberExpression;
+
+            if (body == null)
+            {
+                UnaryExpression ubody = (UnaryExpression)exp.Body;
+                body = ubody.Operand as MemberExpression;
+            }
+
+
+            return type + body.Member.Name;
+        }
+
 
         public static IList<HistogramItem> GetDateHistogram<T>(this KeyItem item, Expression<Func<T, Object>> fieldGetter)
         {

@@ -272,7 +272,9 @@ namespace Tests
             var result =
                 client.Search<Car>(
                     search =>
-                        search.Take(10).Aggregations(agg => agg.MinBy(x => x.Length)));
+                        search.Take(10).Aggregations(agg => agg
+                            .MinBy(x => x.Length)
+                            .MaxBy(x=> x.Length)));
 
             var container = result.Aggs.AsContainer<Car>();
             var min = container.GetMin(x => x.Length);
@@ -288,11 +290,41 @@ namespace Tests
             var result =
                 client.Search<Car>(
                     search =>
-                        search.Take(10).Aggregations(agg => agg.MinBy(x => x.PriceLimit)));
+                        search.Take(10).Aggregations(agg => agg
+                            .MinBy(x => x.PriceLimit)
+                            .MaxBy(x=>x.PriceLimit)
+                            .PercentilesBy(x=> x.PriceLimit)));
 
             var container = result.Aggs.AsContainer<Car>();
             var min = container.GetMin(x => x.PriceLimit);
             Check.That(min).IsNull();
+
+            var max = container.GetMax(x => x.PriceLimit);
+            Check.That(max).IsNull();
+        }
+
+        [Fact]
+        public void Stats_By_Test()
+        {
+            //all price limit values are null - the result should be null
+            AddSimpleTestData();
+
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(agg => agg
+                            .MinBy(x => x.Length)
+                            .MaxBy(x => x.Length)
+                            .StatsBy(x => x.Length)));
+
+            var container = result.Aggs.AsContainer<Car>();
+            var min = container.GetMin(x => x.Length);
+            var max = container.GetMax(x => x.Length);
+            var stats = container.GetStats(x => x.Length);
+            Check.That(stats.Min).Equals(0d);
+            Check.That(stats.Max).Equals(9d);
+            Check.That(min).Equals(0d);
+            Check.That(max).Equals(9d);
         }
     }
 }
