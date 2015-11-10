@@ -29,7 +29,21 @@ namespace FluentNest
 
             return v;
         }
-        
+
+        public static AggregationDescriptor<T> IntoHistogram<T>(this AggregationDescriptor<T> innerAggregation, Expression<Func<T, Object>> fieldGetter, int interval) where T : class
+        {
+            AggregationDescriptor<T> v = new AggregationDescriptor<T>();
+            var fieldName = GetName(fieldGetter);
+            v.Histogram(fieldName, dr =>
+            {
+                HistogramAggregationDescriptor<T> dateAggDesc = new HistogramAggregationDescriptor<T>();
+                dateAggDesc.Field(fieldGetter).Interval(interval);
+                return dateAggDesc.Aggregations(x => innerAggregation);
+            });
+
+            return v;
+        }
+
         public static AggregationDescriptor<T> DateHistogram<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter, DateInterval dateInterval) where T : class
         {
             return agg.DateHistogram(GetName(fieldGetter), x => x.Field(fieldGetter).Interval(dateInterval));
@@ -73,6 +87,12 @@ namespace FluentNest
         public static IList<HistogramItem> GetDateHistogram<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = aggs.DateHistogram(GetName(fieldGetter));
+            return histogramItem.Items;
+        }
+
+        public static IList<HistogramItem> GetHistogram<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
+        {
+            var histogramItem = aggs.Histogram(GetName(fieldGetter));
             return histogramItem.Items;
         }
 
