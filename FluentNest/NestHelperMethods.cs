@@ -358,6 +358,18 @@ namespace FluentNest
             return searchDescriptor.Query(q => q.Filtered(fil => fil.Filter(f => container)));
         }
 
+        public static DeleteByQueryDescriptor<T> FilteredOn<T>(this DeleteByQueryDescriptor<T> deleteDescriptor, FilterContainer container) where T : class
+        {
+            return deleteDescriptor.Query(q => q.Filtered(fil => fil.Filter(f => container)));
+        }
+
+        public static DeleteByQueryDescriptor<T> FilteredOn<T>(this DeleteByQueryDescriptor<T> deleteDescriptor, Expression<Func<T, bool>> filterRule) where T : class
+        {
+            var binaryExpression = filterRule.Body as BinaryExpression;
+            return deleteDescriptor.Query(q => q.Filtered(fil => fil.Filter(f => GenerateFilterDescription<T>(binaryExpression))));
+        }
+
+
         public static FilterContainer AndFilteredOn<T>(this FilterContainer queryDescriptor, Expression<Func<T, bool>> filterRule) where T : class
         {
             var filterDescriptor = new FilterDescriptor<T>();

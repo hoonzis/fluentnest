@@ -66,6 +66,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DeleteTests.cs" />
     <Compile Include="FilterTests.cs" />
     <Compile Include="GroupByTests.cs" />
     <Compile Include="HistogramTests.cs" />
