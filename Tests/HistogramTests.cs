@@ -36,7 +36,9 @@ namespace Tests
                     Name = "Car" + i,
                     Price = 10,
                     Sold = i % 2 == 0 ? true : false,
-                    CarType = "Type" + i%3
+                    CarType = "Type" + i%3,
+                    Length = i*2,
+                    Weight = i
                 };
                 client.Index(car);
             }
@@ -111,6 +113,21 @@ namespace Tests
             var histogram = result.Aggs.GetDateHistogram<Car>(x => x.Timestamp);
 
             Check.That(histogram).HasSize(3);
+        }
+
+        [Fact]
+        public void StandardHistogramTest()
+        {
+            AddSimpleTestData();
+            
+            var result = client.Search<Car>(search => search
+                .Aggregations(x => x
+                    .SumBy(y => y.Price)
+                    .IntoHistogram(y => y.Length, 5)
+                ));
+
+            var histogram = result.Aggs.GetHistogram<Car>(x => x.Length);
+            Check.That(histogram).HasSize(4);
         }
     }
 }

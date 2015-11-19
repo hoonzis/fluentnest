@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq.Expressions;
+using System.Reflection;
 using Nest;
 
 namespace FluentNest
@@ -29,13 +29,27 @@ namespace FluentNest
 
             return v;
         }
-        
+
+        public static AggregationDescriptor<T> IntoHistogram<T>(this AggregationDescriptor<T> innerAggregation, Expression<Func<T, Object>> fieldGetter, int interval) where T : class
+        {
+            AggregationDescriptor<T> v = new AggregationDescriptor<T>();
+            var fieldName = GetName(fieldGetter);
+            v.Histogram(fieldName, dr =>
+            {
+                HistogramAggregationDescriptor<T> dateAggDesc = new HistogramAggregationDescriptor<T>();
+                dateAggDesc.Field(fieldGetter).Interval(interval);
+                return dateAggDesc.Aggregations(x => innerAggregation);
+            });
+
+            return v;
+        }
+
         public static AggregationDescriptor<T> DateHistogram<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter, DateInterval dateInterval) where T : class
         {
             return agg.DateHistogram(GetName(fieldGetter), x => x.Field(fieldGetter).Interval(dateInterval));
         }
 
-        public static string GetName<T,K>(this Expression<Func<T, K>> exp)
+        private static string GetName<T,K>(this Expression<Func<T, K>> exp)
         {
             MemberExpression body = exp.Body as MemberExpression;
 
@@ -49,6 +63,21 @@ namespace FluentNest
             return body.Member.Name;
         }
 
+        public static string GetAggName<T, K>(this Expression<Func<T, K>> exp, AggType type)
+        {
+            MemberExpression body = exp.Body as MemberExpression;
+
+            if (body == null)
+            {
+                UnaryExpression ubody = (UnaryExpression)exp.Body;
+                body = ubody.Operand as MemberExpression;
+            }
+
+
+            return type + body.Member.Name;
+        }
+
+
         public static IList<HistogramItem> GetDateHistogram<T>(this KeyItem item, Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = item.DateHistogram(GetName(fieldGetter));
@@ -58,6 +87,12 @@ namespace FluentNest
         public static IList<HistogramItem> GetDateHistogram<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = aggs.DateHistogram(GetName(fieldGetter));
+            return histogramItem.Items;
+        }
+
+        public static IList<HistogramItem> GetHistogram<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
+        {
+            var histogramItem = aggs.Histogram(GetName(fieldGetter));
             return histogramItem.Items;
         }
 
@@ -170,24 +205,16 @@ namespace FluentNest
 
         public static FilterContainer GenerateNotEqualFilter<T>(this Expression expression) where T : class
         {
-            var binaryExpression = expression as BinaryExpression;
-            var value = GetValue(binaryExpression.Right);
-            var fieldName = GenerateFilterName(binaryExpression);
+            var equalityFilter = GenerateEqualityFilter<T>(expression);
             var filterDescriptor = new FilterDescriptor<T>();
-            //here we handle binary expressions in the from .field != null
-            if (value == null)
-            {
-                return filterDescriptor.Exists(fieldName);
-            }
-            throw new NotImplementedException();
+            return filterDescriptor.Not(x => equalityFilter);
         }
 
         public static FilterContainer GenerateBoolFilter<T>(this Expression expression) where T : class
         {
-            var value = GetValue(expression);           
             var filterDescriptor = new FilterDescriptor<T>();
             var fieldName = GenerateFilterName(expression);
-            return filterDescriptor.Term(fieldName, value);
+            return filterDescriptor.Term(fieldName, true);
         }
 
 
@@ -250,7 +277,15 @@ namespace FluentNest
                     var filterDescriptor = new FilterDescriptor<T>();
                     return filterDescriptor.Exists(parentFieldName);
                 }
-                return GenerateBoolFilter<T>(expression);
+                var isProperty = memberExpression.Member.MemberType == MemberTypes.Property;
+                if (isProperty)
+                {
+                    var propertyType = ((PropertyInfo) memberExpression.Member).PropertyType;
+                    if (propertyType == typeof (bool))
+                    {
+                        return GenerateBoolFilter<T>(memberExpression);
+                    }
+                }
             }
             else if (expType == ExpressionType.Lambda)
             {
@@ -322,6 +357,18 @@ namespace FluentNest
         {
             return searchDescriptor.Query(q => q.Filtered(fil => fil.Filter(f => container)));
         }
+
+        public static DeleteByQueryDescriptor<T> FilteredOn<T>(this DeleteByQueryDescriptor<T> deleteDescriptor, FilterContainer container) where T : class
+        {
+            return deleteDescriptor.Query(q => q.Filtered(fil => fil.Filter(f => container)));
+        }
+
+        public static DeleteByQueryDescriptor<T> FilteredOn<T>(this DeleteByQueryDescriptor<T> deleteDescriptor, Expression<Func<T, bool>> filterRule) where T : class
+        {
+            var binaryExpression = filterRule.Body as BinaryExpression;
+            return deleteDescriptor.Query(q => q.Filtered(fil => fil.Filter(f => GenerateFilterDescription<T>(binaryExpression))));
+        }
+
 
         public static FilterContainer AndFilteredOn<T>(this FilterContainer queryDescriptor, Expression<Func<T, bool>> filterRule) where T : class
         {

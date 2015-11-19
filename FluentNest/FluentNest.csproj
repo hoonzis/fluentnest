@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AggsContainer.cs" />
+    <Compile Include="AggType.cs" />
     <Compile Include="GroupBys.cs" />
     <Compile Include="NestHelperMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 using Nest;
 
 namespace FluentNest
@@ -24,12 +21,22 @@ namespace FluentNest
 
         public K GetSum<K>(Expression<Func<T, K>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
-            return aggs.GetSum<T,K>(fieldGetter, filterRule);
+            return aggs.GetSum(fieldGetter, filterRule);
         }
 
-        public double? GetAverage(Expression<Func<T, object>> fieldGetter)
+        public K GetAverage<K>(Expression<Func<T, K>> fieldGetter)
         {
             return aggs.GetAverage(fieldGetter);
+        }
+
+        public K GetMin<K>(Expression<Func<T, K>> fieldGetter)
+        {
+            return aggs.GetMin(fieldGetter);
+        }
+
+        public K GetMax<K>(Expression<Func<T, K>> fieldGetter)
+        {
+            return aggs.GetMax(fieldGetter);
         }
 
         public int? GetCount(Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
@@ -40,6 +47,16 @@ namespace FluentNest
         public IEnumerable<V> GetDistinct<V>(Expression<Func<T, V>> fieldGetter)
         {
             return aggs.GetDistinct(fieldGetter);
+        }
+
+        public IList<PercentileItem> GetPercentile(Expression<Func<T, Object>> fieldGetter)
+        {
+            return aggs.GetPercentile<T>(fieldGetter);
+        }
+
+        public StatsMetric GetStats(Expression<Func<T, Object>> fieldGetter)
+        {
+            return aggs.GetStats(fieldGetter);
         }
     }
 }

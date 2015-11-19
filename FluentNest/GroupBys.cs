@@ -11,7 +11,7 @@ namespace FluentNest
         public static AggregationDescriptor<T> GroupBy<T>(this AggregationDescriptor<T> innerAggregation, Expression<Func<T, Object>> fieldGetter) where T : class
         {
             AggregationDescriptor<T> v = new AggregationDescriptor<T>();
-            var fieldName = fieldGetter.GetName();
+            var fieldName = fieldGetter.GetAggName(AggType.GroupBy);
             v.Terms(fieldName, tr =>
             {
                 TermsAggregationDescriptor<T> trmAggDescriptor = new TermsAggregationDescriptor<T>();
@@ -45,7 +45,7 @@ namespace FluentNest
 
         public static IEnumerable<KeyItem> GetGroupBy<T>(this BucketAggregationBase aggs, Expression<Func<T, Object>> fieldGetter)
         {
-            var aggName = fieldGetter.GetName();
+            var aggName = fieldGetter.GetAggName(AggType.GroupBy);
             var itemsTerms = aggs.Terms(aggName);
             return itemsTerms.Items;
         }
@@ -58,21 +58,21 @@ namespace FluentNest
 
         public static IDictionary<String, KeyItem> GetDictioanry<T>(this BucketAggregationBase aggs, Expression<Func<T, Object>> fieldGetter)
         {
-            var aggName = fieldGetter.GetName();
+            var aggName = fieldGetter.GetAggName(AggType.GroupBy);
             var itemsTerms = aggs.Terms(aggName);
             return itemsTerms.Items.ToDictionary(x => x.Key);
         }
 
         public static IEnumerable<K> GetGroupBy<T,K>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter, Func<KeyItem, K> objectTransformer)
         {
-            var aggName = fieldGetter.GetName();
+            var aggName = fieldGetter.GetAggName(AggType.GroupBy);
             var itemsTerms = aggs.Terms(aggName);
             return itemsTerms.Items.Select(objectTransformer);
         }
 
         public static IEnumerable<KeyItem> GetGroupBy<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
         {
-            var aggName = fieldGetter.GetName();
+            var aggName = fieldGetter.GetAggName(AggType.GroupBy);
             var itemsTerms = aggs.Terms(aggName);
             return itemsTerms.Items;
         }
@@ -85,7 +85,7 @@ namespace FluentNest
 
         public static IDictionary<V, KeyItem> GetDictioanry<T,V>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter) where V:struct,IConvertible
         {
-            var aggName = fieldGetter.GetName();
+            var aggName = fieldGetter.GetAggName(AggType.GroupBy);
             var itemsTerms = aggs.Terms(aggName);
             if ((typeof(V).IsEnum))
             {
@@ -96,7 +96,7 @@ namespace FluentNest
 
         public static IDictionary<String, K> GetDictioanry<T, K>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter, Func<KeyItem, K> objectTransformer)
         {
-            var aggName = fieldGetter.GetName();
+            var aggName = fieldGetter.GetAggName(AggType.GroupBy);
             var itemsTerms = aggs.Terms(aggName);
             return itemsTerms.Items.ToDictionary(x => x.Key, objectTransformer);
         }

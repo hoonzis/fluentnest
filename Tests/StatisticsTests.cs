@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using FluentNest;
 using Nest;
 using NFluent;
@@ -77,8 +78,10 @@ namespace Tests
                     search =>
                         search.Take(10).Aggregations(x => cardAgg));
 
+            var container = result.Aggs.AsContainer<Car>();
             var card = result.Aggs.GetCardinality<Car>(x => x.EngineType);
             Check.That(card).Equals(2);
+            Check.That(container.GetCardinality(x=>x.EngineType)).Equals(2);
         }
 
         [Fact]
@@ -113,7 +116,7 @@ namespace Tests
                 .Aggregations(x => notionalSumAgg));
 
             var priceSum = result.Aggs.GetSum<Car,decimal>(x => x.Price);
-            var avgLength = result.Aggs.GetAverage<Car>(x => x.Length);
+            var avgLength = result.Aggs.GetAverage<Car,double>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
             var typeOneCount = result.Aggs.GetCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
             var engineCardinality = result.Aggs.GetCardinality<Car>(x => x.EngineType);
@@ -140,7 +143,7 @@ namespace Tests
                 .Aggregations(x => agg));
             
             var priceSum = result.Aggs.GetSum<Car, decimal>(x => x.Price);
-            var avgLength = result.Aggs.GetAverage<Car>(x => x.Length);
+            var avgLength = result.Aggs.GetAverage<Car,double>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
             var typeOneCount = result.Aggs.GetCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
             var car1PriceSum = result.Aggs.GetSum<Car,decimal>(x => x.Price, x => x.CarType == "type1");
@@ -225,6 +228,103 @@ namespace Tests
 
             Check.That(sum).Equals(25m);
             Check.That(sum2).Equals(0m);
+        }
+
+        [Fact]
+        public void Percentiles_Test()
+        {
+            AddSimpleTestData();
+            
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(agg => agg.PercentilesBy(x=>x.Price)));
+
+            var percentiles = result.Aggs.GetPercentile<Car>(x => x.Price);
+            var container = result.Aggs.AsContainer<Car>();
+
+            Check.That(percentiles).HasSize(7);
+            Check.That(container.GetPercentile(x => x.Price)).HasSize(7);
+
+            Check.That(percentiles.Single(x => x.Percentile == 50.0).Value).Equals(10d);
+        }
+
+        [Fact]
+        public void Max_Test()
+        {
+            AddSimpleTestData();
+
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(agg => agg.MaxBy(x=>x.Length)));
+
+            var container = result.Aggs.AsContainer<Car>();
+            var max = container.GetMax(x => x.Length);
+            Check.That(max).Equals(9d);
+        }
+
+        [Fact]
+        public void MinTest()
+        {
+            AddSimpleTestData();
+
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(agg => agg
+                            .MinBy(x => x.Length)
+                            .MaxBy(x=> x.Length)));
+
+            var container = result.Aggs.AsContainer<Car>();
+            var min = container.GetMin(x => x.Length);
+            Check.That(min).Equals(0d);
+        }
+
+        [Fact]
+        public void Agg_On_NUllable_Field_With_No_Result()
+        {
+            //all price limit values are null - the result should be null
+            AddSimpleTestData();
+
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(agg => agg
+                            .MinBy(x => x.PriceLimit)
+                            .MaxBy(x=>x.PriceLimit)
+                            .PercentilesBy(x=> x.PriceLimit)));
+
+            var container = result.Aggs.AsContainer<Car>();
+            var min = container.GetMin(x => x.PriceLimit);
+            Check.That(min).IsNull();
+
+            var max = container.GetMax(x => x.PriceLimit);
+            Check.That(max).IsNull();
+        }
+
+        [Fact]
+        public void Stats_By_Test()
+        {
+            //all price limit values are null - the result should be null
+            AddSimpleTestData();
+
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(agg => agg
+                            .MinBy(x => x.Length)
+                            .MaxBy(x => x.Length)
+                            .StatsBy(x => x.Length)));
+
+            var container = result.Aggs.AsContainer<Car>();
+            var min = container.GetMin(x => x.Length);
+            var max = container.GetMax(x => x.Length);
+            var stats = container.GetStats(x => x.Length);
+            Check.That(stats.Min).Equals(0d);
+            Check.That(stats.Max).Equals(9d);
+            Check.That(min).Equals(0d);
+            Check.That(max).Equals(9d);
         }
     }
 }
