@@ -84,7 +84,7 @@ namespace Tests
         public void SumInMonthlyHistogram()
         {
             AddSimpleTestData();
-            var sumOnPrice = Statistics.SumBy<Car>(x => x.Price);
+            var sumOnPrice = new AggregationDescriptor<Car>().SumBy(x => x.Price);
             var esResult =
                 client.Search<Car>(
                     search => search.Aggregations(x => sumOnPrice.IntoDateHistogram(date => date.Timestamp, DateInterval.Month)));
@@ -101,8 +101,8 @@ namespace Tests
             var start = new DateTime(2010, 1, 1);
             var end = new DateTime(2010, 4, 4);
 
-            var agg = Statistics
-                .SumBy<Car>(x => x.Price)
+            var agg = new AggregationDescriptor<Car>()
+                .SumBy(x => x.Price)
                 .IntoDateHistogram(date => date.Timestamp, DateInterval.Month);
 
             var result = client.Search<Car>(
