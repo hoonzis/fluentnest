@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Tests
 {
-    public class StatisticsTests :TestsBase
+    public class StatisticsTests : TestsBase
     {
         [Fact]
         public void SumTest()

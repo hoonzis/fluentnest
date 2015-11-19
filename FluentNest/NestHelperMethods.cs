@@ -385,10 +385,26 @@ namespace FluentNest
 
         private static object GetValue(Expression member)
         {
-            var objectMember = Expression.Convert(member, typeof(object));
+            var convertedMember = ExplicitlyConvertEnums(member);
+
+            var objectMember = Expression.Convert(convertedMember, typeof(object));
             var getterLambda = Expression.Lambda<Func<object>>(objectMember);
             var getter = getterLambda.Compile();
             return getter();
+        }
+
+        /// <summary>
+        /// This is necessary in order to avoid the automatic cast of enums to the underlying integer representation
+        /// </summary>
+        private static Expression ExplicitlyConvertEnums(Expression member)
+        {
+            var unaryExpression = member as UnaryExpression;
+            if (unaryExpression != null && unaryExpression.Operand.Type.IsEnum)
+            {
+                return Expression.Convert(member, unaryExpression.Operand.Type);
+            }
+
+            return member;
         }
 
         public static T Parse<T>(string value)
