@@ -15,12 +15,13 @@ namespace FluentNest
 
             return Char.ToLowerInvariant(str[0]) + str.Substring(1);
         }
-        
-        public static AggregationDescriptor<T> IntoDateHistogram<T>(this AggregationDescriptor<T> innerAggregation, Expression<Func<T, Object>> fieldGetter,DateInterval interval) where T : class
+
+        public static AggregationDescriptor<T> IntoDateHistogram<T>(this AggregationDescriptor<T> innerAggregation,
+            Expression<Func<T, Object>> fieldGetter, DateInterval interval) where T : class
         {
             AggregationDescriptor<T> v = new AggregationDescriptor<T>();
             var fieldName = GetName(fieldGetter);
-            v.DateHistogram(fieldName, dr=>
+            v.DateHistogram(fieldName, dr =>
             {
                 DateHistogramAggregationDescriptor<T> dateAggDesc = new DateHistogramAggregationDescriptor<T>();
                 dateAggDesc.Field(fieldGetter).Interval(interval);
@@ -30,7 +31,8 @@ namespace FluentNest
             return v;
         }
 
-        public static AggregationDescriptor<T> IntoHistogram<T>(this AggregationDescriptor<T> innerAggregation, Expression<Func<T, Object>> fieldGetter, int interval) where T : class
+        public static AggregationDescriptor<T> IntoHistogram<T>(this AggregationDescriptor<T> innerAggregation,
+            Expression<Func<T, Object>> fieldGetter, int interval) where T : class
         {
             AggregationDescriptor<T> v = new AggregationDescriptor<T>();
             var fieldName = GetName(fieldGetter);
@@ -44,22 +46,23 @@ namespace FluentNest
             return v;
         }
 
-        public static AggregationDescriptor<T> DateHistogram<T>(this AggregationDescriptor<T> agg, Expression<Func<T, Object>> fieldGetter, DateInterval dateInterval) where T : class
+        public static AggregationDescriptor<T> DateHistogram<T>(this AggregationDescriptor<T> agg,
+            Expression<Func<T, Object>> fieldGetter, DateInterval dateInterval) where T : class
         {
             return agg.DateHistogram(GetName(fieldGetter), x => x.Field(fieldGetter).Interval(dateInterval));
         }
 
-        private static string GetName<T,K>(this Expression<Func<T, K>> exp)
+        private static string GetName<T, K>(this Expression<Func<T, K>> exp)
         {
             MemberExpression body = exp.Body as MemberExpression;
 
             if (body == null)
             {
-                UnaryExpression ubody = (UnaryExpression)exp.Body;
+                UnaryExpression ubody = (UnaryExpression) exp.Body;
                 body = ubody.Operand as MemberExpression;
             }
 
-         
+
             return body.Member.Name;
         }
 
@@ -69,7 +72,7 @@ namespace FluentNest
 
             if (body == null)
             {
-                UnaryExpression ubody = (UnaryExpression)exp.Body;
+                UnaryExpression ubody = (UnaryExpression) exp.Body;
                 body = ubody.Operand as MemberExpression;
             }
 
@@ -78,57 +81,57 @@ namespace FluentNest
         }
 
 
-        public static IList<HistogramItem> GetDateHistogram<T>(this KeyItem item, Expression<Func<T, Object>> fieldGetter)
+        public static IList<HistogramItem> GetDateHistogram<T>(this KeyItem item,
+            Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = item.DateHistogram(GetName(fieldGetter));
             return histogramItem.Items;
         }
 
-        public static IList<HistogramItem> GetDateHistogram<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
+        public static IList<HistogramItem> GetDateHistogram<T>(this AggregationsHelper aggs,
+            Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = aggs.DateHistogram(GetName(fieldGetter));
             return histogramItem.Items;
         }
 
-        public static IList<HistogramItem> GetHistogram<T>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter)
+        public static IList<HistogramItem> GetHistogram<T>(this AggregationsHelper aggs,
+            Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = aggs.Histogram(GetName(fieldGetter));
             return histogramItem.Items;
         }
 
-        public static SearchDescriptor<T> FilterOn<T>(this SearchDescriptor<T> searchDescriptor,Expression<Func<T, Object>> fieldGetter, object value) where T:class
-        {
-            return searchDescriptor.Filter(x => x.Term(fieldGetter, value));
-        }
-
-        public static FilterContainer GenerateComparisonFilter<T>(this Expression expression, ExpressionType type) where T : class
+        public static FilterContainer GenerateComparisonFilter<T>(this Expression expression, ExpressionType type)
+            where T : class
         {
             var binaryExpression = expression as BinaryExpression;
-            
+
             var value = GetValue(binaryExpression.Right);
             var memberAccessor = binaryExpression.Left as MemberExpression;
             var fieldName = GetFieldNameFromMember(memberAccessor);
-            
+
             if (value is DateTime)
             {
-                return GenerateComparisonFilter<T>((DateTime)value, type, fieldName);
+                return GenerateComparisonFilter<T>((DateTime) value, type, fieldName);
             }
             else if (value is double)
             {
-                return GenerateComparisonFilter<T>((double)value, type, fieldName);
+                return GenerateComparisonFilter<T>((double) value, type, fieldName);
             }
             else if (value is int)
             {
-                return GenerateComparisonFilter<T>((long)(int)value, type, fieldName);
+                return GenerateComparisonFilter<T>((long) (int) value, type, fieldName);
             }
             else if (value is long)
             {
-                return GenerateComparisonFilter<T>((long)value, type, fieldName);
+                return GenerateComparisonFilter<T>((long) value, type, fieldName);
             }
             throw new InvalidOperationException("Comparison on non-supported type");
         }
 
-        public static FilterContainer GenerateComparisonFilter<T>(DateTime value, ExpressionType type, string fieldName) where T : class
+        public static FilterContainer GenerateComparisonFilter<T>(DateTime value, ExpressionType type, string fieldName)
+            where T : class
         {
             var filterDescriptor = new FilterDescriptor<T>();
             if (type == ExpressionType.LessThan)
@@ -150,7 +153,8 @@ namespace FluentNest
             throw new NotImplementedException();
         }
 
-        public static FilterContainer GenerateComparisonFilter<T>(long value, ExpressionType type, string fieldName) where T : class
+        public static FilterContainer GenerateComparisonFilter<T>(long value, ExpressionType type, string fieldName)
+            where T : class
         {
             var filterDescriptor = new FilterDescriptor<T>();
             if (type == ExpressionType.LessThan)
@@ -172,7 +176,8 @@ namespace FluentNest
             throw new NotImplementedException();
         }
 
-        public static FilterContainer GenerateComparisonFilter<T>(double value, ExpressionType type, string fieldName) where T : class
+        public static FilterContainer GenerateComparisonFilter<T>(double value, ExpressionType type, string fieldName)
+            where T : class
         {
             var filterDescriptor = new FilterDescriptor<T>();
             if (type == ExpressionType.LessThan)
@@ -200,7 +205,7 @@ namespace FluentNest
             var value = GetValue(binaryExpression.Right);
             var filterDescriptor = new FilterDescriptor<T>();
             var fieldName = GetFieldName(binaryExpression.Left);
-            return filterDescriptor.Term(fieldName,value);
+            return filterDescriptor.Term(fieldName, value);
         }
 
         public static FilterContainer GenerateNotEqualFilter<T>(this Expression expression) where T : class
@@ -223,12 +228,13 @@ namespace FluentNest
             if (expression is MemberExpression)
             {
                 return GetFieldNameFromMember(expression as MemberExpression);
-            }else if (expression is UnaryExpression)
+            }
+            else if (expression is UnaryExpression)
             {
                 var unary = expression as UnaryExpression;
                 return GetFieldName(unary.Operand);
             }
-            throw  new NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public static string GetFieldNameFromMember(this MemberExpression expression)

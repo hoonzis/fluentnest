@@ -90,6 +90,18 @@ namespace Tests
         }
 
         [Fact]
+        public void DateEqualityTest()
+        {
+            AddSimpleTestData();
+
+            var startDate = new DateTime(2010, 1, 1);
+
+            var result = client.Search<Car>(s => s.FilterOn(x => x.Timestamp == startDate));
+            
+            Check.That(result.Documents).HasSize(1);
+        }
+
+        [Fact]
         public void TestSimpleComparisonFilter()
         {
             AddSimpleTestData();
@@ -109,12 +121,7 @@ namespace Tests
             //Standard Nest way of getting the docuements. Values are lowered by ES
             var result = client.Search<Car>(s => s.Filter(x => x.Term(f => f.CarType, carType)));
             Check.That(result.Documents).HasSize(5);
-
-            //Little bit better
-            result = client.Search<Car>(s => s.FilterOn(x => x.CarType, carType));
-            Check.That(result.Documents).HasSize(5);
-
-
+            
             //Best way
             result = client.Search<Car>(s => s.FilterOn(x => x.CarType == carType));
             Check.That(result.Documents).HasSize(5);
