@@ -31,6 +31,13 @@ namespace FluentNest
                 var valueAsUndType = Convert.ChangeType(agg.Value, undType);
                 return (K)(Object)valueAsUndType;
             }
+
+            //seems that by default ES stores the datetime value as unix timestamp in miliseconds
+            else if (typeof (K) == typeof (DateTime) && agg.Value.HasValue)
+            {
+                DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+                return (K)(Object)origin.AddMilliseconds(agg.Value.Value);
+            }
             else
             {
                 return (K)Convert.ChangeType(agg.Value, typeof(K));

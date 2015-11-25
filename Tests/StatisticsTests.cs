@@ -326,5 +326,27 @@ namespace Tests
             Check.That(min).Equals(0d);
             Check.That(max).Equals(9d);
         }
+
+        [Fact]
+        public void MinMaxTimeTests()
+        {
+            AddSimpleTestData();
+
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(agg => agg
+                            .MinBy(x => x.Timestamp)
+                            .MaxBy(x => x.Timestamp)
+                        ));
+
+            var container = result.Aggs.AsContainer<Car>();
+
+            var min = container.GetMin(x => x.Timestamp);
+            Check.That(min).Equals(new DateTime(2010, 1, 1));
+
+            var max = container.GetMax(x => x.Timestamp);
+            Check.That(max).Equals(new DateTime(2010, 10, 1));
+        }
     }
 }
