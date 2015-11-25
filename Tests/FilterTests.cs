@@ -255,6 +255,15 @@ namespace Tests
             var allUsers = client.Search<User>(s => s.Index("test").Filter(filter));
             Check.That(allUsers.Documents).HasSize(5);
         }
+
+        [Fact]
+        public void Time_equality_filter()
+        {
+            AddSimpleTestData();
+            
+            var allUsers = client.Search<Car>(s=>s.FilterOn(x=>x.Timestamp == new DateTime(2010,1,1)));
+            Check.That(allUsers.Documents).HasSize(1);
+        }
     }
 }
 
