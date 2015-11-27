@@ -115,17 +115,13 @@ namespace FluentNest
             {
                 return GenerateComparisonFilter<T>((DateTime) value, type, fieldName);
             }
-            else if (value is double)
+            else if (value is double || value is decimal)
             {
-                return GenerateComparisonFilter<T>((double) value, type, fieldName);
+                return GenerateComparisonFilter<T>(Convert.ToDouble(value), type, fieldName);
             }
-            else if (value is int)
+            else if (value is int || value is long)
             {
-                return GenerateComparisonFilter<T>((long) (int) value, type, fieldName);
-            }
-            else if (value is long)
-            {
-                return GenerateComparisonFilter<T>((long) value, type, fieldName);
+                return GenerateComparisonFilter<T>(Convert.ToInt64(value), type, fieldName);
             }
             throw new InvalidOperationException("Comparison on non-supported type");
         }

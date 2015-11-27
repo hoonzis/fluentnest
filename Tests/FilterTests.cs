@@ -54,6 +54,7 @@ namespace Tests
                     Price = 10,
                     Sold = i % 2 == 0 ? true : false,
                     CarType = "Type" + i%2,
+                    Emissions = i+1
                 };
                 client.Index(car);
             }
@@ -263,6 +264,14 @@ namespace Tests
             
             var allUsers = client.Search<Car>(s=>s.FilterOn(x=>x.Timestamp == new DateTime(2010,1,1)));
             Check.That(allUsers.Documents).HasSize(1);
+        }
+
+        [Fact]
+        public void Decimal_Filter_Comparison_Test()
+        {
+            AddSimpleTestData();
+            var allUsers = client.Search<Car>(s => s.FilterOn(x=>x.Emissions > 2 && x.Emissions < 6));
+            Check.That(allUsers.Documents).HasSize(3);
         }
     }
 }

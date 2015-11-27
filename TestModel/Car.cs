@@ -21,5 +21,6 @@ namespace TestModel
         public decimal? Weight { get; set; } 
         public int? ConditionalRanking { get; set; }
         public decimal? PriceLimit { get; set; }
+        public decimal Emissions { get; set; }
     }
 }
