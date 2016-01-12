@@ -58,5 +58,11 @@ namespace FluentNest
         {
             return aggs.GetStats(fieldGetter);
         }
+
+        public K GetFirstBy<K>(Expression<Func<T, K>> fieldGetter,
+            Expression<Func<T, object>> filterRule = null)
+        {
+            return aggs.GetFirstBy(fieldGetter, filterRule);
+        }
     }
 }

@@ -120,7 +120,7 @@ namespace Tests
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
             var typeOneCount = result.Aggs.GetCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
             var engineCardinality = result.Aggs.GetCardinality<Car>(x => x.EngineType);
-            
+
             Check.That(priceSum).Equals(100m);
             Check.That(avgLength).Equals(4.5d);
             Check.That(count).Equals(10);
@@ -377,6 +377,10 @@ namespace Tests
             Check.That(engineType).Equals(EngineType.Diesel);
             Check.That(carType).Equals("type0");
             Check.That(firstLength).Equals(0d);
+
+            var container = result.Aggs.AsContainer<Car>();
+            var lengthFromContainer = container.GetFirstBy(x => x.Length);
+            Check.That(lengthFromContainer).Equals(0d);
         }
     }
 }
