@@ -77,14 +77,14 @@ namespace FluentNest
             if (filterRule == null)
             {
                 var terms = aggs.Terms(aggName);
-                return NestHelperMethods.StringOrEnum<K>(terms.Items[0].Key);
+                return NestHelperMethods.StringToAnything<K>(terms.Items[0].Key);
             }
             else
             {
                 var filterName = filterRule.GenerateFilterName();
                 var filterAgg = aggs.Filter(filterName);
                 var termsAgg = filterAgg.Terms(aggName);
-                return NestHelperMethods.StringOrEnum<K>(termsAgg.Items[0].Key);
+                return NestHelperMethods.StringToAnything<K>(termsAgg.Items[0].Key);
             }
         }
 
