@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Reflection;
 using Nest;
@@ -417,6 +418,19 @@ namespace FluentNest
         public static AggsContainer<T> AsContainer<T> (this AggregationsHelper aggs)
         {
             return new AggsContainer<T>(aggs);
+        }
+
+        public static K StringToAnything<K>(string value)
+        {
+            if ((typeof(K).IsEnum))
+            {
+                return NestHelperMethods.Parse<K>(value);
+            }
+            else
+            {
+                TypeConverter typeConverter = TypeDescriptor.GetConverter(typeof(K));
+                return (K)typeConverter.ConvertFromString(value);
+            }
         }
     }
 }

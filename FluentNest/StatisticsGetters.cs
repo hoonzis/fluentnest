@@ -70,7 +70,24 @@ namespace FluentNest
                 return ValueAsUndType<K>(sumAgg);
             }
         }
-        
+
+        public static K GetFirstBy<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        {
+            var aggName = fieldGetter.GetAggName(AggType.Sum);
+            if (filterRule == null)
+            {
+                var terms = aggs.Terms(aggName);
+                return NestHelperMethods.StringOrEnum<K>(terms.Items[0].Key);
+            }
+            else
+            {
+                var filterName = filterRule.GenerateFilterName();
+                var filterAgg = aggs.Filter(filterName);
+                var termsAgg = filterAgg.Terms(aggName);
+                return NestHelperMethods.StringOrEnum<K>(termsAgg.Items[0].Key);
+            }
+        }
+
         public static K GetAverage<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter)
         {
             var aggName = fieldGetter.GetAggName(AggType.Average);
