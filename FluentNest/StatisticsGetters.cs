@@ -31,6 +31,13 @@ namespace FluentNest
                 var valueAsUndType = Convert.ChangeType(agg.Value, undType);
                 return (K)(Object)valueAsUndType;
             }
+
+            //seems that by default ES stores the datetime value as unix timestamp in miliseconds
+            else if (typeof (K) == typeof (DateTime) && agg.Value.HasValue)
+            {
+                DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+                return (K)(Object)origin.AddMilliseconds(agg.Value.Value);
+            }
             else
             {
                 return (K)Convert.ChangeType(agg.Value, typeof(K));
@@ -63,7 +70,24 @@ namespace FluentNest
                 return ValueAsUndType<K>(sumAgg);
             }
         }
-        
+
+        public static K GetFirstBy<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        {
+            var aggName = fieldGetter.GetAggName(AggType.Sum);
+            if (filterRule == null)
+            {
+                var terms = aggs.Terms(aggName);
+                return NestHelperMethods.StringToAnything<K>(terms.Items[0].Key);
+            }
+            else
+            {
+                var filterName = filterRule.GenerateFilterName();
+                var filterAgg = aggs.Filter(filterName);
+                var termsAgg = filterAgg.Terms(aggName);
+                return NestHelperMethods.StringToAnything<K>(termsAgg.Items[0].Key);
+            }
+        }
+
         public static K GetAverage<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter)
         {
             var aggName = fieldGetter.GetAggName(AggType.Average);

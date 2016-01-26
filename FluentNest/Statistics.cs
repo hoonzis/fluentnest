@@ -22,6 +22,22 @@ namespace FluentNest
             return agg;
         }
 
+        public static AggregationDescriptor<T> FirstBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
+        {
+            var aggName = fieldGetter.GetAggName(AggType.Sum);
+            if (filterRule == null)
+            {
+                return agg.Terms(aggName, x => x.Field(fieldGetter));
+            }
+
+            var filterName = filterRule.GenerateFilterName();
+            agg.Filter(filterName,
+                f =>
+                    f.Filter(fd => filterRule.Body.GenerateFilterDescription<T>())
+                        .Aggregations(innerAgg => innerAgg.Terms(aggName, field => field.Field(fieldGetter))));
+            return agg;
+        }
+
         public static AggregationDescriptor<T> CountBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Count);

@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Tests
 {
-    public class StatisticsTests :TestsBase
+    public class StatisticsTests : TestsBase
     {
         [Fact]
         public void SumTest()
@@ -120,7 +120,7 @@ namespace Tests
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
             var typeOneCount = result.Aggs.GetCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
             var engineCardinality = result.Aggs.GetCardinality<Car>(x => x.EngineType);
-            
+
             Check.That(priceSum).Equals(100m);
             Check.That(avgLength).Equals(4.5d);
             Check.That(count).Equals(10);
@@ -325,6 +325,62 @@ namespace Tests
             Check.That(stats.Max).Equals(9d);
             Check.That(min).Equals(0d);
             Check.That(max).Equals(9d);
+        }
+
+        [Fact]
+        public void MinMaxTimeTests()
+        {
+            AddSimpleTestData();
+
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(agg => agg
+                            .MinBy(x => x.Timestamp)
+                            .MaxBy(x => x.Timestamp)
+                        ));
+
+            var container = result.Aggs.AsContainer<Car>();
+
+            var min = container.GetMin(x => x.Timestamp);
+            Check.That(min).Equals(new DateTime(2010, 1, 1));
+
+            var max = container.GetMax(x => x.Timestamp);
+            Check.That(max).Equals(new DateTime(2010, 10, 1));
+        }
+
+        [Fact]
+        public void FirstByTests()
+        {
+            //very stupid test, getting tyhe single value of engine type when engine type is diesel
+            AddSimpleTestData();
+            var aggs = new AggregationDescriptor<Car>()
+                .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue)
+                .FirstBy(x => x.EngineType, c => c.EngineType == EngineType.Diesel)
+                .FirstBy(x => x.CarType, c => c.Sold == true)
+                .FirstBy(x => x.Length);
+
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(x => aggs));
+
+            var sum = result.Aggs.GetSum<Car, decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
+            var engineType = result.Aggs.GetFirstBy<Car,EngineType>(x => x.EngineType, c => c.EngineType == EngineType.Diesel);
+
+            //car type of first sold car
+            var carType = result.Aggs.GetFirstBy<Car, string>(x => x.CarType, c => c.Sold == true);
+
+            var firstLength = result.Aggs.GetFirstBy<Car, double>(x => x.Length);
+
+            Check.That(sum).Equals(25m);
+            Check.That(engineType).Equals(EngineType.Diesel);
+            Check.That(carType).Equals("type0");
+            Check.That(firstLength).Equals(0d);
+
+            var container = result.Aggs.AsContainer<Car>();
+            var lengthFromContainer = container.GetFirstBy(x => x.Length);
+            Check.That(lengthFromContainer).Equals(0d);
         }
     }
 }
