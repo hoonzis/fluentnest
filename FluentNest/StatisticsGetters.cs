@@ -44,12 +44,25 @@ namespace FluentNest
             }
         }
 
-        public static int GetCardinality<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter)
+        public static int GetCardinality<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
             var aggName = fieldGetter.GetAggName(AggType.Cardinality);
-            var itemsTerms = aggs.Cardinality(aggName);
-            if (itemsTerms == null || !itemsTerms.Value.HasValue)
-                throw new InvalidOperationException("There is not cardinality avaialble");
+            ValueMetric itemsTerms;
+
+            if (filterRule == null)
+            {
+                itemsTerms = aggs.Cardinality(aggName);
+            }
+            else
+            {
+                var filterName = filterRule.GenerateFilterName();
+                var filterAgg = aggs.Filter(filterName);
+                itemsTerms = filterAgg.Cardinality(aggName);
+            }
+
+            if (itemsTerms?.Value == null)
+                throw new InvalidOperationException("Cardinality not available");
+
             return (int)itemsTerms.Value.Value;
         }
 
