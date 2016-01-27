@@ -54,10 +54,22 @@ namespace FluentNest
             return agg;
         }
 
-        public static AggregationDescriptor<T> CardinalityBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
+        public static AggregationDescriptor<T> CardinalityBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Cardinality);
-            return agg.Cardinality(aggName, x => x.Field(fieldGetter));
+
+            if (filterRule == null)
+            {
+                return agg.Cardinality(aggName, x => x.Field(fieldGetter));
+            }
+
+            var filterName = filterRule.GenerateFilterName();
+            agg.Filter(filterName,
+                f =>
+                    f.Filter(fd => filterRule.Body.GenerateFilterDescription<T>())
+                        .Aggregations(innerAgg => innerAgg.Cardinality(aggName, field => field.Field(fieldGetter))));
+
+            return agg;
         }
 
         public static AggregationDescriptor<T> DistinctBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
