@@ -1,3 +1,5 @@
+Write-Host "Starting elasticsearch script"
+
 Invoke-WebRequest "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.6.0.zip" -OutFile .\es16.zip;
 
 $destFolder = "$pwd\es16\elasticsearch-1.6.0";
