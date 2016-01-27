@@ -85,6 +85,22 @@ namespace Tests
         }
 
         [Fact]
+        public void CardinalityFilterTest()
+        {
+            AddSimpleTestData();
+            var cardAgg = new AggregationDescriptor<Car>().CardinalityBy(x => x.EngineType, x => x.EngineType == EngineType.Standard);
+            var result =
+                client.Search<Car>(
+                    search =>
+                        search.Take(10).Aggregations(x => cardAgg));
+
+            var container = result.Aggs.AsContainer<Car>();
+            var card = result.Aggs.GetCardinality<Car>(x => x.EngineType, x => x.EngineType == EngineType.Standard);
+            Check.That(card).Equals(1);
+            Check.That(container.GetCardinality(x => x.EngineType, x => x.EngineType == EngineType.Standard)).Equals(1);
+        }
+
+        [Fact]
         public void TestConditionalSum()
         {
             AddSimpleTestData();
