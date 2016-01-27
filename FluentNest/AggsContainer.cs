@@ -14,9 +14,9 @@ namespace FluentNest
             this.aggs = aggs;
         }
 
-        public int GetCardinality(Expression<Func<T, object>> fieldGetter)
+        public int GetCardinality(Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
-            return aggs.GetCardinality(fieldGetter);
+            return aggs.GetCardinality(fieldGetter, filterRule);
         }
 
         public K GetSum<K>(Expression<Func<T, K>> fieldGetter, Expression<Func<T, object>> filterRule = null)
