@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using Elasticsearch.Net;
 using Nest;
+using static Nest.Infer;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using TestModel;
@@ -13,25 +16,22 @@ namespace Tests
     {
         protected ElasticClient client;
 
-        public TestsBase(params Func<ConnectionSettings, ConnectionSettings>[] additionalSettings)
+        public TestsBase(Func<ConnectionSettings, IElasticsearchSerializer> serializerFactory = null)
         {
             var node = new Uri("http://localhost:9600");
+            var connectionPool = new SingleNodeConnectionPool(node);
 
-            var settings = new ConnectionSettings(
-                node,
-                defaultIndex: "my-application"
-                );
-
-            settings = additionalSettings.Aggregate(settings, (current, newSetting) => newSetting(current));
+            var settings = new ConnectionSettings(connectionPool, serializerFactory).DefaultIndex("my-application");
 
             client = new ElasticClient(settings);
         }
 
         public void AddSimpleTestData()
         {
-            client.DeleteIndex(x => x.Index<Car>());
-            client.CreateIndex(c => c.Index<Car>().AddMapping<Car>(x => x
-            .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed)))));
+            client.DeleteIndex(Index<Car>());
+            client.CreateIndex(Index<Car>(), x => x.Mappings(
+                m => m.Map<Car>(t => t
+            .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
 
             for (int i = 0; i < 10; i++)
             {
@@ -48,11 +48,14 @@ namespace Tests
                     ConditionalRanking = i%2 ==0 ? null : (int?)i
                 };
 
-                var json = Encoding.UTF8.GetString(client.Serializer.Serialize(car));
-                Console.WriteLine(json);
+                using (var ms = new MemoryStream())
+                {
+                    client.Serializer.Serialize(car, ms);
+                    Console.WriteLine(Encoding.UTF8.GetString(ms.ToArray()));
+                }
                 client.Index(car);
             }
-            client.Flush(x => x.Index<Car>());
+            client.Flush(Index<Car>());
         }
     }
 }

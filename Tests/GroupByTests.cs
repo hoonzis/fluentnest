@@ -10,18 +10,18 @@ using Xunit;
 
 namespace Tests
 {   
-    public class GroupByTests :TestsBase
+    public class GroupByTests : TestsBase
     {
         [Fact]
         public void NestedGroupBy()
         {
             AddSimpleTestData();
-            var agg = new AggregationDescriptor<Car>()
+            var agg = new AggregationContainerDescriptor<Car>()
                 .SumBy(s => s.Price)
                 .GroupBy(s => s.EngineType)
                 .GroupBy(b => b.CarType);
 
-            var result =client.Search<Car>(search =>search.Aggregations(x => agg));
+            var result = client.Search<Car>(search => search.Aggregations(x => agg));
 
 
             var carTypes = result.Aggs.GetGroupBy<Car>(x => x.CarType).ToList();
@@ -42,7 +42,7 @@ namespace Tests
         public void GetDictionaryFromGroupBy()
         {
             AddSimpleTestData();
-            var sumOnPrice = new AggregationDescriptor<Car>().SumBy(s => s.Price);
+            var sumOnPrice = new AggregationContainerDescriptor<Car>().SumBy(s => s.Price);
 
             var result =
                 client.Search<Car>(search => search.Aggregations(x => sumOnPrice.GroupBy(s => s.EngineType)));
@@ -56,7 +56,7 @@ namespace Tests
         public void GroupByStringKeys()
         {
             AddSimpleTestData();
-            var agg = new AggregationDescriptor<Car>()
+            var agg = new AggregationContainerDescriptor<Car>()
                 .SumBy(s => s.Price)
                 .GroupBy("engineType");
 
@@ -70,7 +70,7 @@ namespace Tests
         public void DynamicGroupByListOfKeys()
         {
             AddSimpleTestData();
-            var agg = new AggregationDescriptor<Car>()
+            var agg = new AggregationContainerDescriptor<Car>()
                 .SumBy(s => s.Price)
                 .GroupBy(new List<string> {"engineType", "carType"});
 
@@ -124,7 +124,7 @@ namespace Tests
         public void Distinct_Test()
         {
             AddSimpleTestData();
-            var agg = new AggregationDescriptor<Car>()
+            var agg = new AggregationContainerDescriptor<Car>()
                 .DistinctBy(x => x.CarType)
                 .DistinctBy(x => x.EngineType);
 
@@ -148,7 +148,7 @@ namespace Tests
         public void Simple_Filtered_Distinct_Test()
         {
             AddSimpleTestData();
-            var agg = new AggregationDescriptor<Car>()
+            var agg = new AggregationContainerDescriptor<Car>()
                 .DistinctBy(x => x.CarType)
                 .DistinctBy(x => x.EngineType);
 
@@ -171,7 +171,7 @@ namespace Tests
         public void Distinct_Time_And_Term_Filter_Test()
         {
             AddSimpleTestData();
-            var agg = new AggregationDescriptor<Car>()
+            var agg = new AggregationContainerDescriptor<Car>()
                 .DistinctBy(x => x.CarType)
                 .DistinctBy(x => x.EngineType);
 
