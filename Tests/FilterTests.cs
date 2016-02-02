@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 using FluentNest;
 using FSharpModel;
 using Nest;
@@ -268,6 +270,20 @@ namespace Tests
             AddSimpleTestData();
             var allUsers = client.Search<User>(s => s.FilterOn(x => x.Type == UserType.Admin));
             Check.That(allUsers.Documents).HasSize(5);
+        }
+
+        [Fact]
+        public void Filter_ValueWithin_Test()
+        {
+            AddSimpleTestData();
+            var container = new FilterContainer();
+            container = container.AndValueWithin<User>(x => x.Name, new List<string> {"name1", "name2"});
+
+            var sc = new SearchDescriptor<User>().FilteredOn(container);
+            var json = Encoding.UTF8.GetString(client.Serializer.Serialize(sc));
+            var allUsers = client.Search<User>(sc);
+            Check.That(json).Contains("name1");
+            Check.That(allUsers.Documents).HasSize(6);
         }
     }
 }
