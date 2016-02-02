@@ -54,7 +54,7 @@ namespace Tests
                             a => a.DateHistogram(x => x.Timestamp, DateInterval.Month).GroupBy(x => x.CarType)));
 
             var carTypes =
-                histogramsPerCarType.Aggs.GetDictioanry<Car, IList<DateHistogramItem>>(x => x.CarType,
+                histogramsPerCarType.Aggs.GetDictionary<Car, IList<DateHistogramItem>>(x => x.CarType,
                     v => v.GetDateHistogram<Car>(f => f.Timestamp));
 
             Check.That(carTypes).HasSize(3);

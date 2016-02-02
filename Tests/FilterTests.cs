@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Text;
 using FluentNest;
 using Nest;
 using static Nest.Infer;
@@ -33,19 +35,20 @@ namespace Tests
         {
             var node = new Uri("http://localhost:9600");
 
-            var settings = new ConnectionSettings(
-                node
-                //defaultIndex: "my-application"
-            );
+            var settings = new ConnectionSettings(node).DefaultIndex("my-application");
             client = new ElasticClient(settings);
         }
 
         private void AddSimpleTestData()
         {
-            client.DeleteIndex(Indices.AllIndices);
-            var createIndexResult = client.CreateIndex("test", x => x.Mappings(m => m.Map<User>(u => u.AutoMap())));
+            client.DeleteIndex(Index<Car>());
+            client.DeleteIndex(Index("test"));
+            var createIndexResult = client.CreateIndex(Index("test"), x => x.Mappings(m => m.Map<User>(u => u.AutoMap())));
+            //client.CreateIndex(Index<Car>(), x => x.Mappings(
+            //    m => m.Map<Car>(t => t
+            //.Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
 
-            Check.That(createIndexResult.Acknowledged).IsTrue();
+            //Check.That(createIndexResult.Acknowledged).IsTrue();
             for (int i = 0; i < 10; i++)
             {
                 var car = new Car
@@ -83,7 +86,7 @@ namespace Tests
 
             var startDate = new DateTime(2010, 1, 1);
             var endDate = new DateTime(2010, 3, 1);
-           
+
             var result = client.Search<Car>(s => s.FilterOn(x => x.Timestamp >= startDate && x.Timestamp <= endDate && x.CarType == "type0"));
 
 
@@ -96,7 +99,6 @@ namespace Tests
             AddSimpleTestData();
 
             var startDate = new DateTime(2010, 1, 1);
-
             var result = client.Search<Car>(s => s.FilterOn(x => x.Timestamp == startDate));
             
             Check.That(result.Documents).HasSize(1);
@@ -138,8 +140,8 @@ namespace Tests
             var endDate = new DateTime(2010, 5, 1);
 
             var result = client.Search<Car>(s => s.Query(
-                q => q.Bool(b => b.Must(left => left.DateRange(f => f.Field(fd => fd.Timestamp).GreaterThan(startDate)))
-                    .Must(right => right.DateRange(f => f.Field(fd => fd.Timestamp).LessThan(endDate)))
+                q => q.Bool(b => b.Must(left => left.DateRange(f => f.Field(fd => fd.Timestamp).GreaterThan(startDate)), 
+                                        right => right.DateRange(f => f.Field(fd => fd.Timestamp).LessThan(endDate)))
                     )
                 ));
             Check.That(result.Documents).HasSize(3);
@@ -203,7 +205,6 @@ namespace Tests
             AddSimpleTestData();
 
             var sc = new SearchDescriptor<User>();
-            sc = sc.Index("test");
 
             var filter = NestHelperMethods
                 .CreateFilter<User>(x => x.Name == "name1" && x.Age >= 5)
@@ -211,7 +212,7 @@ namespace Tests
 
             var ageSum  = new AggregationContainerDescriptor<User>().SumBy(x => x.Age);
 
-            sc = sc.FilteredOn(filter).Aggregations(agg => ageSum);
+            sc = sc.Index("test").FilteredOn(filter).Aggregations(agg => ageSum);
 
             var filterdAggregation = client.Search<User>(sc);
             var sumValue = filterdAggregation.Aggs.GetSum<User, int>(x => x.Age);
@@ -253,7 +254,7 @@ namespace Tests
 
             var filter = NestHelperMethods
                 .CreateFilter<User>(x => x.Active);
-
+            
             var allUsers = client.Search<User>(s => s.Index("test").Query(_ => filter));
             Check.That(allUsers.Documents).HasSize(5);
         }

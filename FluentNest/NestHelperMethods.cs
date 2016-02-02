@@ -249,8 +249,7 @@ namespace FluentNest
                 var leftFilter = GenerateFilterDescription<T>(binaryExpression.Left);
                 var rightFilter = GenerateFilterDescription<T>(binaryExpression.Right);
                 var filterDescriptor = new QueryContainerDescriptor<T>();
-                return filterDescriptor.Bool(s => s.Must(leftFilter).Must(rightFilter));
-
+                return filterDescriptor.Bool(s => s.Must(leftFilter, rightFilter));
             }
             else if (expType == ExpressionType.Or || expType == ExpressionType.OrElse)
             {
@@ -258,7 +257,7 @@ namespace FluentNest
                 var leftFilter = GenerateFilterDescription<T>(binaryExpression.Left);
                 var rightFilter = GenerateFilterDescription<T>(binaryExpression.Right);
                 var filterDescriptor = new QueryContainerDescriptor<T>();
-                return filterDescriptor.Bool(x => x.Should(leftFilter).Should(rightFilter).MinimumShouldMatch(1));
+                return filterDescriptor.Bool(x => x.Should(leftFilter, rightFilter).MinimumShouldMatch(1));
             }
             else if (expType == ExpressionType.Equal)
             {
@@ -353,7 +352,7 @@ namespace FluentNest
         public static SearchDescriptor<T> FilteredOn<T>(this SearchDescriptor<T> searchDescriptor, Expression<Func<T, bool>> filterRule) where T : class
         {           
             var binaryExpression = filterRule.Body as BinaryExpression;            
-            return searchDescriptor.Query(q => q.Filtered(fil=>fil.Filter(f=>GenerateFilterDescription<T>(binaryExpression))));
+            return searchDescriptor.Query(q => q.Bool(b => b.Must(GenerateFilterDescription<T>(binaryExpression))));
         }
 
         public static SearchDescriptor<T> FilteredOn<T>(this SearchDescriptor<T> searchDescriptor, QueryContainer container) where T : class
@@ -379,7 +378,7 @@ namespace FluentNest
             var filterDescriptor = new QueryContainerDescriptor<T>();
             var binaryExpression = filterRule.Body as BinaryExpression;
             var newPartOfQuery = GenerateFilterDescription<T>(binaryExpression);
-            return filterDescriptor.Bool(x => x.Must(queryDescriptor).Must(newPartOfQuery));            
+            return filterDescriptor.Bool(x => x.Must(queryDescriptor, newPartOfQuery));            
         }
 
         public static QueryContainer CreateFilter<T>(Expression<Func<T, bool>> filterRule) where T : class

@@ -83,7 +83,7 @@ namespace FluentNest
             return itemsTerms.Items;
         }
 
-        public static IDictionary<V, KeyedBucket> GetDictioanry<T,V>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter) where V:struct,IConvertible
+        public static IDictionary<V, KeyedBucket> GetDictionary<T,V>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter) where V:struct,IConvertible
         {
             var aggName = fieldGetter.GetAggName(AggType.GroupBy);
             var itemsTerms = aggs.Terms(aggName);
@@ -94,7 +94,7 @@ namespace FluentNest
             return itemsTerms.Items.ToDictionary(x => (V)(Object)x.Key);
         }
 
-        public static IDictionary<String, K> GetDictioanry<T, K>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter, Func<KeyedBucket, K> objectTransformer)
+        public static IDictionary<String, K> GetDictionary<T, K>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter, Func<KeyedBucket, K> objectTransformer)
         {
             var aggName = fieldGetter.GetAggName(AggType.GroupBy);
             var itemsTerms = aggs.Terms(aggName);

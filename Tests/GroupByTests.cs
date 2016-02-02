@@ -47,7 +47,7 @@ namespace Tests
             var result =
                 client.Search<Car>(search => search.Aggregations(x => sumOnPrice.GroupBy(s => s.EngineType)));
 
-            var carTypes = result.Aggs.GetDictioanry<Car,EngineType>(x => x.EngineType);
+            var carTypes = result.Aggs.GetDictionary<Car,EngineType>(x => x.EngineType);
             Check.That(carTypes).HasSize(2);
             Check.That(carTypes.Keys).ContainsExactly(EngineType.Diesel, EngineType.Standard);
         }
