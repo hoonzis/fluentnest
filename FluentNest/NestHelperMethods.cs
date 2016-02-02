@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Microsoft.FSharp.Core;
+using Microsoft.FSharp.Reflection;
 using Nest;
 
 namespace FluentNest
@@ -200,6 +204,12 @@ namespace FluentNest
         {
             var binaryExpression = expression as BinaryExpression;
             var value = GetValue(binaryExpression.Right);
+            if (FSharpType.IsUnion(value.GetType(), FSharpOption<BindingFlags>.None))
+            {
+                var fields = FSharpValue.GetUnionFields(value, value.GetType(), FSharpOption<BindingFlags>.None);
+                var unionCase = fields.Item1;
+                value = unionCase.Name;
+            }
             var filterDescriptor = new FilterDescriptor<T>();
             var fieldName = GetFieldName(binaryExpression.Left);
             return filterDescriptor.Term(fieldName, value);
