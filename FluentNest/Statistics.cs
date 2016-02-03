@@ -6,7 +6,7 @@ namespace FluentNest
 {
     public static class Statistics
     {
-        public static AggregationDescriptor<T> SumBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
+        public static AggregationContainerDescriptor<T> SumBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Sum);
             if (filterRule == null)
@@ -22,7 +22,7 @@ namespace FluentNest
             return agg;
         }
 
-        public static AggregationDescriptor<T> FirstBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
+        public static AggregationContainerDescriptor<T> FirstBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Sum);
             if (filterRule == null)
@@ -38,7 +38,7 @@ namespace FluentNest
             return agg;
         }
 
-        public static AggregationDescriptor<T> CountBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
+        public static AggregationContainerDescriptor<T> CountBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Count);
             if (filterRule == null)
@@ -54,7 +54,7 @@ namespace FluentNest
             return agg;
         }
 
-        public static AggregationDescriptor<T> CardinalityBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
+        public static AggregationContainerDescriptor<T> CardinalityBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Cardinality);
 
@@ -72,37 +72,37 @@ namespace FluentNest
             return agg;
         }
 
-        public static AggregationDescriptor<T> DistinctBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
+        public static AggregationContainerDescriptor<T> DistinctBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Distinct);
             return agg.Terms(aggName, x => x.Field(fieldGetter));
         }
 
-        public static AggregationDescriptor<T> AverageBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
+        public static AggregationContainerDescriptor<T> AverageBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Average);
             return agg.Average(aggName, x => x.Field(fieldGetter));
         }
 
-        public static AggregationDescriptor<T> PercentilesBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
+        public static AggregationContainerDescriptor<T> PercentilesBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Percentile);
             return agg.Percentiles(aggName, x => x.Field(fieldGetter));
         }
 
-        public static AggregationDescriptor<T> MaxBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
+        public static AggregationContainerDescriptor<T> MaxBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Max);
             return agg.Max(aggName, x => x.Field(fieldGetter));
         }
 
-        public static AggregationDescriptor<T> MinBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
+        public static AggregationContainerDescriptor<T> MinBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Min);
             return agg.Min(aggName, x => x.Field(fieldGetter));
         }
 
-        public static AggregationDescriptor<T> StatsBy<T>(this AggregationDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
+        public static AggregationContainerDescriptor<T> StatsBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Stats);
             return agg.Stats(aggName, x => x.Field(fieldGetter));

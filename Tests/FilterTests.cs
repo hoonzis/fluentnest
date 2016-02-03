@@ -1,9 +1,13 @@
 ﻿using System;
+using System.IO;
+using System.Text;
 using FluentNest;
 using Nest;
+using static Nest.Infer;
 using NFluent;
 using TestModel;
 using Xunit;
+using Indices = Nest.Indices;
 
 namespace Tests
 {
@@ -13,7 +17,7 @@ namespace Tests
 
         class User
         {
-            [ElasticProperty(OmitNorms = true, Index = FieldIndexOption.NotAnalyzed)]
+            [String(Index = FieldIndexOption.NotAnalyzed)]
             public String Email { get; set; }
 
             public String Name { get; set; }
@@ -31,18 +35,15 @@ namespace Tests
         {
             var node = new Uri("http://localhost:9600");
 
-            var settings = new ConnectionSettings(
-                node,
-                defaultIndex: "my-application"
-            );
+            var settings = new ConnectionSettings(node).DefaultIndex("my-application");
             client = new ElasticClient(settings);
         }
 
         private void AddSimpleTestData()
         {
-            client.DeleteIndex(x => x.Index<Car>());
-            client.DeleteIndex(x => x.Index("test"));
-            var createIndexResult = client.CreateIndex("test", x => x.AddMapping<User>(c => c.MapFromAttributes()));
+            client.DeleteIndex(Index<Car>());
+            client.DeleteIndex(Index("test"));
+            var createIndexResult = client.CreateIndex(Index("test"), x => x.Mappings(m => m.Map<User>(u => u.AutoMap())));
 
             Check.That(createIndexResult.Acknowledged).IsTrue();
             for (int i = 0; i < 10; i++)
@@ -71,8 +72,7 @@ namespace Tests
                 };
                 client.Index(user, c => c.Index("test"));
             }
-            client.Flush(x => x.Index("test"));
-            client.Flush(x => x.Index<Car>());
+            client.Flush(Indices.AllIndices);
         }
 
 
@@ -83,7 +83,7 @@ namespace Tests
 
             var startDate = new DateTime(2010, 1, 1);
             var endDate = new DateTime(2010, 3, 1);
-           
+
             var result = client.Search<Car>(s => s.FilterOn(x => x.Timestamp >= startDate && x.Timestamp <= endDate && x.CarType == "type0"));
 
 
@@ -96,7 +96,6 @@ namespace Tests
             AddSimpleTestData();
 
             var startDate = new DateTime(2010, 1, 1);
-
             var result = client.Search<Car>(s => s.FilterOn(x => x.Timestamp == startDate));
             
             Check.That(result.Documents).HasSize(1);
@@ -120,7 +119,7 @@ namespace Tests
 
             var carType = "Type0".ToLower();
             //Standard Nest way of getting the docuements. Values are lowered by ES
-            var result = client.Search<Car>(s => s.Filter(x => x.Term(f => f.CarType, carType)));
+            var result = client.Search<Car>(s => s.Query(x => x.Term(f => f.CarType, carType)));
             Check.That(result.Documents).HasSize(5);
             
             //Best way
@@ -136,16 +135,12 @@ namespace Tests
 
             var startDate = new DateTime(2010, 1, 1);
             var endDate = new DateTime(2010, 5, 1);
-         
+
             var result = client.Search<Car>(s => s.Query(
-                    q=>q.Filtered(fil=>fil.Filter(
-                        x => x.And(
-                            left=>left.Range(f=>f.OnField(fd=>fd.Timestamp).Greater(startDate)),
-                            right=>right.Range(f=>f.OnField(fd=>fd.Timestamp).Lower(endDate))
-                        )
+                q => q.Bool(b => b.Must(left => left.DateRange(f => f.Field(fd => fd.Timestamp).GreaterThan(startDate)), 
+                                        right => right.DateRange(f => f.Field(fd => fd.Timestamp).LessThan(endDate)))
                     )
-                )
-            ));
+                ));
             Check.That(result.Documents).HasSize(3);
 
             //Much better
@@ -164,7 +159,12 @@ namespace Tests
             //these two searches should provide the same result
             var result =
                 client.Search<User>(
-                    s => s.Index("test").Query(q => q.Filtered(f => f.Filter(fil => fil.Term(term => term.Email, "Email@email1.com")))));
+                    s =>
+                        s.Index("test")
+                            .Query(
+                                q =>
+                                    q.Bool(
+                                        b => b.Must(x => x.Term(term => term.Email, "Email@email1.com")))));
             Check.That(result.Documents).HasSize(5);
 
             result = client.Search<User>(s => s.Index("test").FilteredOn(f => f.Email == "Email@email1.com"));
@@ -180,7 +180,7 @@ namespace Tests
                 .CreateFilter<User>(x => x.Name == "name1" && x.Age >= 5)
                 .AndFilteredOn<User>(x => x.Email == "Email@email1.com");
 
-            var allUsers = client.Search<User>(s => s.Index("test").Filter(filter));
+            var allUsers = client.Search<User>(s => s.Index("test").Query(_ => filter));
             Check.That(allUsers.Documents).HasSize(1);            
         }
 
@@ -192,7 +192,7 @@ namespace Tests
             var filter = NestHelperMethods
                 .CreateFilter<User>(x => x.Enabled == true);
 
-            var allUsers = client.Search<User>(s => s.Index("test").Filter(filter));
+            var allUsers = client.Search<User>(s => s.Index("test").Query(_ => filter));
             Check.That(allUsers.Documents).HasSize(5);
         }
 
@@ -202,15 +202,14 @@ namespace Tests
             AddSimpleTestData();
 
             var sc = new SearchDescriptor<User>();
-            sc = sc.Index("test");
 
             var filter = NestHelperMethods
                 .CreateFilter<User>(x => x.Name == "name1" && x.Age >= 5)
                 .AndFilteredOn<User>(x => x.Email == "Email@email1.com");
 
-            var ageSum  = new AggregationDescriptor<User>().SumBy(x => x.Age);
+            var ageSum  = new AggregationContainerDescriptor<User>().SumBy(x => x.Age);
 
-            sc = sc.FilteredOn(filter).Aggregations(agg => ageSum);
+            sc = sc.Index("test").FilteredOn(filter).Aggregations(agg => ageSum);
 
             var filterdAggregation = client.Search<User>(sc);
             var sumValue = filterdAggregation.Aggs.GetSum<User, int>(x => x.Age);
@@ -229,7 +228,7 @@ namespace Tests
             var filter = NestHelperMethods
                 .CreateFilter<User>(x => x.Name == "name1" || x.Age >= 5);
 
-            var allUsers = client.Search<User>(s => s.Index("test").Filter(filter));
+            var allUsers = client.Search<User>(s => s.Index("test").Query(_ => filter));
             Check.That(allUsers.Documents).HasSize(7);
         }
 
@@ -241,7 +240,7 @@ namespace Tests
             var filter = NestHelperMethods
                 .CreateFilter<User>(x => x.Name != "name1" && x.Name != "name2");
 
-            var allUsers = client.Search<User>(s => s.Index("test").Filter(filter));
+            var allUsers = client.Search<User>(s => s.Index("test").Query(_ => filter));
             Check.That(allUsers.Documents).HasSize(4);
         }
 
@@ -252,8 +251,8 @@ namespace Tests
 
             var filter = NestHelperMethods
                 .CreateFilter<User>(x => x.Active);
-
-            var allUsers = client.Search<User>(s => s.Index("test").Filter(filter));
+            
+            var allUsers = client.Search<User>(s => s.Index("test").Query(_ => filter));
             Check.That(allUsers.Documents).HasSize(5);
         }
 

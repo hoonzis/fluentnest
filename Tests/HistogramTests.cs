@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentNest;
 using Nest;
+using static Nest.Infer;
 using NFluent;
 using TestModel;
 using Xunit;
@@ -17,17 +18,14 @@ namespace Tests
         {
             var node = new Uri("http://localhost:9600");
 
-            var settings = new ConnectionSettings(
-                node,
-                defaultIndex: "my-application"
-            );
+            var settings = new ConnectionSettings(node).DefaultIndex("my-application");
 
             client = new ElasticClient(settings);
         }
 
         private void AddSimpleTestData()
         {
-            client.DeleteIndex(x => x.Index<Car>());
+            client.DeleteIndex(Index<Car>());
             for (int i = 0; i < 10; i++)
             {
                 var car = new Car
@@ -42,7 +40,7 @@ namespace Tests
                 };
                 client.Index(car);
             }
-            client.Flush(x => x.Index<Car>());
+            client.Flush(Index<Car>());
         }
 
         [Fact]
@@ -56,13 +54,14 @@ namespace Tests
                             a => a.DateHistogram(x => x.Timestamp, DateInterval.Month).GroupBy(x => x.CarType)));
 
             var carTypes =
-                histogramsPerCarType.Aggs.GetDictioanry<Car, IList<HistogramItem>>(x => x.CarType,
+                histogramsPerCarType.Aggs.GetDictionary<Car, IList<DateHistogramItem>>(x => x.CarType,
                     v => v.GetDateHistogram<Car>(f => f.Timestamp));
 
             Check.That(carTypes).HasSize(3);
 
             var firstType = carTypes["type0"];
-            Check.That(firstType).HasSize(4);
+            Check.That(firstType).HasSize(10);
+            Check.That(firstType.Sum(x => x.DocCount)).IsEqualTo(4);
         }
 
         [Fact]
@@ -86,7 +85,7 @@ namespace Tests
         public void SumInMonthlyHistogram()
         {
             AddSimpleTestData();
-            var sumOnPrice = new AggregationDescriptor<Car>().SumBy(x => x.Price);
+            var sumOnPrice = new AggregationContainerDescriptor<Car>().SumBy(x => x.Price);
             var esResult =
                 client.Search<Car>(
                     search => search.Aggregations(x => sumOnPrice.IntoDateHistogram(date => date.Timestamp, DateInterval.Month)));
@@ -103,7 +102,7 @@ namespace Tests
             var start = new DateTime(2010, 1, 1);
             var end = new DateTime(2010, 4, 4);
 
-            var agg = new AggregationDescriptor<Car>()
+            var agg = new AggregationContainerDescriptor<Car>()
                 .SumBy(x => x.Price)
                 .IntoDateHistogram(date => date.Timestamp, DateInterval.Month);
 

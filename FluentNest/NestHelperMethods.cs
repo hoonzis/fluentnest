@@ -17,10 +17,10 @@ namespace FluentNest
             return Char.ToLowerInvariant(str[0]) + str.Substring(1);
         }
 
-        public static AggregationDescriptor<T> IntoDateHistogram<T>(this AggregationDescriptor<T> innerAggregation,
+        public static AggregationContainerDescriptor<T> IntoDateHistogram<T>(this AggregationContainerDescriptor<T> innerAggregation,
             Expression<Func<T, Object>> fieldGetter, DateInterval interval) where T : class
         {
-            AggregationDescriptor<T> v = new AggregationDescriptor<T>();
+            AggregationContainerDescriptor<T> v = new AggregationContainerDescriptor<T>();
             var fieldName = GetName(fieldGetter);
             v.DateHistogram(fieldName, dr =>
             {
@@ -32,10 +32,10 @@ namespace FluentNest
             return v;
         }
 
-        public static AggregationDescriptor<T> IntoHistogram<T>(this AggregationDescriptor<T> innerAggregation,
+        public static AggregationContainerDescriptor<T> IntoHistogram<T>(this AggregationContainerDescriptor<T> innerAggregation,
             Expression<Func<T, Object>> fieldGetter, int interval) where T : class
         {
-            AggregationDescriptor<T> v = new AggregationDescriptor<T>();
+            AggregationContainerDescriptor<T> v = new AggregationContainerDescriptor<T>();
             var fieldName = GetName(fieldGetter);
             v.Histogram(fieldName, dr =>
             {
@@ -47,7 +47,7 @@ namespace FluentNest
             return v;
         }
 
-        public static AggregationDescriptor<T> DateHistogram<T>(this AggregationDescriptor<T> agg,
+        public static AggregationContainerDescriptor<T> DateHistogram<T>(this AggregationContainerDescriptor<T> agg,
             Expression<Func<T, Object>> fieldGetter, DateInterval dateInterval) where T : class
         {
             return agg.DateHistogram(GetName(fieldGetter), x => x.Field(fieldGetter).Interval(dateInterval));
@@ -82,14 +82,14 @@ namespace FluentNest
         }
 
 
-        public static IList<HistogramItem> GetDateHistogram<T>(this KeyItem item,
+        public static IList<DateHistogramItem> GetDateHistogram<T>(this KeyedBucket item,
             Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = item.DateHistogram(GetName(fieldGetter));
             return histogramItem.Items;
         }
 
-        public static IList<HistogramItem> GetDateHistogram<T>(this AggregationsHelper aggs,
+        public static IList<DateHistogramItem> GetDateHistogram<T>(this AggregationsHelper aggs,
             Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = aggs.DateHistogram(GetName(fieldGetter));
@@ -103,7 +103,7 @@ namespace FluentNest
             return histogramItem.Items;
         }
 
-        public static FilterContainer GenerateComparisonFilter<T>(this Expression expression, ExpressionType type)
+        public static QueryContainer GenerateComparisonFilter<T>(this Expression expression, ExpressionType type)
             where T : class
         {
             var binaryExpression = expression as BinaryExpression;
@@ -127,94 +127,94 @@ namespace FluentNest
             throw new InvalidOperationException("Comparison on non-supported type");
         }
 
-        public static FilterContainer GenerateComparisonFilter<T>(DateTime value, ExpressionType type, string fieldName)
+        public static QueryContainer GenerateComparisonFilter<T>(DateTime value, ExpressionType type, string fieldName)
             where T : class
         {
-            var filterDescriptor = new FilterDescriptor<T>();
+            var filterDescriptor = new QueryContainerDescriptor<T>();
             if (type == ExpressionType.LessThan)
             {
-                return filterDescriptor.Range(x => x.Lower(value).OnField(fieldName));
+                return filterDescriptor.DateRange(x => x.LessThan(value).Field(fieldName));
             }
             else if (type == ExpressionType.GreaterThan)
             {
-                return filterDescriptor.Range(x => x.Greater(value).OnField(fieldName));
+                return filterDescriptor.DateRange(x => x.GreaterThan(value).Field(fieldName));
             }
             else if (type == ExpressionType.LessThanOrEqual)
             {
-                return filterDescriptor.Range(x => x.LowerOrEquals(value).OnField(fieldName));
+                return filterDescriptor.DateRange(x => x.LessThanOrEquals(value).Field(fieldName));
             }
             else if (type == ExpressionType.GreaterThanOrEqual)
             {
-                return filterDescriptor.Range(x => x.GreaterOrEquals(value).OnField(fieldName));
+                return filterDescriptor.DateRange(x => x.GreaterThanOrEquals(value).Field(fieldName));
             }
             throw new NotImplementedException();
         }
 
-        public static FilterContainer GenerateComparisonFilter<T>(long value, ExpressionType type, string fieldName)
+        public static QueryContainer GenerateComparisonFilter<T>(long value, ExpressionType type, string fieldName)
             where T : class
         {
-            var filterDescriptor = new FilterDescriptor<T>();
+            var filterDescriptor = new QueryContainerDescriptor<T>();
             if (type == ExpressionType.LessThan)
             {
-                return filterDescriptor.Range(x => x.Lower(value).OnField(fieldName));
+                return filterDescriptor.Range(x => x.LessThan(value).Field(fieldName));
             }
             else if (type == ExpressionType.GreaterThan)
             {
-                return filterDescriptor.Range(x => x.Greater(value).OnField(fieldName));
+                return filterDescriptor.Range(x => x.GreaterThan(value).Field(fieldName));
             }
             else if (type == ExpressionType.LessThanOrEqual)
             {
-                return filterDescriptor.Range(x => x.LowerOrEquals(value).OnField(fieldName));
+                return filterDescriptor.Range(x => x.LessThanOrEquals(value).Field(fieldName));
             }
             else if (type == ExpressionType.GreaterThanOrEqual)
             {
-                return filterDescriptor.Range(x => x.GreaterOrEquals(value).OnField(fieldName));
+                return filterDescriptor.Range(x => x.GreaterThanOrEquals(value).Field(fieldName));
             }
             throw new NotImplementedException();
         }
 
-        public static FilterContainer GenerateComparisonFilter<T>(double value, ExpressionType type, string fieldName)
+        public static QueryContainer GenerateComparisonFilter<T>(double value, ExpressionType type, string fieldName)
             where T : class
         {
-            var filterDescriptor = new FilterDescriptor<T>();
+            var filterDescriptor = new QueryContainerDescriptor<T>();
             if (type == ExpressionType.LessThan)
             {
-                return filterDescriptor.Range(x => x.Lower(value).OnField(fieldName));
+                return filterDescriptor.Range(x => x.LessThan(value).Field(fieldName));
             }
             else if (type == ExpressionType.GreaterThan)
             {
-                return filterDescriptor.Range(x => x.Greater(value).OnField(fieldName));
+                return filterDescriptor.Range(x => x.GreaterThan(value).Field(fieldName));
             }
             else if (type == ExpressionType.LessThanOrEqual)
             {
-                return filterDescriptor.Range(x => x.LowerOrEquals(value).OnField(fieldName));
+                return filterDescriptor.Range(x => x.LessThanOrEquals(value).Field(fieldName));
             }
             else if (type == ExpressionType.GreaterThanOrEqual)
             {
-                return filterDescriptor.Range(x => x.GreaterOrEquals(value).OnField(fieldName));
+                return filterDescriptor.Range(x => x.GreaterThanOrEquals(value).Field(fieldName));
             }
             throw new NotImplementedException();
         }
 
-        public static FilterContainer GenerateEqualityFilter<T>(this Expression expression) where T : class
+        public static QueryContainer GenerateEqualityFilter<T>(this Expression expression) where T : class
         {
             var binaryExpression = expression as BinaryExpression;
             var value = GetValue(binaryExpression.Right);
-            var filterDescriptor = new FilterDescriptor<T>();
+            var queryContainerDescriptor = new QueryContainerDescriptor<T>();
             var fieldName = GetFieldName(binaryExpression.Left);
-            return filterDescriptor.Term(fieldName, value);
+            return queryContainerDescriptor.Term(fieldName, value);
         }
 
-        public static FilterContainer GenerateNotEqualFilter<T>(this Expression expression) where T : class
+        public static QueryContainer GenerateNotEqualFilter<T>(this Expression expression) where T : class
         {
             var equalityFilter = GenerateEqualityFilter<T>(expression);
-            var filterDescriptor = new FilterDescriptor<T>();
-            return filterDescriptor.Not(x => equalityFilter);
+            var filterDescriptor = new QueryContainerDescriptor<T>();
+            return filterDescriptor.Bool(x => x.MustNot(equalityFilter));
         }
 
-        public static FilterContainer GenerateBoolFilter<T>(this Expression expression) where T : class
+        public static QueryContainer GenerateBoolFilter<T>(this Expression expression) where T : class
         {
-            var filterDescriptor = new FilterDescriptor<T>();
+            var filterDescriptor = new QueryContainerDescriptor<T>();
             var fieldName = GenerateFilterName(expression);
             return filterDescriptor.Term(fieldName, true);
         }
@@ -239,7 +239,7 @@ namespace FluentNest
             return FirstCharacterToLower(expression.Member.Name);
         }
 
-        public static FilterContainer GenerateFilterDescription<T>(this Expression expression) where T:class
+        public static QueryContainer GenerateFilterDescription<T>(this Expression expression) where T:class
         {
             var expType = expression.NodeType;
             
@@ -248,17 +248,16 @@ namespace FluentNest
                 var binaryExpression = expression as BinaryExpression;
                 var leftFilter = GenerateFilterDescription<T>(binaryExpression.Left);
                 var rightFilter = GenerateFilterDescription<T>(binaryExpression.Right);
-                var filterDescriptor = new FilterDescriptor<T>();
-                return filterDescriptor.And(leftFilter, rightFilter);
-
+                var filterDescriptor = new QueryContainerDescriptor<T>();
+                return filterDescriptor.Bool(s => s.Must(leftFilter, rightFilter));
             }
             else if (expType == ExpressionType.Or || expType == ExpressionType.OrElse)
             {
                 var binaryExpression = expression as BinaryExpression;
                 var leftFilter = GenerateFilterDescription<T>(binaryExpression.Left);
                 var rightFilter = GenerateFilterDescription<T>(binaryExpression.Right);
-                var filterDescriptor = new FilterDescriptor<T>();
-                return filterDescriptor.Or(leftFilter, rightFilter);
+                var filterDescriptor = new QueryContainerDescriptor<T>();
+                return filterDescriptor.Bool(x => x.Should(leftFilter, rightFilter).MinimumShouldMatch(1));
             }
             else if (expType == ExpressionType.Equal)
             {
@@ -277,8 +276,8 @@ namespace FluentNest
                     var parentFieldExpression = (memberExpression.Expression as MemberExpression);
                     var parentFieldName = GetFieldNameFromMember(parentFieldExpression);
 
-                    var filterDescriptor = new FilterDescriptor<T>();
-                    return filterDescriptor.Exists(parentFieldName);
+                    var filterDescriptor = new QueryContainerDescriptor<T>();
+                    return filterDescriptor.Exists(x => x.Field(parentFieldName));
                 }
                 var isProperty = memberExpression.Member.MemberType == MemberTypes.Property;
                 if (isProperty)
@@ -347,41 +346,42 @@ namespace FluentNest
         {
             var binaryExpression = filterRule.Body as BinaryExpression;
             var filterDescriptor = GenerateFilterDescription<T>(binaryExpression);
-            return searchDescriptor.Filter(f => filterDescriptor);           
+            return searchDescriptor.Query(_ => filterDescriptor);
         }
 
         public static SearchDescriptor<T> FilteredOn<T>(this SearchDescriptor<T> searchDescriptor, Expression<Func<T, bool>> filterRule) where T : class
         {           
             var binaryExpression = filterRule.Body as BinaryExpression;            
-            return searchDescriptor.Query(q => q.Filtered(fil=>fil.Filter(f=>GenerateFilterDescription<T>(binaryExpression))));
+            return searchDescriptor.Query(q => q.Bool(b => b.Must(GenerateFilterDescription<T>(binaryExpression))));
         }
 
-        public static SearchDescriptor<T> FilteredOn<T>(this SearchDescriptor<T> searchDescriptor, FilterContainer container) where T : class
+        public static SearchDescriptor<T> FilteredOn<T>(this SearchDescriptor<T> searchDescriptor, QueryContainer container) where T : class
         {
-            return searchDescriptor.Query(q => q.Filtered(fil => fil.Filter(f => container)));
+            return searchDescriptor.Query(q => q.Bool(b => b.Must(container)));
         }
 
-        public static DeleteByQueryDescriptor<T> FilteredOn<T>(this DeleteByQueryDescriptor<T> deleteDescriptor, FilterContainer container) where T : class
+        public static DeleteByQueryDescriptor<T> FilteredOn<T>(this DeleteByQueryDescriptor<T> deleteDescriptor, QueryContainer container) where T : class
         {
-            return deleteDescriptor.Query(q => q.Filtered(fil => fil.Filter(f => container)));
+            return deleteDescriptor.Query(q => q.Bool(b => b.Must(container)));
         }
 
         public static DeleteByQueryDescriptor<T> FilteredOn<T>(this DeleteByQueryDescriptor<T> deleteDescriptor, Expression<Func<T, bool>> filterRule) where T : class
         {
             var binaryExpression = filterRule.Body as BinaryExpression;
-            return deleteDescriptor.Query(q => q.Filtered(fil => fil.Filter(f => GenerateFilterDescription<T>(binaryExpression))));
+            var deleteByQueryDescriptor = deleteDescriptor.Query(q => q.Bool(b => b.Must(GenerateFilterDescription<T>(binaryExpression))));
+            return deleteByQueryDescriptor;
         }
 
 
-        public static FilterContainer AndFilteredOn<T>(this FilterContainer queryDescriptor, Expression<Func<T, bool>> filterRule) where T : class
+        public static QueryContainer AndFilteredOn<T>(this QueryContainer queryDescriptor, Expression<Func<T, bool>> filterRule) where T : class
         {
-            var filterDescriptor = new FilterDescriptor<T>();
+            var filterDescriptor = new QueryContainerDescriptor<T>();
             var binaryExpression = filterRule.Body as BinaryExpression;
             var newPartOfQuery = GenerateFilterDescription<T>(binaryExpression);
-            return filterDescriptor.And(newPartOfQuery, queryDescriptor);            
+            return filterDescriptor.Bool(x => x.Must(queryDescriptor, newPartOfQuery));            
         }
 
-        public static FilterContainer CreateFilter<T>(Expression<Func<T, bool>> filterRule) where T : class
+        public static QueryContainer CreateFilter<T>(Expression<Func<T, bool>> filterRule) where T : class
         {
             return GenerateFilterDescription<T>(filterRule);
         }
@@ -393,7 +393,8 @@ namespace FluentNest
             var objectMember = Expression.Convert(convertedMember, typeof(object));
             var getterLambda = Expression.Lambda<Func<object>>(objectMember);
             var getter = getterLambda.Compile();
-            return getter();
+            var value = getter();
+            return value;
         }
 
         /// <summary>
