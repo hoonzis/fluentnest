@@ -43,26 +43,6 @@ namespace FluentNest
             return aggregations;
         }
 
-        //public static IEnumerable<KeyedBucket> GetGroupBy<T>(this BucketAggregationBase aggs, Expression<Func<T, Object>> fieldGetter)
-        //{
-        //    var aggName = fieldGetter.GetAggName(AggType.GroupBy);
-        //    var itemsTerms = aggs.Terms(aggName);
-        //    return itemsTerms.Items;
-        //}
-
-        //public static IEnumerable<KeyedBucket> GetGroupBy(this BucketAggregationBase aggs, string key)
-        //{
-        //    var itemsTerms = aggs.Terms(key);
-        //    return itemsTerms.Items;
-        //}
-
-        //public static IDictionary<String, KeyedBucket> GetDictioanry<T>(this BucketAggregationBase aggs, Expression<Func<T, Object>> fieldGetter)
-        //{
-        //    var aggName = fieldGetter.GetAggName(AggType.GroupBy);
-        //    var itemsTerms = aggs.Terms(aggName);
-        //    return itemsTerms.Items.ToDictionary(x => x.Key);
-        //}
-
         public static IEnumerable<K> GetGroupBy<T,K>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter, Func<KeyedBucket, K> objectTransformer)
         {
             var aggName = fieldGetter.GetAggName(AggType.GroupBy);

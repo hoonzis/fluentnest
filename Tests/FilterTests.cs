@@ -44,11 +44,8 @@ namespace Tests
             client.DeleteIndex(Index<Car>());
             client.DeleteIndex(Index("test"));
             var createIndexResult = client.CreateIndex(Index("test"), x => x.Mappings(m => m.Map<User>(u => u.AutoMap())));
-            //client.CreateIndex(Index<Car>(), x => x.Mappings(
-            //    m => m.Map<Car>(t => t
-            //.Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
 
-            //Check.That(createIndexResult.Acknowledged).IsTrue();
+            Check.That(createIndexResult.Acknowledged).IsTrue();
             for (int i = 0; i < 10; i++)
             {
                 var car = new Car
