@@ -80,6 +80,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\FSharpModel\FSharpModel.fsproj">
+      <Project>{e7f25562-8fec-4bb4-9922-b310641e2b20}</Project>
+      <Name>FSharpModel</Name>
+    </ProjectReference>
     <ProjectReference Include="..\TestModel\TestModel.csproj">
       <Project>{b94072a6-42d4-4c73-8ea9-5d9cda4c2fcb}</Project>
       <Name>TestModel</Name>

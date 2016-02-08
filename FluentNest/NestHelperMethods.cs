@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Microsoft.FSharp.Core;
+using Microsoft.FSharp.Reflection;
 using Nest;
 
 namespace FluentNest
@@ -69,11 +73,11 @@ namespace FluentNest
 
         public static string GetAggName<T, K>(this Expression<Func<T, K>> exp, AggType type)
         {
-            MemberExpression body = exp.Body as MemberExpression;
+            var body = exp.Body as MemberExpression;
 
             if (body == null)
             {
-                UnaryExpression ubody = (UnaryExpression) exp.Body;
+                var ubody = (UnaryExpression) exp.Body;
                 body = ubody.Operand as MemberExpression;
             }
 
@@ -200,6 +204,12 @@ namespace FluentNest
         {
             var binaryExpression = expression as BinaryExpression;
             var value = GetValue(binaryExpression.Right);
+            if (FSharpType.IsUnion(value.GetType(), FSharpOption<BindingFlags>.None))
+            {
+                var fields = FSharpValue.GetUnionFields(value, value.GetType(), FSharpOption<BindingFlags>.None);
+                var unionCase = fields.Item1;
+                value = unionCase.Name;
+            }
             var filterDescriptor = new FilterDescriptor<T>();
             var fieldName = GetFieldName(binaryExpression.Left);
             return filterDescriptor.Term(fieldName, value);
@@ -379,6 +389,13 @@ namespace FluentNest
             var binaryExpression = filterRule.Body as BinaryExpression;
             var newPartOfQuery = GenerateFilterDescription<T>(binaryExpression);
             return filterDescriptor.And(newPartOfQuery, queryDescriptor);            
+        }
+
+        public static FilterContainer AndValueWithin<T>(this FilterContainer queryDescriptor, Expression<Func<T, Object>> fieldGetter, IEnumerable<Object> list) where T : class
+        {
+            var filterDescriptor = new FilterDescriptor<T>();
+            var fieldName = fieldGetter.GetName();
+            return filterDescriptor.Terms(fieldGetter, list);
         }
 
         public static FilterContainer CreateFilter<T>(Expression<Func<T, bool>> filterRule) where T : class
