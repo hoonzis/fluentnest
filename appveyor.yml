@@ -25,3 +25,5 @@ deploy:
     secure: Ax/Zt3hfzLf7jMzb9VqiCsTtGCr3c+sf6pozg3KrCm/d+qZnY2IWFmmbQYws5Frh
   skip_symbols: true
   artifact: /.*\.nupkg/
+  on:
+    branch: master
