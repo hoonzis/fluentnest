@@ -18,7 +18,7 @@ namespace Tests
 
         public TestsBase(Func<ConnectionSettings, IElasticsearchSerializer> serializerFactory = null)
         {
-            var node = new Uri("http://localhost:9600");
+            var node = new Uri("http://localhost:9200");
             var connectionPool = new SingleNodeConnectionPool(node);
 
             var settings = new ConnectionSettings(connectionPool, serializerFactory).DefaultIndex("my-application");

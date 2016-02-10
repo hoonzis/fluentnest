@@ -69,11 +69,11 @@ namespace FluentNest
 
         public static string GetAggName<T, K>(this Expression<Func<T, K>> exp, AggType type)
         {
-            MemberExpression body = exp.Body as MemberExpression;
+            var body = exp.Body as MemberExpression;
 
             if (body == null)
             {
-                UnaryExpression ubody = (UnaryExpression) exp.Body;
+                var ubody = (UnaryExpression) exp.Body;
                 body = ubody.Operand as MemberExpression;
             }
 
@@ -379,6 +379,14 @@ namespace FluentNest
             var binaryExpression = filterRule.Body as BinaryExpression;
             var newPartOfQuery = GenerateFilterDescription<T>(binaryExpression);
             return filterDescriptor.Bool(x => x.Must(queryDescriptor, newPartOfQuery));            
+        }
+
+        public static QueryContainer AndValueWithin<T>(this QueryContainer queryDescriptor, Expression<Func<T, Object>> fieldGetter, IEnumerable<string> list) where T : class
+        {
+            var filterDescriptor = new QueryContainerDescriptor<T>();
+            var newFilter = new QueryContainerDescriptor<T>();
+            var newPartOfQuery = newFilter.Terms(terms=>terms.Terms(list).Field(fieldGetter));
+            return filterDescriptor.Bool(x => x.Must(queryDescriptor, newPartOfQuery));
         }
 
         public static QueryContainer CreateFilter<T>(Expression<Func<T, bool>> filterRule) where T : class
