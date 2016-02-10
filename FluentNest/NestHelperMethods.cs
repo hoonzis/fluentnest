@@ -394,8 +394,8 @@ namespace FluentNest
         public static FilterContainer AndValueWithin<T>(this FilterContainer queryDescriptor, Expression<Func<T, Object>> fieldGetter, IEnumerable<Object> list) where T : class
         {
             var filterDescriptor = new FilterDescriptor<T>();
-            var fieldName = fieldGetter.GetName();
-            return filterDescriptor.Terms(fieldGetter, list);
+            var termsFilter = filterDescriptor.Terms(fieldGetter, list);
+            return filterDescriptor.And(termsFilter, queryDescriptor);
         }
 
         public static FilterContainer CreateFilter<T>(Expression<Func<T, bool>> filterRule) where T : class

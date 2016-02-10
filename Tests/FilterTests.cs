@@ -285,6 +285,20 @@ namespace Tests
             Check.That(json).Contains("name1");
             Check.That(allUsers.Documents).HasSize(6);
         }
+
+        [Fact]
+        public void Filter_ValueWithin_OnExistingFilter()
+        {
+            AddSimpleTestData();
+            var container = NestHelperMethods.CreateFilter<User>(x => x.Age > 8);
+            container = container.AndValueWithin<User>(x => x.Name, new List<string> { "name1", "name2" });
+
+            var sc = new SearchDescriptor<User>().FilteredOn(container);
+            var json = Encoding.UTF8.GetString(client.Serializer.Serialize(sc));
+            var allUsers = client.Search<User>(sc);
+            Check.That(json).Contains("\"name1\"");
+            Check.That(allUsers.Documents).HasSize(1);
+        }
     }
 }
 
