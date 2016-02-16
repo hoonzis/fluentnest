@@ -21,6 +21,8 @@ namespace TestModel
 
         public DateTime CreationTime { get; set; }
 
+        public String Nationality { get; set; }
+
     }
 
 }

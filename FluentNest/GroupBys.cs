@@ -16,6 +16,7 @@ namespace FluentNest
             {
                 TermsAggregationDescriptor<T> trmAggDescriptor = new TermsAggregationDescriptor<T>();
                 trmAggDescriptor.Field(fieldGetter);
+                trmAggDescriptor.Size(int.MaxValue);
                 return trmAggDescriptor.Aggregations(x => innerAggregation);
             });
 
@@ -29,6 +30,7 @@ namespace FluentNest
             {
                 TermsAggregationDescriptor<T> trmAggDescriptor = new TermsAggregationDescriptor<T>();
                 trmAggDescriptor.Field(key);
+                trmAggDescriptor.Size(int.MaxValue);
                 return trmAggDescriptor.Aggregations(x => innerAggregation);
             });
 

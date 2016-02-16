@@ -194,5 +194,39 @@ namespace Tests
             Check.That(engineTypes).HasSize(2);
             Check.That(engineTypes).ContainsExactly(EngineType.Diesel, EngineType.Standard);
         }
+
+        [Fact]
+        public void Terms_Aggregation_Big_Size()
+        {
+            client.DeleteIndex(x => x.Index<User>());
+            client.CreateIndex(c => c.Index<Car>());
+            for (int i = 0; i < 1000; i++)
+            {
+                var user = new User
+                {
+                    Name = "User" + i,
+                    Nationality = "Nationality" + i%50
+                };
+                
+                client.Index(user);
+            }
+            client.Flush(x=>x.Index<User>());
+    
+            var sc = new SearchDescriptor<User>().Aggregations(agg => agg.DistinctBy(x=>x.Nationality));
+            var result = client.Search<User>(sc);
+
+            var nationalities = result.Aggs.GetDistinct<User, string>(x => x.Nationality).ToList();
+
+            Check.That(nationalities).IsNotNull();
+            Check.That(nationalities).HasSize(50);
+
+            sc = new SearchDescriptor<User>().Aggregations(agg => agg.GroupBy(x => x.Nationality));
+            result = client.Search<User>(sc);
+
+            var nationalitiesGroup = result.Aggs.GetGroupBy<User>(x => x.Nationality).ToList();
+
+            Check.That(nationalitiesGroup).IsNotNull();
+            Check.That(nationalitiesGroup).HasSize(50);
+        }
     }
 }
