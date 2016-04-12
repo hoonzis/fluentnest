@@ -230,5 +230,170 @@ namespace Tests
             Check.That(nationalitiesGroup).IsNotNull();
             Check.That(nationalitiesGroup).HasSize(50);
         }
+
+        [Fact]
+        public void GroupBy_With_TopHits_Specifying_Properties()
+        {
+            AddSimpleTestData();
+            var agg = new AggregationContainerDescriptor<Car>()
+                .TopHits(3, x => x.Name)
+                .GroupBy(b => b.CarType);
+
+            var result = client.Search<Car>(search => search.Aggregations(x => agg));
+
+
+            var carTypes = result.Aggs.GetGroupBy<Car>(x => x.CarType).ToList();
+            Check.That(carTypes).HasSize(3);
+            foreach (var carType in carTypes)
+            {
+                var hits = carType.GetTopHits<Car>().ToList();
+                Check.That(hits).HasSize(3);
+                Check.That(hits[0].Name).IsNotNull();
+                Check.That(hits[0].Weight).IsNull();
+            }
+        }
+
+        [Fact]
+        public void GroupBy_With_TopHits_Specifying_More_Properties()
+        {
+            AddSimpleTestData();
+
+            var result = client.Search<Car>(search => search.Aggregations(agg => agg
+                //get name and weight for each retrived document
+                .TopHits(3, x => x.Name, x => x.Weight)
+                .GroupBy(b => b.CarType)
+            ));
+
+
+            var carTypes = result.Aggs.GetGroupBy<Car>(x => x.CarType).ToList();
+            Check.That(carTypes).HasSize(3);
+            foreach (var carType in carTypes)
+            {
+                var hits = carType.GetTopHits<Car>().ToList();
+                Check.That(hits).HasSize(3);
+                // we have asked only for name and weights
+                Check.That(hits[0].Name).IsNotNull();
+                Check.That(hits[0].Weight).IsNotNull();
+                // description must be null
+                Check.That(hits[0].Description).IsNull();
+            }
+        }
+
+        [Fact]
+        public void GroupBy_With_TopHits_NoProperties_GetsWholeSource()
+        {
+            AddSimpleTestData();
+            
+            var result = client.Search<Car>(search => search.Aggregations(x => x
+                .TopHits(3)
+                .GroupBy(b => b.CarType))
+            );
+            
+            var carTypes = result.Aggs.GetGroupBy<Car>(x => x.CarType).ToList();
+            Check.That(carTypes).HasSize(3);
+            foreach (var carType in carTypes)
+            {
+                var hits = carType.GetTopHits<Car>().ToList();
+                Check.That(hits).HasSize(3);
+                Check.That(hits[0].Name).IsNotNull();
+                Check.That(hits[0].Weight).IsNotNull();
+                Check.That(hits[0].Description).IsNotNull();
+            }
+        }
+        
+        [Fact]
+        public void TopHits_In_Double_GroupBy()
+        {
+            client.DeleteIndex(Index<User>());
+            client.CreateIndex(Index<User>());
+            for (int i = 0; i < 1000; i++)
+            {
+                var user = new User
+                {
+                    Name = "User" + i,
+                    Nationality = "Nationality" + i % 2,
+                    Active = i%3 == 0
+                };
+
+                client.Index(user);
+            }
+            client.Flush(Index<User>());
+
+            var result = client.Search<User>(search => search.Aggregations(agg => agg
+                .TopHits(40, x => x.Name) 
+                .GroupBy(b => b.Active)
+                .GroupBy(b => b.Nationality))
+            );
+
+            var userByNationality = result.Aggs.GetGroupBy<User>(x => x.Nationality).ToList();
+            Check.That(userByNationality).HasSize(2);
+            foreach (var nationality in userByNationality)
+            {
+                var byActive = nationality.GetGroupBy<User>(x => x.Active).ToList();
+
+                var activeUsers = byActive[0];
+                var inactiveUser = byActive[1];
+
+
+                var hits = activeUsers.GetTopHits<User>().ToList();
+                Check.That(hits).HasSize(40);
+                Check.That(hits[0].Name).IsNotNull();
+
+                hits = inactiveUser.GetTopHits<User>().ToList();
+
+                Check.That(hits).HasSize(40);
+                Check.That(hits[0].Name).IsNotNull();
+            }
+        }
+
+        [Fact]
+        public void TopHits_Sorted_SettingSize()
+        {
+            client.DeleteIndex(Index<User>());
+            client.CreateIndex(Index<User>());
+            for (int i = 0; i < 100; i++)
+            {
+                var user = new User
+                {
+                    Name = "User" + i,
+                    Nationality = "Nationality" + i % 10,
+                    Age = (i+1) % 10
+                };
+
+                client.Index(user);
+            }
+            client.Flush(Index<User>());
+
+            var result = client.Search<User>(search => search.Aggregations(agg => agg
+                // get 40 first users, sort by name. for each user retrieve name and email
+                .SortedTopHits(40, x=>x.Name, SortType.Ascending, x => x.Name, y=>y.Email)
+                .SortedTopHits(40, x=>x.Name, SortType.Descending, x=>x.Name, y=>y.Email)
+                .SumBy(x=>x.Age)
+                .GroupBy(b => b.Nationality))
+            );
+
+            var userByNationality = result.Aggs.GetGroupBy<User>(x => x.Nationality).ToList();
+            Check.That(userByNationality).HasSize(10);
+            var firstNotionality = userByNationality.Single(x => x.Key == "nationality0");
+            
+            var ascendingHits = firstNotionality.GetSortedTopHits<User>(x => x.Name, SortType.Ascending).ToList();
+            Check.That(ascendingHits).HasSize(10);
+            Check.That(ascendingHits[0].Name).IsNotNull();
+
+            Check.That(firstNotionality.GetSum<User, int>(x => x.Age)).Equals(10);
+            Check.That(ascendingHits[0].Name).Equals("User0");
+            Check.That(ascendingHits[1].Name).Equals("User10");
+            Check.That(ascendingHits[2].Name).Equals("User20");
+            Check.That(ascendingHits[3].Name).Equals("User30");
+
+            var descendingHits = firstNotionality.GetSortedTopHits<User>(x => x.Name, SortType.Descending).ToList();
+            Check.That(descendingHits).HasSize(10);
+            Check.That(descendingHits[0].Name).IsNotNull();
+
+            Check.That(descendingHits[0].Name).Equals("User90");
+            Check.That(descendingHits[1].Name).Equals("User80");
+            Check.That(descendingHits[2].Name).Equals("User70");
+            Check.That(descendingHits[3].Name).Equals("User60");
+        }
     }
 }

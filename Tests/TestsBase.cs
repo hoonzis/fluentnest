@@ -45,7 +45,8 @@ namespace Tests
                     Length = i,
                     EngineType = i % 2 == 0 ? EngineType.Diesel : EngineType.Standard,
                     Weight = 5,
-                    ConditionalRanking = i%2 ==0 ? null : (int?)i
+                    ConditionalRanking = i%2 ==0 ? null : (int?)i,
+                    Description = "Desc" + i,
                 };
 
                 using (var ms = new MemoryStream())

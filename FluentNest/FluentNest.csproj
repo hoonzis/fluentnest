@@ -57,6 +57,7 @@
     <Compile Include="GroupBys.cs" />
     <Compile Include="NestHelperMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SortType.cs" />
     <Compile Include="Statistics.cs" />
     <Compile Include="StatisticsGetters.cs" />
   </ItemGroup>
