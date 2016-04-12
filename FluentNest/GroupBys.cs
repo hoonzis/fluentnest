@@ -22,7 +22,7 @@ namespace FluentNest
 
             return v;
         }
-
+        
         public static AggregationDescriptor<T> GroupBy<T>(this AggregationDescriptor<T> innerAggregation, String key) where T : class
         {
             AggregationDescriptor<T> v = new AggregationDescriptor<T>();

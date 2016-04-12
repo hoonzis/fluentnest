@@ -11,6 +11,7 @@
         Distinct,
         Cardinality,
         Stats,
-        GroupBy
+        GroupBy,
+        TopHits
     }
 }

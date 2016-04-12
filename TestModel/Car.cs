@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Permissions;
 
 
 namespace TestModel
@@ -22,5 +23,6 @@ namespace TestModel
         public int? ConditionalRanking { get; set; }
         public decimal? PriceLimit { get; set; }
         public decimal Emissions { get; set; }
+        public string Description { get; set; }
     }
 }
