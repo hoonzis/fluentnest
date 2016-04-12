@@ -75,7 +75,7 @@ namespace FluentNest
         public static AggregationContainerDescriptor<T> DistinctBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Distinct);
-            return agg.Terms(aggName, x => x.Field(fieldGetter));
+            return agg.Terms(aggName, x => x.Field(fieldGetter).Size(int.MaxValue));
         }
 
         public static AggregationContainerDescriptor<T> AverageBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
