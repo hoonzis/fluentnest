@@ -49,14 +49,14 @@ namespace Tests
         public void MonthlyHistogramPerCarType()
         {
             AddSimpleTestData();
-            var histogramsPerCarType =
-                client.Search<Car>(
-                    s =>
-                        s.Aggregations(
-                            a => a.DateHistogram(x => x.Timestamp, DateInterval.Month).GroupBy(x => x.CarType)));
+
+            var histogram = client.Search<Car>(s => s.Aggregations(a => a
+                .DateHistogram(x => x.Timestamp, DateInterval.Month)
+                .GroupBy(x => x.CarType))
+            );
 
             var carTypes =
-                histogramsPerCarType.Aggs.GetDictioanry<Car, IList<HistogramItem>>(x => x.CarType,
+                histogram.Aggs.GetDictioanry<Car, IList<HistogramItem>>(x => x.CarType,
                     v => v.GetDateHistogram<Car>(f => f.Timestamp));
 
             Check.That(carTypes).HasSize(3);
@@ -86,14 +86,14 @@ namespace Tests
         public void SumInMonthlyHistogram()
         {
             AddSimpleTestData();
-            var sumOnPrice = new AggregationDescriptor<Car>().SumBy(x => x.Price);
-            var esResult =
-                client.Search<Car>(
-                    search => search.Aggregations(x => sumOnPrice.IntoDateHistogram(date => date.Timestamp, DateInterval.Month)));
+            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+                .SumBy(x=>x.Price)
+                .IntoDateHistogram(date => date.Timestamp, DateInterval.Month))
+            );
 
-            var histogram = esResult.Aggs.GetDateHistogram<Car>(x => x.Timestamp);
+            var histogram = result.Aggs.GetDateHistogram<Car>(x => x.Timestamp);
             Check.That(histogram).HasSize(10);
-            Check.That(histogram.All(x => x.GetSum<Car,Decimal>(s => s.Price) == 10m)).IsTrue();
+            Check.That(histogram.All(x => x.GetSum<Car, decimal>(s => s.Price) == 10m)).IsTrue();
         }
 
         [Fact]
@@ -103,12 +103,12 @@ namespace Tests
             var start = new DateTime(2010, 1, 1);
             var end = new DateTime(2010, 4, 4);
 
-            var agg = new AggregationDescriptor<Car>()
-                .SumBy(x => x.Price)
-                .IntoDateHistogram(date => date.Timestamp, DateInterval.Month);
-
-            var result = client.Search<Car>(
-                    search => search.FilteredOn(f => f.Timestamp < end && f.Timestamp > start).Aggregations(x =>agg));
+            var result = client.Search<Car>(sc => sc
+                .FilteredOn(f => f.Timestamp < end && f.Timestamp > start)
+                .Aggregations(agg => agg
+                    .SumBy(x => x.Price)
+                    .IntoDateHistogram(date => date.Timestamp, DateInterval.Month)
+                ));
 
             var histogram = result.Aggs.GetDateHistogram<Car>(x => x.Timestamp);
 
@@ -120,7 +120,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result = client.Search<Car>(search => search
+            var result = client.Search<Car>(sc => sc
                 .Aggregations(x => x
                     .SumBy(y => y.Price)
                     .IntoHistogram(y => y.Length, 5)

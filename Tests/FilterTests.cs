@@ -74,7 +74,6 @@ namespace Tests
 
             var startDate = new DateTime(2010, 1, 1);
             var endDate = new DateTime(2010, 3, 1);
-           
             var result = client.Search<Car>(s => s.FilterOn(x => x.Timestamp >= startDate && x.Timestamp <= endDate && x.CarType == "type0"));
 
 
@@ -87,7 +86,6 @@ namespace Tests
             AddSimpleTestData();
 
             var startDate = new DateTime(2010, 1, 1);
-
             var result = client.Search<Car>(s => s.FilterOn(x => x.Timestamp == startDate));
             
             Check.That(result.Documents).HasSize(1);
@@ -167,12 +165,12 @@ namespace Tests
         {
             AddSimpleTestData();
 
-            var filter = NestHelperMethods
+            var filter = Filters
                 .CreateFilter<User>(x => x.Name == "name1" && x.Age >= 5)
                 .AndFilteredOn<User>(x => x.Email == "Email@email1.com");
 
-            var allUsers = client.Search<User>(s => s.Filter(filter));
-            Check.That(allUsers.Documents).HasSize(1);            
+            var users = client.Search<User>(s => s.Filter(filter));
+            Check.That(users.Documents).HasSize(1);            
         }
 
         [Fact]
@@ -180,7 +178,7 @@ namespace Tests
         {
             AddSimpleTestData();
 
-            var filter = NestHelperMethods
+            var filter = Filters
                 .CreateFilter<User>(x => x.Enabled == true);
 
             var allUsers = client.Search<User>(s => s.Filter(filter));
@@ -191,21 +189,20 @@ namespace Tests
         public void MultipleFiltersAndSomeAggregations()
         {
             AddSimpleTestData();
-
-            var sc = new SearchDescriptor<User>();
-         
-            var filter = NestHelperMethods
+            
+            var filter = Filters
                 .CreateFilter<User>(x => x.Name == "name1" && x.Age >= 5)
                 .AndFilteredOn<User>(x => x.Email == "Email@email1.com");
+            
+            var result = client.Search<User>(sc => sc
+                .FilteredOn(filter)
+                .Aggregations(agg => agg
+                .SumBy(x=>x.Age)
+            ));
 
-            var ageSum  = new AggregationDescriptor<User>().SumBy(x => x.Age);
+            var sumValue = result.Aggs.GetSum<User, int>(x => x.Age);
 
-            sc = sc.FilteredOn(filter).Aggregations(agg => ageSum);
-
-            var filterdAggregation = client.Search<User>(sc);
-            var sumValue = filterdAggregation.Aggs.GetSum<User, int>(x => x.Age);
-
-            var aggsContainer = filterdAggregation.Aggs.AsContainer<User>();
+            var aggsContainer = result.Aggs.AsContainer<User>();
             var sum2 = aggsContainer.GetSum(x => x.Age);
             Check.That(sumValue).Equals(8);
             Check.That(sum2).Equals(8);
@@ -215,12 +212,8 @@ namespace Tests
         public void Or_Filter_Test()
         {
             AddSimpleTestData();
-
-            var filter = NestHelperMethods
-                .CreateFilter<User>(x => x.Name == "name1" || x.Age >= 5);
-
-            var allUsers = client.Search<User>(s => s.Filter(filter));
-            Check.That(allUsers.Documents).HasSize(7);
+            var users = client.Search<User>(s => s.FilterOn(x=> x.Name == "name1" || x.Age >= 5));
+            Check.That(users.Documents).HasSize(7);
         }
 
         [Fact]
@@ -228,7 +221,7 @@ namespace Tests
         {
             AddSimpleTestData();
 
-            var filter = NestHelperMethods
+            var filter = Filters
                 .CreateFilter<User>(x => x.Name != "name1" && x.Name != "name2");
 
             var allUsers = client.Search<User>(s => s.Filter(filter));
@@ -239,11 +232,7 @@ namespace Tests
         public void Bool_filter_test()
         {
             AddSimpleTestData();
-
-            var filter = NestHelperMethods
-                .CreateFilter<User>(x => x.Active);
-
-            var allUsers = client.Search<User>(s => s.Filter(filter));
+            var allUsers = client.Search<User>(s => s.FilterOn(f=>f.Active));
             Check.That(allUsers.Documents).HasSize(5);
         }
 
@@ -276,24 +265,17 @@ namespace Tests
         public void Filter_ValueWithin_Test()
         {
             AddSimpleTestData();
-            var container = new FilterContainer();
-            container = container.AndValueWithin<User>(x => x.Name, new List<string> {"name1", "name2"});
-
-            var sc = new SearchDescriptor<User>().FilteredOn(container);
-            var json = Encoding.UTF8.GetString(client.Serializer.Serialize(sc));
-            var allUsers = client.Search<User>(sc);
-            Check.That(json).Contains("name1");
-            Check.That(allUsers.Documents).HasSize(6);
+            var list = new List<string> {"name1", "name2"};
+            var users = client.Search<User>(sc => sc.FilteredOn(Filters.ValueWithin<User>(x => x.Name, list)));
+            Check.That(users.Documents).HasSize(6);
         }
 
         [Fact]
         public void Filter_ValueWithin_OnExistingFilter()
         {
             AddSimpleTestData();
-            var container = NestHelperMethods.CreateFilter<User>(x => x.Age > 8);
-            container = container.AndValueWithin<User>(x => x.Name, new List<string> { "name1", "name2" });
-
-            var sc = new SearchDescriptor<User>().FilteredOn(container);
+            var filter = Filters.CreateFilter<User>(x => x.Age > 8);
+            var sc = new SearchDescriptor<User>().FilteredOn(filter.AndValueWithin<User>(x=>x.Name, new List<string> { "name1", "name2" } ));
             var json = Encoding.UTF8.GetString(client.Serializer.Serialize(sc));
             var allUsers = client.Search<User>(sc);
             Check.That(json).Contains("\"name1\"");

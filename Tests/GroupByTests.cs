@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using FluentNest;
-using Nest;
 using NFluent;
 using TestModel;
 using Xunit;
@@ -16,23 +14,24 @@ namespace Tests
         public void NestedGroupBy()
         {
             AddSimpleTestData();
-            var agg = new AggregationDescriptor<Car>()
+            
+            var result =client.Search<Car>(search =>search.Aggregations(agg => agg
                 .SumBy(s => s.Price)
                 .GroupBy(s => s.EngineType)
-                .GroupBy(b => b.CarType);
-
-            var result =client.Search<Car>(search =>search.Aggregations(x => agg));
+                .GroupBy(b => b.CarType)
+            ));
 
 
             var carTypes = result.Aggs.GetGroupBy<Car>(x => x.CarType).ToList();
             Check.That(carTypes).HasSize(3);
             foreach (var carType in carTypes)
             {
-                var engineTypes = carType.GetGroupBy<Car,CarType>(x => x.EngineType, k => new CarType
+                var engineTypes = carType.GetGroupBy<Car, CarType>(x => x.EngineType, k => new CarType
                 {
                     Type = k.Key,
-                    Price = k.GetSum<Car,Decimal>(x=>x.Price)
-                });
+                    Price = k.GetSum<Car, decimal>(x => x.Price)
+                }).ToList();
+
                 Check.That(engineTypes).HasSize(2);
                 Check.That(engineTypes.First().Price).Equals(20m);
             }
@@ -42,25 +41,29 @@ namespace Tests
         public void GetDictionaryFromGroupBy()
         {
             AddSimpleTestData();
-            var sumOnPrice = new AggregationDescriptor<Car>().SumBy(s => s.Price);
 
-            var result =
-                client.Search<Car>(search => search.Aggregations(x => sumOnPrice.GroupBy(s => s.EngineType)));
+            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+                .SumBy(s => s.Price)
+                .GroupBy(s => s.EngineType))
+            );
 
-            var carTypes = result.Aggs.GetDictioanry<Car,EngineType>(x => x.EngineType);
-            Check.That(carTypes).HasSize(2);
-            Check.That(carTypes.Keys).ContainsExactly(EngineType.Diesel, EngineType.Standard);
+            var carTypesList = result.Aggs.GetGroupBy<Car>(x => x.EngineType);
+            var carTypesDictionary = result.Aggs.GetDictioanry<Car,EngineType>(x => x.EngineType);
+            
+            Check.That(carTypesDictionary).HasSize(2);
+            Check.That(carTypesList).HasSize(2);
+            Check.That(carTypesDictionary.Keys).ContainsExactly(EngineType.Diesel, EngineType.Standard);
         }
 
         [Fact]
         public void GroupByStringKeys()
         {
             AddSimpleTestData();
-            var agg = new AggregationDescriptor<Car>()
+            
+            var result = client.Search<Car>(search => search.Aggregations(agg => agg
                 .SumBy(s => s.Price)
-                .GroupBy("engineType");
-
-            var result = client.Search<Car>(search => search.Aggregations(x => agg));
+                .GroupBy("engineType")
+            ));
 
             var engineTypes = result.Aggs.GetGroupBy("engineType");
             Check.That(engineTypes).HasSize(2);
@@ -70,11 +73,11 @@ namespace Tests
         public void DynamicGroupByListOfKeys()
         {
             AddSimpleTestData();
-            var agg = new AggregationDescriptor<Car>()
+            
+            var result = client.Search<Car>(search => search.Aggregations(agg => agg
                 .SumBy(s => s.Price)
-                .GroupBy(new List<string> {"engineType", "carType"});
-
-            var result = client.Search<Car>(search => search.Aggregations(x => agg));
+                .GroupBy(new List<string> { "engineType", "carType" })
+            ));
 
             var engineTypes = result.Aggs.GetGroupBy("engineType");
             Check.That(engineTypes).HasSize(2);
@@ -124,11 +127,11 @@ namespace Tests
         public void Distinct_Test()
         {
             AddSimpleTestData();
-            var agg = new AggregationDescriptor<Car>()
+            
+            var result = client.Search<Car>(search => search.Aggregations(agg => agg
                 .DistinctBy(x => x.CarType)
-                .DistinctBy(x => x.EngineType);
-
-            var result = client.Search<Car>(search => search.Aggregations(x => agg));
+                .DistinctBy(x => x.EngineType)
+            ));
             
             var engineTypes = result.Aggs.GetDistinct<Car, EngineType>(x => x.EngineType).ToList();
 
@@ -148,14 +151,16 @@ namespace Tests
         public void Simple_Filtered_Distinct_Test()
         {
             AddSimpleTestData();
-            var agg = new AggregationDescriptor<Car>()
-                .DistinctBy(x => x.CarType)
-                .DistinctBy(x => x.EngineType);
+            
+            var result = client.Search<Car>(search => search
+                .FilteredOn(f=> f.CarType == "type0")
+                .Aggregations(agg => agg
+                    .DistinctBy(x => x.CarType)
+                    .DistinctBy(x => x.EngineType)
+                )
+            );
 
-            var filter = NestHelperMethods.CreateFilter<Car>(x => x.CarType == "type0");
-            var result = client.Search<Car>(search => search.FilteredOn(filter).Aggregations(x => agg));
-
-            var distinctCarTypes = result.Aggs.GetDistinct<Car, String>(x => x.CarType).ToList();
+            var distinctCarTypes = result.Aggs.GetDistinct<Car, string>(x => x.CarType).ToList();
             var engineTypes = result.Aggs.GetDistinct<Car, EngineType>(x => x.EngineType).ToList();
 
             Check.That(distinctCarTypes).IsNotNull();
@@ -171,19 +176,16 @@ namespace Tests
         public void Distinct_Time_And_Term_Filter_Test()
         {
             AddSimpleTestData();
-            var agg = new AggregationDescriptor<Car>()
+            
+            var filter = FluentNest.Filters.CreateFilter<Car>(x => x.Timestamp > new DateTime(2010,2,1) && x.Timestamp < new DateTime(2010, 8, 1))
+                .AndFilteredOn<Car>(x => x.CarType == "type0");
+
+            var result = client.Search<Car>(sc => sc.FilteredOn(filter).Aggregations(agg => agg
                 .DistinctBy(x => x.CarType)
-                .DistinctBy(x => x.EngineType);
+                .DistinctBy(x => x.EngineType)
+            ));
 
-            var filter = NestHelperMethods.CreateFilter<Car>(x => x.Timestamp > new DateTime(2010,2,1) && x.Timestamp < new DateTime(2010, 8, 1));
-            filter = filter.AndFilteredOn<Car>(x => x.CarType == "type0");
-
-            var sc = new SearchDescriptor<Car>()
-                .FilteredOn(filter).Aggregations(x => agg);
-
-            var result = client.Search<Car>(sc);
-
-            var distinctCarTypes = result.Aggs.GetDistinct<Car, String>(x => x.CarType).ToList();
+            var distinctCarTypes = result.Aggs.GetDistinct<Car, string>(x => x.CarType).ToList();
             var engineTypes = result.Aggs.GetDistinct<Car, EngineType>(x => x.EngineType).ToList();
 
             Check.That(distinctCarTypes).IsNotNull();
@@ -212,32 +214,23 @@ namespace Tests
             }
             client.Flush(x=>x.Index<User>());
     
-            var sc = new SearchDescriptor<User>().Aggregations(agg => agg.DistinctBy(x=>x.Nationality));
-            var result = client.Search<User>(sc);
+            var result = client.Search<User>(sc => sc.Aggregations(agg => agg.DistinctBy(x=>x.Nationality)));
 
             var nationalities = result.Aggs.GetDistinct<User, string>(x => x.Nationality).ToList();
 
             Check.That(nationalities).IsNotNull();
             Check.That(nationalities).HasSize(50);
-
-            sc = new SearchDescriptor<User>().Aggregations(agg => agg.GroupBy(x => x.Nationality));
-            result = client.Search<User>(sc);
-
-            var nationalitiesGroup = result.Aggs.GetGroupBy<User>(x => x.Nationality).ToList();
-
-            Check.That(nationalitiesGroup).IsNotNull();
-            Check.That(nationalitiesGroup).HasSize(50);
         }
 
         [Fact]
         public void GroupBy_With_TopHits_Specifying_Properties()
         {
             AddSimpleTestData();
-            var agg = new AggregationDescriptor<Car>()
+            
+            var result = client.Search<Car>(search => search.Aggregations(agg => agg
                 .TopHits(3, x => x.Name)
-                .GroupBy(b => b.CarType);
-
-            var result = client.Search<Car>(search => search.Aggregations(x => agg));
+                .GroupBy(b => b.CarType)
+            ));
 
 
             var carTypes = result.Aggs.GetGroupBy<Car>(x => x.CarType).ToList();
