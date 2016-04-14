@@ -14,14 +14,12 @@ namespace Tests
         public void SumTest()
         {
 
-            AddSimpleTestData();
-            var standardSum = new AggregationContainerDescriptor<Car>().SumBy(x => x.Price);
-            var result =
-                client.Search<Car>(
-                    search =>
-                        search.Take(10).Aggregations(x => standardSum));
+            AddSimpleTestData();           
+            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+                .SumBy(x=>x.Price)
+            ));
 
-            var sum = result.Aggs.GetSum<Car, Decimal>(x => x.Price);
+            var sum = result.Aggs.GetSum<Car, decimal>(x => x.Price);
             Check.That(sum).Equals(100m);
         }
 
@@ -55,44 +53,26 @@ namespace Tests
         }
 
         [Fact]
-        public void CountTest()
+        public void CountAndCardinalityTest()
         {
             AddSimpleTestData();
-            var count = new AggregationContainerDescriptor<Car>().CountBy(x => x.Price);
-            var result =
-                client.Search<Car>(
-                    search =>
-                        search.Take(10).Aggregations(x => count));
-
+            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+                .CountBy(x=>x.Price)
+                .CardinalityBy(x => x.EngineType)
+            ));
             var val = result.Aggs.GetCount<Car>(x => x.Price);
             Check.That(val).Equals(10);
-        }
-
-        [Fact]
-        public void CardinalityTest()
-        {
-            AddSimpleTestData();
-            var cardAgg = new AggregationContainerDescriptor<Car>().CardinalityBy(x => x.EngineType);
-            var result =
-                client.Search<Car>(
-                    search =>
-                        search.Take(10).Aggregations(x => cardAgg));
-
-            var container = result.Aggs.AsContainer<Car>();
             var card = result.Aggs.GetCardinality<Car>(x => x.EngineType);
             Check.That(card).Equals(2);
-            Check.That(container.GetCardinality(x=>x.EngineType)).Equals(2);
         }
 
         [Fact]
         public void CardinalityFilterTest()
         {
             AddSimpleTestData();
-            var cardAgg = new AggregationContainerDescriptor<Car>().CardinalityBy(x => x.EngineType, x => x.EngineType == EngineType.Standard);
-            var result =
-                client.Search<Car>(
-                    search =>
-                        search.Take(10).Aggregations(x => cardAgg));
+            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+                .CardinalityBy(x => x.EngineType, x => x.EngineType == EngineType.Standard)
+            ));
 
             var container = result.Aggs.AsContainer<Car>();
             var card = result.Aggs.GetCardinality<Car>(x => x.EngineType, x => x.EngineType == EngineType.Standard);
@@ -104,13 +84,10 @@ namespace Tests
         public void TestConditionalSum()
         {
             AddSimpleTestData();
-            AggregationContainerDescriptor<Car> sumCond = new AggregationContainerDescriptor<Car>().SumBy(x => x.Price, x => x.Sold == true);
 
-            var result =
-                client.Search<Car>(
-                    search =>
-                        search.Take(10)
-                        .Aggregations(x => sumCond));
+            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+                .SumBy(x => x.Price, x => x.Sold == true)
+            ));
 
             var sum = result.Aggs.GetSum<Car,decimal>(x => x.Price, x => x.Sold == true);
             Check.That(sum).Equals(50m);
@@ -120,16 +97,14 @@ namespace Tests
         public void MultipleAggregationsInSingleAggregation()
         {
             AddSimpleTestData();
-            var engineTypeSum = new AggregationContainerDescriptor<Car>().CountBy(x => x.Name, c => c.EngineType == EngineType.Diesel);
-
-            var notionalSumAgg = engineTypeSum.SumBy(x => x.Price)
+            
+            var result = client.Search<Car>(s => s.Aggregations(agg => agg
+                .CountBy(x => x.Name, c => c.EngineType == EngineType.Diesel)
+                .SumBy(x => x.Price)
                 .AverageBy(x => x.Length)
                 .CountBy(x => x.CarType)
-                .CardinalityBy(x => x.EngineType);
-
-            var result = client.Search<Car>(s => s
-                .Take(100)
-                .Aggregations(x => notionalSumAgg));
+                .CardinalityBy(x => x.EngineType))
+            );
 
             var priceSum = result.Aggs.GetSum<Car,decimal>(x => x.Price);
             var avgLength = result.Aggs.GetAverage<Car,double>(x => x.Length);
@@ -148,15 +123,14 @@ namespace Tests
         public void MultipleAggregationsInSingleAggregation_ReversingOrder()
         {
             AddSimpleTestData();
-            var agg = new AggregationContainerDescriptor<Car>().SumBy(x => x.Price)
+            
+            var result = client.Search<Car>(s => s.Aggregations(agg => agg
+                .SumBy(x => x.Price)
                 .AverageBy(x => x.Length)
                 .CountBy(x => x.CarType)
                 .CountBy(x => x.Name, c => c.EngineType == EngineType.Diesel)
-                .SumBy(x => x.Price, c => c.CarType == "type1");
-
-            var result = client.Search<Car>(s => s
-                .Take(100)
-                .Aggregations(x => agg));
+                .SumBy(x => x.Price, c => c.CarType == "type1")
+            ));
             
             var priceSum = result.Aggs.GetSum<Car, decimal>(x => x.Price);
             var avgLength = result.Aggs.GetAverage<Car,double>(x => x.Length);
@@ -189,12 +163,7 @@ namespace Tests
         public void SumOfNullableDecimal()
         {
             AddSimpleTestData();
-            var standardSum = new AggregationContainerDescriptor<Car>().SumBy(x => x.Weight);
-            var result =
-                client.Search<Car>(
-                    search =>
-                        search.Take(10).Aggregations(x => standardSum));
-
+            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg.SumBy(x => x.Weight)));
             var sum = result.Aggs.GetSum<Car,decimal?>(x => x.Weight);
 
             var container = result.Aggs.AsContainer<Car>();
@@ -209,12 +178,10 @@ namespace Tests
         public void Condition_Equals_Not_Null_Test()
         {
             AddSimpleTestData();
-            var standardSum = new AggregationContainerDescriptor<Car>().SumBy(x => x.Weight,x=>x.ConditionalRanking.HasValue);
-
-            var result =
-                client.Search<Car>(
-                    search =>
-                        search.Take(10).Aggregations(x => standardSum));
+            
+            var result =client.Search<Car>(sc => sc.Aggregations(agg => agg
+                .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue)
+            ));
 
             var sum = result.Aggs.GetSum<Car,decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
 
@@ -230,14 +197,11 @@ namespace Tests
         public void Two_Conditional_Sums_Similar_Condition_One_More_Restrained()
         {
             AddSimpleTestData();
-            var aggs = new AggregationContainerDescriptor<Car>()
+            
+            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue)
-                .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue && x.CarType == "Type1");
-
-            var result =
-                client.Search<Car>(
-                    search =>
-                        search.Take(10).Aggregations(x => aggs));
+                .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue && x.CarType == "Type1")
+            ));
 
             var sum = result.Aggs.GetSum<Car,decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
             var sum2 = result.Aggs.GetSum<Car, decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue && c.CarType == "Type1");
@@ -251,10 +215,9 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result =
-                client.Search<Car>(
-                    search =>
-                        search.Take(10).Aggregations(agg => agg.PercentilesBy(x=>x.Price)));
+            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+                .PercentilesBy(x=>x.Price)
+            ));
 
             var percentiles = result.Aggs.GetPercentile<Car>(x => x.Price);
             var container = result.Aggs.AsContainer<Car>();
@@ -270,10 +233,7 @@ namespace Tests
         {
             AddSimpleTestData();
 
-            var result =
-                client.Search<Car>(
-                    search =>
-                        search.Take(10).Aggregations(agg => agg.MaxBy(x=>x.Length)));
+            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg.MaxBy(x=>x.Length)));
 
             var container = result.Aggs.AsContainer<Car>();
             var max = container.GetMax(x => x.Length);
@@ -285,16 +245,17 @@ namespace Tests
         {
             AddSimpleTestData();
 
-            var result =
-                client.Search<Car>(
-                    search =>
-                        search.Take(10).Aggregations(agg => agg
-                            .MinBy(x => x.Length)
-                            .MaxBy(x=> x.Length)));
+            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+                .MinBy(x => x.Length)
+                .MaxBy(x=> x.Length))
+            );
 
             var container = result.Aggs.AsContainer<Car>();
             var min = container.GetMin(x => x.Length);
+            var max = container.GetMax(x => x.Length);
+
             Check.That(min).Equals(0d);
+            Check.That(max).Equals(9d);
         }
 
         [Fact]
@@ -370,16 +331,13 @@ namespace Tests
         {
             //very stupid test, getting tyhe single value of engine type when engine type is diesel
             AddSimpleTestData();
-            var aggs = new AggregationContainerDescriptor<Car>()
+
+            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue)
                 .FirstBy(x => x.EngineType, c => c.EngineType == EngineType.Diesel)
                 .FirstBy(x => x.CarType, c => c.Sold == true)
-                .FirstBy(x => x.Length);
-
-            var result =
-                client.Search<Car>(
-                    search =>
-                        search.Take(10).Aggregations(x => aggs));
+                .FirstBy(x => x.Length)
+            ));
 
             var sum = result.Aggs.GetSum<Car, decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
             var engineType = result.Aggs.GetFirstBy<Car,EngineType>(x => x.EngineType, c => c.EngineType == EngineType.Diesel);

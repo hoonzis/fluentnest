@@ -71,7 +71,7 @@ namespace FluentNest
             var itemsTerms = aggs.Terms(aggName);
             if ((typeof(V).IsEnum))
             {
-                return itemsTerms.Items.ToDictionary(x => NestHelperMethods.Parse<V>(x.Key));
+                return itemsTerms.Items.ToDictionary(x => Filters.Parse<V>(x.Key));
             }
             return itemsTerms.Items.ToDictionary(x => (V)(Object)x.Key);
         }

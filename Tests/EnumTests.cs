@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Elasticsearch.Net;
 using FluentNest;
 using Nest;
 using Newtonsoft.Json;
@@ -42,10 +38,7 @@ namespace Tests
         public void Filtering_on_enum_property_should_work()
         {
             AddSimpleTestData();
-            var filter = NestHelperMethods.CreateFilter<Car>(x => x.EngineType == EngineType.Diesel);
-
-            var result = client.Search<Car>(s => s
-                .Take(100).Query(_ => filter));
+            var result = client.Search<Car>(s => s.Query(_ => Filters.CreateFilter<Car>(x => x.EngineType == EngineType.Diesel)));
 
             Check.That(result.Hits.Count()).IsEqualTo(5);
         }
