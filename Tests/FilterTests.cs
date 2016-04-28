@@ -288,7 +288,7 @@ namespace Tests
         {
             var indexName = "cars3";
             client.DeleteIndex(indexName);
-            var createIndexResult = client.CreateIndex(indexName, i => i.AddMapping<Car>(c => c.MapFromAttributes()));
+            var createIndexResult = client.CreateIndex(Index(indexName), x => x.Mappings(m => m.Map<Car>(u => u.AutoMap())));
             Check.That(createIndexResult.Acknowledged).IsTrue();
             for (int i = 0; i < 10; i++)
             {
@@ -309,7 +309,7 @@ namespace Tests
 
                 client.Index(car, ind => ind.Index(indexName));
             }
-            client.Flush(x => x.Index(indexName));
+            client.Flush(Index(indexName));
 
             var sc = new SearchDescriptor<Car>().Index(indexName).FilteredOn(x => x.Guid == "17c175f0-15ae-4f94-8d34-66574d7784d4");
             var result = client.Search<Car>(sc);
