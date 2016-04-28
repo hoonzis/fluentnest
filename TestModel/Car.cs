@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Security.Permissions;
+using Nest;
 
 
 namespace TestModel
@@ -24,5 +25,8 @@ namespace TestModel
         public decimal? PriceLimit { get; set; }
         public decimal Emissions { get; set; }
         public string Description { get; set; }
+
+        [ElasticProperty(OmitNorms = true, Index = FieldIndexOption.NotAnalyzed)]
+        public string Guid { get; set; }
     }
 }

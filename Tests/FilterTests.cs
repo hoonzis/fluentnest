@@ -282,6 +282,39 @@ namespace Tests
             var allUsers = client.Search<User>(sc);
             Check.That(allUsers.Documents).HasSize(1);
         }
+
+        [Fact]
+        public void Guid_Filter_Test()
+        {
+            var indexName = "cars3";
+            client.DeleteIndex(indexName);
+            var createIndexResult = client.CreateIndex(indexName, i => i.AddMapping<Car>(c => c.MapFromAttributes()));
+            Check.That(createIndexResult.Acknowledged).IsTrue();
+            for (int i = 0; i < 10; i++)
+            {
+                var car = new Car
+                {
+                    Timestamp = new DateTime(2010, (i % 12) + 1, 1),
+                    Name = "Car" + i,
+                    Price = 10,
+                    Sold = i % 2 == 0,
+                    CarType = "Type" + i % 2,
+                    Emissions = i + 1
+                };
+                
+                if (i == 1)
+                {
+                    car.Guid = "17c175f0-15ae-4f94-8d34-66574d7784d4";
+                }
+
+                client.Index(car, ind => ind.Index(indexName));
+            }
+            client.Flush(x => x.Index(indexName));
+
+            var sc = new SearchDescriptor<Car>().Index(indexName).FilteredOn(x => x.Guid == "17c175f0-15ae-4f94-8d34-66574d7784d4");
+            var result = client.Search<Car>(sc);
+            Check.That(result.Documents).HasSize(1);
+        }
     }
 }
 
