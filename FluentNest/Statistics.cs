@@ -75,7 +75,7 @@ namespace FluentNest
         public static AggregationContainerDescriptor<T> DistinctBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Distinct);
-            return agg.Terms(aggName, x => x.Field(fieldGetter));
+            return agg.Terms(aggName, x => x.Field(fieldGetter).Size(int.MaxValue));
         }
 
         public static AggregationContainerDescriptor<T> AverageBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
@@ -106,6 +106,28 @@ namespace FluentNest
         {
             var aggName = fieldGetter.GetAggName(AggType.Stats);
             return agg.Stats(aggName, x => x.Field(fieldGetter));
+        }
+
+        public static AggregationContainerDescriptor<T> TopHits<T>(this AggregationContainerDescriptor<T> agg, int size, params Expression<Func<T, object>>[] fieldGetter) where T : class
+        {
+            var aggName = AggType.TopHits.ToString();
+            return agg.TopHits(aggName, x => x.Size(size).Source(i=>i.Include(f=>f.Fields(fieldGetter))));
+        }
+
+        public static AggregationContainerDescriptor<T> SortedTopHits<T>(this AggregationContainerDescriptor<T> agg, int size, Expression<Func<T, object>> fieldSort,SortType sorttype, params Expression<Func<T, object>>[] fieldGetter) where T : class
+        {
+            var aggName = sorttype + fieldSort.GetAggName(AggType.TopHits);
+            var sortFieldDescriptor = new SortFieldDescriptor<T>();
+            sortFieldDescriptor = sortFieldDescriptor.Field(fieldSort);
+            if (sorttype == SortType.Ascending)
+            {
+                sortFieldDescriptor = sortFieldDescriptor.Ascending();
+            }
+            else
+            {
+                sortFieldDescriptor = sortFieldDescriptor.Descending();
+            }
+            return agg.TopHits(aggName, x => x.Size(size).Source(i => i.Include(f=>f.Fields(fieldGetter))).Sort(s=>sortFieldDescriptor));
         }
     }
 }

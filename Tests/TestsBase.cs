@@ -18,7 +18,7 @@ namespace Tests
 
         public TestsBase(Func<ConnectionSettings, IElasticsearchSerializer> serializerFactory = null)
         {
-            var node = new Uri("http://localhost:9600");
+            var node = new Uri("http://localhost:9200");
             var connectionPool = new SingleNodeConnectionPool(node);
 
             var settings = new ConnectionSettings(connectionPool, serializerFactory).DefaultIndex("my-application");
@@ -45,7 +45,8 @@ namespace Tests
                     Length = i,
                     EngineType = i % 2 == 0 ? EngineType.Diesel : EngineType.Standard,
                     Weight = 5,
-                    ConditionalRanking = i%2 ==0 ? null : (int?)i
+                    ConditionalRanking = i%2 ==0 ? null : (int?)i,
+                    Description = "Desc" + i,
                 };
 
                 using (var ms = new MemoryStream())

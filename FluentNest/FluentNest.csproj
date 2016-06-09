@@ -43,8 +43,9 @@
     <Compile Include="AggsContainer.cs" />
     <Compile Include="AggType.cs" />
     <Compile Include="GroupBys.cs" />
-    <Compile Include="NestHelperMethods.cs" />
+    <Compile Include="Filters.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SortType.cs" />
     <Compile Include="Statistics.cs" />
     <Compile Include="StatisticsGetters.cs" />
   </ItemGroup>

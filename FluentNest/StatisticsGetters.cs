@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Nest;
@@ -90,14 +91,14 @@ namespace FluentNest
             if (filterRule == null)
             {
                 var terms = aggs.Terms(aggName);
-                return NestHelperMethods.StringToAnything<K>(terms.Items[0].Key);
+                return Filters.StringToAnything<K>(terms.Items[0].Key);
             }
             else
             {
                 var filterName = filterRule.GenerateFilterName();
                 var filterAgg = aggs.Filter(filterName);
                 var termsAgg = filterAgg.Terms(aggName);
-                return NestHelperMethods.StringToAnything<K>(termsAgg.Items[0].Key);
+                return Filters.StringToAnything<K>(termsAgg.Items[0].Key);
             }
         }
 
@@ -163,7 +164,7 @@ namespace FluentNest
             var itemsTerms = aggs.Terms(aggName);
             if ((typeof(V).IsEnum))
             {
-                return itemsTerms.Items.Select((x => NestHelperMethods.Parse<V>(x.Key)));
+                return itemsTerms.Items.Select((x => Filters.Parse<V>(x.Key)));
             }
             else if (typeof(V) == typeof(string))
             {
@@ -173,6 +174,19 @@ namespace FluentNest
             {
                 return itemsTerms.Items.Select((x => (V)(object)(x.Key)));
             }
+        }
+
+        public static IEnumerable<T> GetTopHits<T>(this AggregationsHelper aggs) where T:class 
+        {
+            var topHits = aggs.TopHits(AggType.TopHits.ToString());
+            return topHits.Hits<T>().Select(x => x.Source);
+        }
+
+        public static IEnumerable<T> GetSortedTopHits<T>(this AggregationsHelper aggs, Expression<Func<T, object>> sorter, SortType sortType) where T : class
+        {
+            var aggName = sortType + sorter.GetAggName(AggType.TopHits);
+            var topHits = aggs.TopHits(aggName);
+            return topHits.Hits<T>().Select(x => x.Source);
         }
     }
 }
