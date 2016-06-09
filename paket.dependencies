@@ -5,3 +5,4 @@ framework >= net45
 nuget NEST 2.0.0-alpha2
 nuget NFluent 1.3.1.0
 nuget xunit 2.0.0
+nuget xunit.runner.visualstudio version_in_path: true
