@@ -48,11 +48,24 @@ namespace Tests
             );
 
             var carTypesList = result.Aggs.GetGroupBy<Car>(x => x.EngineType);
-            var carTypesDictionary = result.Aggs.GetDictioanry<Car,EngineType>(x => x.EngineType);
+            var carTypesDictionary = result.Aggs.GetDictionary<Car,EngineType>(x => x.EngineType);
             
             Check.That(carTypesDictionary).HasSize(2);
             Check.That(carTypesList).HasSize(2);
             Check.That(carTypesDictionary.Keys).ContainsExactly(EngineType.Diesel, EngineType.Standard);
+        }
+
+        [Fact]
+        public void GetDictionaryWithDecimalKeysFromGroupBy()
+        {
+            AddSimpleTestData();
+
+            var result =
+                client.Search<Car>(search => search.Aggregations(x => x.GroupBy(s => s.Price)));
+
+            var carTypes = result.Aggs.GetDictionary<Car, decimal>(x => x.Price);
+            Check.That(carTypes).HasSize(1);
+            Check.That(carTypes.Keys).ContainsExactly(10m);
         }
 
         [Fact]

@@ -13,8 +13,6 @@ namespace Tests
     public class FilterTests
     {
         private readonly ElasticClient client;
-
-        
         
         public FilterTests()
         {

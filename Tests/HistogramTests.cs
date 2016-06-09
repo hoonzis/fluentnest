@@ -56,7 +56,7 @@ namespace Tests
             );
 
             var carTypes =
-                histogram.Aggs.GetDictioanry<Car, IList<HistogramItem>>(x => x.CarType,
+                histogram.Aggs.GetDictionary<Car, IList<HistogramItem>>(x => x.CarType,
                     v => v.GetDateHistogram<Car>(f => f.Timestamp));
 
             Check.That(carTypes).HasSize(3);
