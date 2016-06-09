@@ -1,24 +1,24 @@
 Write-Host "Starting elasticsearch script"
 
-Invoke-WebRequest "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.6.0.zip" -OutFile .\es16.zip;
+Invoke-WebRequest "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-2.3.3.zip" -OutFile .\es.zip;
 
-$destFolder = "$pwd\es16\elasticsearch-1.6.0";
+$destFolder = "$pwd\es\elasticsearch-2.3.3";
 
 $shell = new-object -com shell.application;
 
 
-$zip = $shell.NameSpace("$pwd\es16.zip");
+$zip = $shell.NameSpace("$pwd\es.zip");
 
 if (Test-Path $pwd\$destFolder )
 {
 	del $pwd\$destFolder -Force -Recurse
 }
 
-md ".\es16";
+md ".\es";
 
 foreach($item in $zip.items())
 {
-	$shell.Namespace("$pwd\es16").copyhere($item);
+	$shell.Namespace("$pwd\es").copyhere($item);
 }
 
 cd $destFolder	

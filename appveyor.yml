@@ -19,8 +19,6 @@ build:
   publish_nuget: true
   project: FluentNest.sln
 
-test: off
-
 deploy:
   provider: NuGet
   api_key:
