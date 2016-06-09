@@ -73,7 +73,7 @@ namespace FluentNest
             {
                 return itemsTerms.Items.ToDictionary(x => Filters.Parse<V>(x.Key));
             }
-            return itemsTerms.Items.ToDictionary(x => (V)(Object)x.Key);
+            return itemsTerms.Items.ToDictionary(x => (V)Convert.ChangeType(x.Key, typeof(V)));
         }
 
         public static IDictionary<String, K> GetDictionary<T, K>(this AggregationsHelper aggs, Expression<Func<T, Object>> fieldGetter, Func<KeyedBucket, K> objectTransformer)

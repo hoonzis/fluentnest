@@ -60,8 +60,7 @@ namespace Tests
             Check.That(carTypes).HasSize(3);
 
             var firstType = carTypes["type0"];
-            Check.That(firstType).HasSize(10);
-            Check.That(firstType.Sum(x => x.DocCount)).IsEqualTo(4);
+            Check.That(firstType).HasSize(4);
         }
 
         [Fact]

@@ -57,6 +57,19 @@ namespace Tests
         }
 
         [Fact]
+        public void GetDictionaryWithDecimalKeysFromGroupBy()
+        {
+            AddSimpleTestData();
+
+            var result =
+                client.Search<Car>(search => search.Aggregations(x => x.GroupBy(s => s.Price)));
+
+            var carTypes = result.Aggs.GetDictionary<Car, decimal>(x => x.Price);
+            Check.That(carTypes).HasSize(1);
+            Check.That(carTypes.Keys).ContainsExactly(10m);
+        }
+
+        [Fact]
         public void GroupByStringKeys()
         {
             AddSimpleTestData();
