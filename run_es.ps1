@@ -1,21 +1,31 @@
-Install-ChocolateyZipPackage 'elastics' 'http://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.5.1.zip' "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
- 
-$path = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)\elasticsearch-1.5.1\bin"
- 
-Install-ChocolateyPath $path
- 
-#$java_home = [Environment]::GetEnvironmentVariable("JAVA_HOME", "Machine")
-#[Environment]::SetEnvironmentVariable("JAVA_HOME", $java_home)
- 
-[Environment]::SetEnvironmentVariable("ES_START_TYPE", "auto")
-[Environment]::SetEnvironmentVariable("ES_START_TYPE", "auto")
-[Environment]::SetEnvironmentVariable("ELASTIC_SEARCH_PATH", "$(Split-Path -parent $MyInvocation.MyCommand.Definition)\elasticsearch-1.5.1\", "Machine")
- 
-#if ([Environment]::GetEnvironmentVariable("DATA_DIR") -eq $null ) { throw "DATA_DIR Must be set" }
-#if ([Environment]::GetEnvironmentVariable("LOG_DIR") -eq $null ) { throw "LOG_DIR Must be set" }
-#if ([Environment]::GetEnvironmentVariable("CONF_DIR") -eq $null ) { throw "CONF_DIR Must be set" }
-#if ([Environment]::GetEnvironmentVariable("CONF_FILE") -eq $null ) { throw "CONF_FILE Must be set" }
- 
-&"$path\service.bat" "install"
- 
-&"$path\service.bat" "start"
+Write-Host "Starting elasticsearch script"
+
+Invoke-WebRequest "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.6.0.zip" -OutFile .\es16.zip;
+
+$destFolder = "$pwd\es16\elasticsearch-1.6.0";
+
+$shell = new-object -com shell.application;
+
+
+$zip = $shell.NameSpace("$pwd\es16.zip");
+
+if (Test-Path $pwd\$destFolder )
+{
+	del $pwd\$destFolder -Force -Recurse
+}
+
+md ".\es16";
+
+foreach($item in $zip.items())
+{
+	$shell.Namespace("$pwd\es16").copyhere($item);
+}
+
+cd $destFolder	
+
+.\bin\service.bat install
+
+.\bin\service.bat start
+
+cd ..
+cd ..
