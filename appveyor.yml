@@ -3,7 +3,7 @@ version: 1.0.{build}
 os: Visual Studio 2015
 
 install:
- - choco install elastic -v --ignore-dependencies
+ - ps: .\run_es.ps1
 
 assembly_info:
   patch: true
