@@ -7,3 +7,4 @@ xunit.abstractions
 xunit.assert
 xunit.core
 xunit.extensibility.core
+xunit.runner.visualstudio
