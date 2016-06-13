@@ -1,0 +1,21 @@
+FRAMEWORK: >= NET45
+NUGET
+  remote: https://www.nuget.org/api/v2
+  specs:
+    Elasticsearch.Net (1.5)
+    FSharp.Core (4.0.0.1)
+    NEST (1.5)
+      Elasticsearch.Net (>= 1.5)
+      Newtonsoft.Json (>= 6.0.1)
+    Newtonsoft.Json (6.0.1)
+    NFluent (1.3.1)
+    xunit (2.0)
+      xunit.assert (2.0)
+      xunit.core (2.0)
+    xunit.abstractions (2.0)
+    xunit.assert (2.0)
+    xunit.core (2.0)
+      xunit.extensibility.core (2.0)
+    xunit.extensibility.core (2.0)
+      xunit.abstractions (2.0)
+    xunit.runner.visualstudio (2.1.0) - version_in_path: true

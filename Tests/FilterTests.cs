@@ -10,28 +10,17 @@ using Xunit;
 
 namespace Tests
 {
-    public class FilterTests
+    public class FilterTests : TestsBase
     {
-        private readonly ElasticClient client;
-        
-        public FilterTests()
-        {
-            var node = new Uri("http://localhost:9200");
-
-            var settings = new ConnectionSettings(
-                node,
-                defaultIndex: "filtertest"
-            );
-            client = new ElasticClient(settings);
-        }
-
         private void AddSimpleTestData()
         {
             client.DeleteIndex(x => x.Index<Car>());
+            client.CreateIndex(c => c.Index<Car>().AddMapping<Car>(x => x
+            .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed)))));
             client.DeleteIndex(x => x.Index<User>());
-            var createIndexResult = client.CreateIndex(i=>i.Index<User>().AddMapping<User>(c => c.MapFromAttributes()));
-
-            Check.That(createIndexResult.Acknowledged).IsTrue();
+            client.CreateIndex(c => c.Index<User>().AddMapping<User>(x => x
+            .Properties(prop => prop.String(str => str.Name(s => s.Email).Index(FieldIndexOption.NotAnalyzed)))));
+            
             for (int i = 0; i < 10; i++)
             {
                 var car = new Car
@@ -285,7 +274,8 @@ namespace Tests
         {
             var indexName = "cars3";
             client.DeleteIndex(indexName);
-            var createIndexResult = client.CreateIndex(indexName, i => i.AddMapping<Car>(c => c.MapFromAttributes()));
+            var createIndexResult = client.CreateIndex(indexName, i => i.AddMapping<Car>(x => x
+            .Properties(prop => prop.String(str => str.Name(s => s.Guid).Index(FieldIndexOption.NotAnalyzed)))));
             Check.That(createIndexResult.Acknowledged).IsTrue();
             for (int i = 0; i < 10; i++)
             {
