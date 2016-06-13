@@ -3,29 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using FluentNest;
 using Nest;
-using static Nest.Infer;
 using NFluent;
 using TestModel;
 using Xunit;
 
 namespace Tests
 {
-    public class HistogramTests
+    public class HistogramTests : TestsBase
     {
-        private ElasticClient client;
-
-        public HistogramTests()
-        {
-            var node = new Uri("http://localhost:9600");
-
-            var settings = new ConnectionSettings(node).DefaultIndex("my-application");
-
-            client = new ElasticClient(settings);
-        }
-
         private void AddSimpleTestData()
         {
-            client.DeleteIndex(Index<Car>());
+            client.DeleteIndex(CarIndex);
+            client.CreateIndex(CarIndex, x => x.Mappings(m => m.Map<Car>(t => t
+            .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
             for (int i = 0; i < 10; i++)
             {
                 var car = new Car
@@ -40,7 +30,7 @@ namespace Tests
                 };
                 client.Index(car);
             }
-            client.Flush(Index<Car>());
+            client.Flush(Infer.Index<Car>());
         }
 
         [Fact]

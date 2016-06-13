@@ -1,50 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq.Expressions;
 using System.Text;
 using FluentNest;
 using Nest;
-using static Nest.Infer;
 using NFluent;
 using TestModel;
 using Xunit;
-using Indices = Nest.Indices;
 
 namespace Tests
 {
-    public class FilterTests
+    public class FilterTests : TestsBase
     {
-        private ElasticClient client;
-
-        class User
-        {
-            [String(Index = FieldIndexOption.NotAnalyzed)]
-            public String Email { get; set; }
-
-            public String Name { get; set; }
-
-            public int Age { get; set; }
-
-            public bool? Enabled { get; set; }
-
-            public bool Active { get; set; }
-
-        }
-
-        
-        public FilterTests()
-        {
-            var node = new Uri("http://localhost:9600");
-
-            var settings = new ConnectionSettings(node).DefaultIndex("my-application");
-            client = new ElasticClient(settings);
-        }
+        private readonly IndexName userIndex = Infer.Index<User>();
+        private const string myFavoriteGuid = "17c175f0-15ae-4f94-8d34-66574d7784d4";
 
         private void AddSimpleTestData()
         {
-            client.DeleteIndex(Index<Car>());
-            client.DeleteIndex(Index("test"));
-            var createIndexResult = client.CreateIndex(Index("test"), x => x.Mappings(m => m.Map<User>(u => u.AutoMap())));
+            client.DeleteIndex(CarIndex);
+            client.CreateIndex(CarIndex, x => x.Mappings(
+                 m => m.Map<Car>(t => t.Properties(prop => prop.String(str => str.Name(s => s.Guid).Index(FieldIndexOption.NotAnalyzed))))));
+            
+            client.DeleteIndex(userIndex);
+            var createIndexResult = client.CreateIndex(userIndex, x=>x.Mappings(
+                m => m.Map<User>(t => t.Properties(prop => prop.String(str => str.Name(s => s.Email).Index(FieldIndexOption.NotAnalyzed))))));
 
             Check.That(createIndexResult.Acknowledged).IsTrue();
             for (int i = 0; i < 10; i++)
@@ -56,9 +36,14 @@ namespace Tests
                     Price = 10,
                     Sold = i % 2 == 0 ? true : false,
                     CarType = "Type" + i%2,
-                    Emissions = i+1
+                    Emissions = i+1,
+                    Guid = Guid.NewGuid().ToString()
                 };
-                client.Index(car);
+                if (i == 1)
+                {
+                    car.Guid = myFavoriteGuid;
+                }
+                client.Index(car, ind => ind.Index(CarIndex));
             }
 
             for (int i = 0; i < 10; i++)
@@ -71,7 +56,7 @@ namespace Tests
                     Enabled = i%2 == 0 ? true : false,
                     Active = i % 2 == 0 ? true : false
                 };
-                client.Index(user, c => c.Index("test"));
+                client.Index(user, c => c.Index(userIndex));
             }
             client.Flush(Indices.AllIndices);
         }
@@ -153,21 +138,21 @@ namespace Tests
         {
             AddSimpleTestData();
 
-            var allUsers = client.Search<User>(s => s.Index("test"));
+            var allUsers = client.Search<User>(s => s.Index(userIndex));
             Check.That(allUsers.Documents).HasSize(10);
 
             //these two searches should provide the same result
             var result =
                 client.Search<User>(
                     s =>
-                        s.Index("test")
+                        s.Index(userIndex)
                             .Query(
                                 q =>
                                     q.Bool(
                                         b => b.Must(x => x.Term(term => term.Email, "Email@email1.com")))));
             Check.That(result.Documents).HasSize(5);
 
-            result = client.Search<User>(s => s.Index("test").FilteredOn(f => f.Email == "Email@email1.com"));
+            result = client.Search<User>(s => s.Index(userIndex).FilteredOn(f => f.Email == "Email@email1.com"));
             Check.That(result.Documents).HasSize(5);
         }
 
@@ -192,7 +177,7 @@ namespace Tests
             var filter = Filters
                 .CreateFilter<User>(x => x.Enabled == true);
 
-            var allUsers = client.Search<User>(s => s.Index("test").Query(_ => filter));
+            var allUsers = client.Search<User>(s => s.Index(userIndex).Query(_ => filter));
             Check.That(allUsers.Documents).HasSize(5);
         }
 
@@ -235,7 +220,7 @@ namespace Tests
             var filter = Filters
                 .CreateFilter<User>(x => x.Name != "name1" && x.Name != "name2");
 
-            var allUsers = client.Search<User>(s => s.Index("test").Query(_ => filter));
+            var allUsers = client.Search<User>(s => s.Index(userIndex).Query(_ => filter));
             Check.That(allUsers.Documents).HasSize(4);
         }
 
@@ -243,7 +228,7 @@ namespace Tests
         public void Bool_filter_test()
         {
             AddSimpleTestData();
-            var allUsers = client.Search<User>(s => s.FilterOn(f=>f.Active));
+            var allUsers = client.Search<User>(s=>s.Index(userIndex).FilterOn(f=>f.Active));
             Check.That(allUsers.Documents).HasSize(5);
         }
 
@@ -286,33 +271,7 @@ namespace Tests
         [Fact]
         public void Guid_Filter_Test()
         {
-            var indexName = "cars3";
-            client.DeleteIndex(indexName);
-            var createIndexResult = client.CreateIndex(Index(indexName), x => x.Mappings(m => m.Map<Car>(u => u.AutoMap())));
-            Check.That(createIndexResult.Acknowledged).IsTrue();
-            for (int i = 0; i < 10; i++)
-            {
-                var car = new Car
-                {
-                    Timestamp = new DateTime(2010, (i % 12) + 1, 1),
-                    Name = "Car" + i,
-                    Price = 10,
-                    Sold = i % 2 == 0,
-                    CarType = "Type" + i % 2,
-                    Emissions = i + 1
-                };
-                
-                if (i == 1)
-                {
-                    car.Guid = "17c175f0-15ae-4f94-8d34-66574d7784d4";
-                }
-
-                client.Index(car, ind => ind.Index(indexName));
-            }
-            client.Flush(Index(indexName));
-
-            var sc = new SearchDescriptor<Car>().Index(indexName).FilteredOn(x => x.Guid == "17c175f0-15ae-4f94-8d34-66574d7784d4");
-            var result = client.Search<Car>(sc);
+            var result = client.Search<Car>(sc => sc.Index(CarIndex).FilteredOn(x => x.Guid == myFavoriteGuid));
             Check.That(result.Documents).HasSize(1);
         }
     }

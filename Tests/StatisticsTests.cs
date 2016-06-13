@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
+using System.Text;
 using FluentNest;
 using Nest;
 using NFluent;
@@ -10,6 +12,39 @@ namespace Tests
 {
     public class StatisticsTests : TestsBase
     {
+        public void AddSimpleTestData()
+        {
+            client.DeleteIndex(Infer.Index<Car>());
+            client.CreateIndex(Infer.Index<Car>(), x => x.Mappings(
+                m => m.Map<Car>(t => t
+            .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
+
+            for (int i = 0; i < 10; i++)
+            {
+                var car = new Car
+                {
+                    Timestamp = new DateTime(2010, i + 1, 1),
+                    Name = "Car" + i,
+                    Price = 10,
+                    Sold = i % 2 == 0 ? true : false,
+                    CarType = "Type" + i % 3,
+                    Length = i,
+                    EngineType = i % 2 == 0 ? EngineType.Diesel : EngineType.Standard,
+                    Weight = 5,
+                    ConditionalRanking = i % 2 == 0 ? null : (int?)i,
+                    Description = "Desc" + i,
+                };
+
+                using (var ms = new MemoryStream())
+                {
+                    client.Serializer.Serialize(car, ms);
+                    Console.WriteLine(Encoding.UTF8.GetString(ms.ToArray()));
+                }
+                client.Index(car);
+            }
+            client.Flush(Infer.Index<Car>());
+        }
+
         [Fact]
         public void SumTest()
         {
