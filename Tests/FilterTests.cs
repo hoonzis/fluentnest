@@ -274,7 +274,8 @@ namespace Tests
         {
             var indexName = "cars3";
             client.DeleteIndex(indexName);
-            var createIndexResult = client.CreateIndex(indexName, i => i.AddMapping<Car>(c => c.MapFromAttributes()));
+            var createIndexResult = client.CreateIndex(indexName, i => i.AddMapping<Car>(x => x
+            .Properties(prop => prop.String(str => str.Name(s => s.Guid).Index(FieldIndexOption.NotAnalyzed)))));
             Check.That(createIndexResult.Acknowledged).IsTrue();
             for (int i = 0; i < 10; i++)
             {

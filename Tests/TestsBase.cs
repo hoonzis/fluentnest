@@ -15,7 +15,7 @@ namespace Tests
 
         public TestsBase(params Func<ConnectionSettings, ConnectionSettings>[] additionalSettings)
         {
-            var node = new Uri("http://localhost:9200");
+            var node = new Uri("http://localhost:9600");
 
             var settings = new ConnectionSettings(
                 node,
