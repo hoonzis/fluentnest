@@ -162,10 +162,10 @@ namespace Tests
 
             var carTypes = result.Aggs.Terms("firstLevel");
 
-            foreach (var carType in carTypes.Items)
+            foreach (var carType in carTypes.Buckets)
             {
                 var engineTypes = carType.Terms("secondLevel");
-                foreach (var engineType in engineTypes.Items)
+                foreach (var engineType in engineTypes.Buckets)
                 {
                     var priceSum = (decimal)engineType.Sum("priceSum").Value;
                     Check.That(priceSum).IsPositive();
@@ -203,7 +203,7 @@ namespace Tests
             AddSimpleTestData();
             
             var result = client.Search<Car>(search => search
-                .FilteredOn(f=> f.CarType == "type0")
+                .FilterOn(f=> f.CarType == "type0")
                 .Aggregations(agg => agg
                     .DistinctBy(x => x.CarType)
                     .DistinctBy(x => x.EngineType)
@@ -230,7 +230,7 @@ namespace Tests
             var filter = Filters.CreateFilter<Car>(x => x.Timestamp > new DateTime(2010,2,1) && x.Timestamp < new DateTime(2010, 8, 1))
                 .AndFilteredOn<Car>(x => x.CarType == "type0");
 
-            var result = client.Search<Car>(sc => sc.FilteredOn(filter).Aggregations(agg => agg
+            var result = client.Search<Car>(sc => sc.FilterOn(filter).Aggregations(agg => agg
                 .DistinctBy(x => x.CarType)
                 .DistinctBy(x => x.EngineType)
             ));

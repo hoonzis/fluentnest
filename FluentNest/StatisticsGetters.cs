@@ -19,7 +19,7 @@ namespace FluentNest
         /// <typeparam name="K"></typeparam>
         /// <param name="agg"></param>
         /// <returns></returns>
-        private static K ValueAsUndType<K>(ValueMetric agg)
+        private static K ValueAsUndType<K>(ValueAggregate agg)
         {
             var type = typeof(K);
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
@@ -48,7 +48,7 @@ namespace FluentNest
         public static int GetCardinality<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
             var aggName = fieldGetter.GetAggName(AggType.Cardinality);
-            ValueMetric itemsTerms;
+            ValueAggregate itemsTerms;
 
             if (filterRule == null)
             {
@@ -91,14 +91,14 @@ namespace FluentNest
             if (filterRule == null)
             {
                 var terms = aggs.Terms(aggName);
-                return Filters.StringToAnything<K>(terms.Items[0].Key);
+                return Filters.StringToAnything<K>(terms.Buckets[0].Key);
             }
             else
             {
                 var filterName = filterRule.GenerateFilterName();
                 var filterAgg = aggs.Filter(filterName);
                 var termsAgg = filterAgg.Terms(aggName);
-                return Filters.StringToAnything<K>(termsAgg.Items[0].Key);
+                return Filters.StringToAnything<K>(termsAgg.Buckets[0].Key);
             }
         }
 
@@ -130,7 +130,7 @@ namespace FluentNest
             return itemsTerms.Items;
         }
 
-        public static StatsMetric GetStats<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter)
+        public static StatsAggregate GetStats<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter)
         {
             var aggName = fieldGetter.GetAggName(AggType.Stats);
             var itemsTerms = aggs.Stats(aggName);
@@ -164,15 +164,15 @@ namespace FluentNest
             var itemsTerms = aggs.Terms(aggName);
             if ((typeof(V).IsEnum))
             {
-                return itemsTerms.Items.Select((x => Filters.Parse<V>(x.Key)));
+                return itemsTerms.Buckets.Select((x => Filters.Parse<V>(x.Key)));
             }
             else if (typeof(V) == typeof(string))
             {
-                return itemsTerms.Items.Select((x => (V)(object)(x.Key)));
+                return itemsTerms.Buckets.Select((x => (V)(object)(x.Key)));
             }
             else
             {
-                return itemsTerms.Items.Select((x => (V)(object)(x.Key)));
+                return itemsTerms.Buckets.Select((x => (V)(object)(x.Key)));
             }
         }
 

@@ -82,25 +82,25 @@ namespace FluentNest
         }
 
 
-        public static IList<DateHistogramItem> GetDateHistogram<T>(this KeyedBucket item,
+        public static IList<DateHistogramBucket> GetDateHistogram<T>(this KeyedBucket item,
             Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = item.DateHistogram(GetName(fieldGetter));
-            return histogramItem.Items;
+            return histogramItem.Buckets;
         }
 
-        public static IList<DateHistogramItem> GetDateHistogram<T>(this AggregationsHelper aggs,
+        public static IList<DateHistogramBucket> GetDateHistogram<T>(this AggregationsHelper aggs,
             Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = aggs.DateHistogram(GetName(fieldGetter));
-            return histogramItem.Items;
+            return histogramItem.Buckets;
         }
 
-        public static IList<HistogramItem> GetHistogram<T>(this AggregationsHelper aggs,
+        public static IList<HistogramBucket> GetHistogram<T>(this AggregationsHelper aggs,
             Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = aggs.Histogram(GetName(fieldGetter));
-            return histogramItem.Items;
+            return histogramItem.Buckets;
         }
 
         public static QueryContainer GenerateComparisonFilter<T>(this Expression expression, ExpressionType type)
@@ -344,32 +344,25 @@ namespace FluentNest
 
         public static SearchDescriptor<T> FilterOn<T>(this SearchDescriptor<T> searchDescriptor, Expression<Func<T, bool>> filterRule) where T : class
         {
-            var binaryExpression = filterRule.Body as BinaryExpression;
-            var filterDescriptor = GenerateFilterDescription<T>(binaryExpression);
+            var filterDescriptor = GenerateFilterDescription<T>(filterRule.Body);
             return searchDescriptor.Query(_ => filterDescriptor);
         }
 
-        public static SearchDescriptor<T> FilteredOn<T>(this SearchDescriptor<T> searchDescriptor, Expression<Func<T, bool>> filterRule) where T : class
-        {           
-            var binaryExpression = filterRule.Body as BinaryExpression;            
-            return searchDescriptor.Query(q => q.Bool(b => b.Must(GenerateFilterDescription<T>(binaryExpression))));
+        public static SearchDescriptor<T> FilterOn<T>(this SearchDescriptor<T> searchDescriptor, QueryContainer container) where T : class
+        {
+            return searchDescriptor.Query(q => container);
         }
 
-        public static SearchDescriptor<T> FilteredOn<T>(this SearchDescriptor<T> searchDescriptor, QueryContainer container) where T : class
+        public static DeleteByQueryDescriptor<T> FilterOn<T>(this DeleteByQueryDescriptor<T> deleteDescriptor, QueryContainer container) where T : class
         {
-            return searchDescriptor.Query(q => q.Bool(b => b.Must(container)));
+            return deleteDescriptor.Query(q => container);
         }
 
-        public static DeleteByQueryDescriptor<T> FilteredOn<T>(this DeleteByQueryDescriptor<T> deleteDescriptor, QueryContainer container) where T : class
+        public static DeleteByQueryDescriptor<T> FilterOn<T>(this DeleteByQueryDescriptor<T> deleteDescriptor, Expression<Func<T, bool>> filterRule) where T : class
         {
-            return deleteDescriptor.Query(q => q.Bool(b => b.Must(container)));
-        }
 
-        public static DeleteByQueryDescriptor<T> FilteredOn<T>(this DeleteByQueryDescriptor<T> deleteDescriptor, Expression<Func<T, bool>> filterRule) where T : class
-        {
-            var binaryExpression = filterRule.Body as BinaryExpression;
-            var deleteByQueryDescriptor = deleteDescriptor.Query(q => q.Bool(b => b.Must(GenerateFilterDescription<T>(binaryExpression))));
-            return deleteByQueryDescriptor;
+            var filterDescriptor = GenerateFilterDescription<T>(filterRule.Body);
+            return deleteDescriptor.Query(_ => filterDescriptor);
         }
 
 

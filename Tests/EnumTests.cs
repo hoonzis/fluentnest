@@ -17,10 +17,10 @@ namespace Tests
     {
         public void AddSimpleTestData()
         {
-            client.DeleteIndex(Infer.Index<Car>());
-            client.CreateIndex(Infer.Index<Car>(), x => x.Mappings(
+            client.DeleteIndex(CarIndex);
+            client.CreateIndex(CarIndex, x => x.Mappings(
                 m => m.Map<Car>(t => t
-            .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
+                    .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
 
             for (int i = 0; i < 10; i++)
             {
@@ -37,15 +37,9 @@ namespace Tests
                     ConditionalRanking = i % 2 == 0 ? null : (int?)i,
                     Description = "Desc" + i,
                 };
-
-                using (var ms = new MemoryStream())
-                {
-                    client.Serializer.Serialize(car, ms);
-                    Console.WriteLine(Encoding.UTF8.GetString(ms.ToArray()));
-                }
                 client.Index(car);
             }
-            client.Flush(Infer.Index<Car>());
+            client.Flush(CarIndex);
         }
 
         private class StringEnumContractSerializer : JsonNetSerializer
@@ -72,8 +66,7 @@ namespace Tests
         public void Filtering_on_enum_property_should_work()
         {
             AddSimpleTestData();
-            var result = client.Search<Car>(s => s.Query(_ => Filters.CreateFilter<Car>(x => x.EngineType == EngineType.Diesel)));
-
+            var result = client.Search<Car>(s => s.Index(CarIndex).FilterOn(x => x.EngineType == EngineType.Diesel));
             Check.That(result.Hits.Count()).IsEqualTo(5);
         }
     }

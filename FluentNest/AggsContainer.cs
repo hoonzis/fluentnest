@@ -54,7 +54,7 @@ namespace FluentNest
             return aggs.GetPercentile<T>(fieldGetter);
         }
 
-        public StatsMetric GetStats(Expression<Func<T, Object>> fieldGetter)
+        public StatsAggregate GetStats(Expression<Func<T, Object>> fieldGetter)
         {
             return aggs.GetStats(fieldGetter);
         }

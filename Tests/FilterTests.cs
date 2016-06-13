@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq.Expressions;
-using System.Text;
 using FluentNest;
 using Nest;
 using NFluent;
@@ -14,7 +11,7 @@ namespace Tests
     public class FilterTests : TestsBase
     {
         private readonly IndexName userIndex = Infer.Index<User>();
-        private const string myFavoriteGuid = "17c175f0-15ae-4f94-8d34-66574d7784d4";
+        private const string MyFavoriteGuid = "17c175f0-15ae-4f94-8d34-66574d7784d4";
 
         private void AddSimpleTestData()
         {
@@ -41,7 +38,7 @@ namespace Tests
                 };
                 if (i == 1)
                 {
-                    car.Guid = myFavoriteGuid;
+                    car.Guid = MyFavoriteGuid;
                 }
                 client.Index(car, ind => ind.Index(CarIndex));
             }
@@ -129,7 +126,7 @@ namespace Tests
             Check.That(result.Documents).HasSize(3);
 
             //Much better
-            result = client.Search<Car>(s => s.FilteredOn(f => f.Timestamp > startDate && f.Timestamp < endDate));
+            result = client.Search<Car>(s => s.FilterOn(f => f.Timestamp > startDate && f.Timestamp < endDate));
             Check.That(result.Documents).HasSize(3);
         }
 
@@ -152,7 +149,7 @@ namespace Tests
                                         b => b.Must(x => x.Term(term => term.Email, "Email@email1.com")))));
             Check.That(result.Documents).HasSize(5);
 
-            result = client.Search<User>(s => s.Index(userIndex).FilteredOn(f => f.Email == "Email@email1.com"));
+            result = client.Search<User>(s => s.Index(userIndex).FilterOn(f => f.Email == "Email@email1.com"));
             Check.That(result.Documents).HasSize(5);
         }
 
@@ -191,7 +188,7 @@ namespace Tests
                 .AndFilteredOn<User>(x => x.Email == "Email@email1.com");
             
             var result = client.Search<User>(sc => sc
-                .FilteredOn(filter)
+                .FilterOn(filter)
                 .Aggregations(agg => agg
                 .SumBy(x=>x.Age)
             ));
@@ -254,7 +251,7 @@ namespace Tests
         {
             AddSimpleTestData();
             var list = new List<string> {"name1", "name2"};
-            var users = client.Search<User>(sc => sc.FilteredOn(Filters.ValueWithin<User>(x => x.Name, list)));
+            var users = client.Search<User>(sc => sc.FilterOn(Filters.ValueWithin<User>(x => x.Name, list)));
             Check.That(users.Documents).HasSize(6);
         }
 
@@ -263,7 +260,7 @@ namespace Tests
         {
             AddSimpleTestData();
             var filter = Filters.CreateFilter<User>(x => x.Age > 8);
-            var sc = new SearchDescriptor<User>().FilteredOn(filter.AndValueWithin<User>(x=>x.Name, new List<string> { "name1", "name2" } ));
+            var sc = new SearchDescriptor<User>().FilterOn(filter.AndValueWithin<User>(x=>x.Name, new List<string> { "name1", "name2" } ));
             var allUsers = client.Search<User>(sc);
             Check.That(allUsers.Documents).HasSize(1);
         }
@@ -271,7 +268,7 @@ namespace Tests
         [Fact]
         public void Guid_Filter_Test()
         {
-            var result = client.Search<Car>(sc => sc.Index(CarIndex).FilteredOn(x => x.Guid == myFavoriteGuid));
+            var result = client.Search<Car>(sc => sc.Index(CarIndex).FilterOn(x => x.Guid == MyFavoriteGuid));
             Check.That(result.Documents).HasSize(1);
         }
     }

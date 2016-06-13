@@ -14,8 +14,7 @@ namespace Tests
         private void AddSimpleTestData()
         {
             client.DeleteIndex(CarIndex);
-            client.CreateIndex(CarIndex, x => x.Mappings(m => m.Map<Car>(t => t
-            .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
+            client.CreateIndex(CarIndex, x => x.Mappings(m => m.Map<Car>(t => t.Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
             for (int i = 0; i < 10; i++)
             {
                 var car = new Car
@@ -44,13 +43,24 @@ namespace Tests
             );
 
             var carTypes =
-                histogram.Aggs.GetDictionary<Car, IList<DateHistogramItem>>(x => x.CarType,
+                histogram.Aggs.GetDictionary<Car, IList<DateHistogramBucket>>(x => x.CarType,
                     v => v.GetDateHistogram<Car>(f => f.Timestamp));
 
             Check.That(carTypes).HasSize(3);
 
+            // currently nest returns buckets in between the values
+            // first type gets everything between first month and the 10th month -> that is 10 buckets
             var firstType = carTypes["type0"];
-            Check.That(firstType).HasSize(4);
+            Check.That(firstType).HasSize(10);
+
+            // second type and third type both get 7 buckets
+            // second type from february to september
+            var secondType = carTypes["type1"];
+            Check.That(secondType).HasSize(7);
+
+            // third type from marz to october
+            var thirdType = carTypes["type2"];
+            Check.That(thirdType).HasSize(7);
         }
 
         [Fact]
@@ -64,8 +74,8 @@ namespace Tests
                             aggs => aggs.Sum("priceSum", dField => dField.Field(field => field.Price))))));
 
             var histogram = result.Aggs.DateHistogram("by_month");
-            Check.That(histogram.Items).HasSize(10);
-            var firstMonth = histogram.Items[0];
+            Check.That(histogram.Buckets).HasSize(10);
+            var firstMonth = histogram.Buckets[0];
             var priceSum = firstMonth.Sum("priceSum");
             Check.That(priceSum.Value.Value).Equals(10d);
         }
@@ -92,7 +102,7 @@ namespace Tests
             var end = new DateTime(2010, 4, 4);
 
             var result = client.Search<Car>(sc => sc
-                .FilteredOn(f => f.Timestamp < end && f.Timestamp > start)
+                .FilterOn(f => f.Timestamp < end && f.Timestamp > start)
                 .Aggregations(agg => agg
                     .SumBy(x => x.Price)
                     .IntoDateHistogram(date => date.Timestamp, DateInterval.Month)

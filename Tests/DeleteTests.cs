@@ -39,7 +39,8 @@ namespace Tests
         public void DeleteByQuery()
         {
             AddSimpleTestData();
-            client.DeleteByQuery<Car>(CarIndex, s => s.FilteredOn(x => x.Sold == true));
+            var deleteResult = client.DeleteByQuery<Car>(CarIndex, Types.All,s  => s.FilterOn(x => x.Sold));
+            Check.That(deleteResult.IsValid).IsTrue();
             client.Refresh(CarIndex);
             var result = client.Search<Car>(sc=>sc.Index(CarIndex).MatchAll());
             Check.That(result.Hits).HasSize(5);
@@ -50,7 +51,7 @@ namespace Tests
         {
             AddSimpleTestData();
             var filter = Filters.CreateFilter<Car>(x => x.EngineType == EngineType.Diesel);
-            client.DeleteByQuery<Car>(CarIndex, s => s.FilteredOn(filter));
+            client.DeleteByQuery<Car>(CarIndex, Types.All, s => s.FilterOn(filter));
             client.Refresh(CarIndex);
             var result = client.Search<Car>(sc => sc.MatchAll());
             Check.That(result.Hits).HasSize(5);
