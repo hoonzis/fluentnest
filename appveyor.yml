@@ -2,6 +2,9 @@ version: 1.0.{build}
 
 os: Visual Studio 2015
 
+install:
+ - ps: .\run_es.ps1
+
 assembly_info:
   patch: true
   file: AssemblyInfo.*
@@ -16,11 +19,11 @@ build:
   publish_nuget: true
   project: FluentNest.sln
 
-test: off
-
 deploy:
   provider: NuGet
   api_key:
     secure: Ax/Zt3hfzLf7jMzb9VqiCsTtGCr3c+sf6pozg3KrCm/d+qZnY2IWFmmbQYws5Frh
   skip_symbols: true
   artifact: /.*\.nupkg/
+  on:
+    branch: master

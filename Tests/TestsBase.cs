@@ -15,7 +15,7 @@ namespace Tests
 
         public TestsBase(params Func<ConnectionSettings, ConnectionSettings>[] additionalSettings)
         {
-            var node = new Uri("http://localhost:9600");
+            var node = new Uri("http://localhost:9200");
 
             var settings = new ConnectionSettings(
                 node,
@@ -45,7 +45,8 @@ namespace Tests
                     Length = i,
                     EngineType = i % 2 == 0 ? EngineType.Diesel : EngineType.Standard,
                     Weight = 5,
-                    ConditionalRanking = i%2 ==0 ? null : (int?)i
+                    ConditionalRanking = i%2 ==0 ? null : (int?)i,
+                    Description = "Desc" + i,
                 };
 
                 var json = Encoding.UTF8.GetString(client.Serializer.Serialize(car));

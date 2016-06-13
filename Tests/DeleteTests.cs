@@ -20,7 +20,7 @@ namespace Tests
         public void DeleteByQuery_FilterCreatedSeparately()
         {
             AddSimpleTestData();
-            var filter = NestHelperMethods.CreateFilter<Car>(x => x.EngineType == EngineType.Diesel);
+            var filter = Filters.CreateFilter<Car>(x => x.EngineType == EngineType.Diesel);
             client.DeleteByQuery<Car>(s => s.FilteredOn(filter));
             var result = client.Search<Car>(sc => sc.MatchAll());
             Check.That(result.Hits).HasSize(5);
