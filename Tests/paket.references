@@ -1,0 +1,9 @@
+Elasticsearch.Net
+NEST
+Newtonsoft.Json
+NFluent
+xunit
+xunit.abstractions
+xunit.assert
+xunit.core
+xunit.extensibility.core
