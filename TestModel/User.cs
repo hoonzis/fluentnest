@@ -1,12 +1,10 @@
 ﻿using System;
 using FSharpModel;
-using Nest;
 
 namespace TestModel
 {
     public class User
     {
-        [ElasticProperty(OmitNorms = true, Index = FieldIndexOption.NotAnalyzed)]
         public String Email { get; set; }
 
         public String Name { get; set; }
