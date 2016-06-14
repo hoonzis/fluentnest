@@ -1,7 +1,6 @@
 ﻿using System;
-using FSharpModel;
 
-namespace TestModel
+namespace Tests.Model
 {
     public class User
     {
@@ -13,9 +12,7 @@ namespace TestModel
 
         public bool? Enabled { get; set; }
 
-        public bool Active { get; set; }
-
-        public UserType Type { get; set; }
+        public bool Active { get; set; }       
 
         public DateTime CreationTime { get; set; }
 
