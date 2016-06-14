@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{2E4CA567-A6CF-475A-9440-B7732EACBEE4}"
 	ProjectSection(SolutionItems) = preProject
@@ -16,7 +16,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0B655168-DED9-4758-9DCD-EDA18014E233}"
 	ProjectSection(SolutionItems) = preProject
+		paket.cmd = paket.cmd
 		README.md = README.md
+		run_es.ps1 = run_es.ps1
+		tests.cmd = tests.cmd
 	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharpModel", "FSharpModel\FSharpModel.fsproj", "{E7F25562-8FEC-4BB4-9922-B310641E2B20}"
