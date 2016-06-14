@@ -23,6 +23,8 @@ foreach($item in $zip.items())
 
 cd $destFolder	
 
+bin\plugin install delete-by-query
+
 .\bin\service.bat install
 
 .\bin\service.bat start

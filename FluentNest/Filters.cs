@@ -11,10 +11,11 @@ namespace FluentNest
     {
         public static string FirstCharacterToLower(this string str)
         {
-            if (String.IsNullOrEmpty(str) || Char.IsLower(str, 0))
+            if (string.IsNullOrEmpty(str) || char.IsLower(str, 0))
                 return str;
 
-            return Char.ToLowerInvariant(str[0]) + str.Substring(1);
+            return char.ToLowerInvariant(str[0]) + str.Substring(1);
+            ;
         }
 
         public static AggregationContainerDescriptor<T> IntoDateHistogram<T>(this AggregationContainerDescriptor<T> innerAggregation,
@@ -53,7 +54,7 @@ namespace FluentNest
             return agg.DateHistogram(GetName(fieldGetter), x => x.Field(fieldGetter).Interval(dateInterval));
         }
 
-        private static string GetName<T, K>(this Expression<Func<T, K>> exp)
+        private static string GetName<T, TK>(this Expression<Func<T, TK>> exp)
         {
             MemberExpression body = exp.Body as MemberExpression;
 
@@ -67,7 +68,7 @@ namespace FluentNest
             return body.Member.Name;
         }
 
-        public static string GetAggName<T, K>(this Expression<Func<T, K>> exp, AggType type)
+        public static string GetAggName<T, TK>(this Expression<Func<T, TK>> exp, AggType type)
         {
             var body = exp.Body as MemberExpression;
 
@@ -108,7 +109,7 @@ namespace FluentNest
         {
             var binaryExpression = expression as BinaryExpression;
 
-            var value = GetValue(binaryExpression.Right);
+            var value = GetValue(binaryExpression);
             var memberAccessor = binaryExpression.Left as MemberExpression;
             var fieldName = GetFieldNameFromMember(memberAccessor);
 
@@ -196,16 +197,15 @@ namespace FluentNest
             throw new NotImplementedException();
         }
 
-        public static QueryContainer GenerateEqualityFilter<T>(this Expression expression) where T : class
-        {
-            var binaryExpression = expression as BinaryExpression;
-            var value = GetValue(binaryExpression.Right);
+        public static QueryContainer GenerateEqualityFilter<T>(this BinaryExpression binaryExpression) where T : class
+        {           
+            var value = GetValue(binaryExpression);
             var queryContainerDescriptor = new QueryContainerDescriptor<T>();
             var fieldName = GetFieldName(binaryExpression.Left);
             return queryContainerDescriptor.Term(fieldName, value);
         }
 
-        public static QueryContainer GenerateNotEqualFilter<T>(this Expression expression) where T : class
+        public static QueryContainer GenerateNotEqualFilter<T>(this BinaryExpression expression) where T : class
         {
             var equalityFilter = GenerateEqualityFilter<T>(expression);
             var filterDescriptor = new QueryContainerDescriptor<T>();
@@ -251,51 +251,54 @@ namespace FluentNest
                 var filterDescriptor = new QueryContainerDescriptor<T>();
                 return filterDescriptor.Bool(s => s.Must(leftFilter, rightFilter));
             }
-            else if (expType == ExpressionType.Or || expType == ExpressionType.OrElse)
+            else
             {
-                var binaryExpression = expression as BinaryExpression;
-                var leftFilter = GenerateFilterDescription<T>(binaryExpression.Left);
-                var rightFilter = GenerateFilterDescription<T>(binaryExpression.Right);
-                var filterDescriptor = new QueryContainerDescriptor<T>();
-                return filterDescriptor.Bool(x => x.Should(leftFilter, rightFilter).MinimumShouldMatch(1));
-            }
-            else if (expType == ExpressionType.Equal)
-            {
-                return GenerateEqualityFilter<T>(expression);
-            }
-            else if(expType == ExpressionType.LessThan || expType == ExpressionType.GreaterThan || expType == ExpressionType.LessThanOrEqual || expType == ExpressionType.GreaterThanOrEqual)
-            {
-                return GenerateComparisonFilter<T>(expression,expType);
-            }
-            else if (expType == ExpressionType.MemberAccess)
-            {
-                var memberExpression = expression as MemberExpression;
-                //here we handle binary expressions in the from .field.hasValue
-                if (memberExpression.Member.Name == "HasValue")
+                if (expType == ExpressionType.Or || expType == ExpressionType.OrElse)
                 {
-                    var parentFieldExpression = (memberExpression.Expression as MemberExpression);
-                    var parentFieldName = GetFieldNameFromMember(parentFieldExpression);
-
+                    var binaryExpression = expression as BinaryExpression;
+                    var leftFilter = GenerateFilterDescription<T>(binaryExpression.Left);
+                    var rightFilter = GenerateFilterDescription<T>(binaryExpression.Right);
                     var filterDescriptor = new QueryContainerDescriptor<T>();
-                    return filterDescriptor.Exists(x => x.Field(parentFieldName));
+                    return filterDescriptor.Bool(x => x.Should(leftFilter, rightFilter).MinimumShouldMatch(1));
                 }
-                var isProperty = memberExpression.Member.MemberType == MemberTypes.Property;
-                if (isProperty)
+                if (expType == ExpressionType.Equal)
                 {
-                    var propertyType = ((PropertyInfo) memberExpression.Member).PropertyType;
-                    if (propertyType == typeof (bool))
+                    return GenerateEqualityFilter<T>(expression as BinaryExpression);
+                }
+                if(expType == ExpressionType.LessThan || expType == ExpressionType.GreaterThan || expType == ExpressionType.LessThanOrEqual || expType == ExpressionType.GreaterThanOrEqual)
+                {
+                    return GenerateComparisonFilter<T>(expression,expType);
+                }
+                if (expType == ExpressionType.MemberAccess)
+                {
+                    var memberExpression = expression as MemberExpression;
+                    //here we handle binary expressions in the from .field.hasValue
+                    if (memberExpression.Member.Name == "HasValue")
                     {
-                        return GenerateBoolFilter<T>(memberExpression);
+                        var parentFieldExpression = (memberExpression.Expression as MemberExpression);
+                        var parentFieldName = GetFieldNameFromMember(parentFieldExpression);
+
+                        var filterDescriptor = new QueryContainerDescriptor<T>();
+                        return filterDescriptor.Exists(x => x.Field(parentFieldName));
+                    }
+                    var isProperty = memberExpression.Member.MemberType == MemberTypes.Property;
+                    if (isProperty)
+                    {
+                        var propertyType = ((PropertyInfo) memberExpression.Member).PropertyType;
+                        if (propertyType == typeof (bool))
+                        {
+                            return GenerateBoolFilter<T>(memberExpression);
+                        }
                     }
                 }
-            }
-            else if (expType == ExpressionType.Lambda)
-            {
-                var lambda = expression as LambdaExpression;
-                return GenerateFilterDescription<T>(lambda.Body);
-            }else if (expType == ExpressionType.NotEqual)
-            {
-                return GenerateNotEqualFilter<T>(expression);
+                else if (expType == ExpressionType.Lambda)
+                {
+                    var lambda = expression as LambdaExpression;
+                    return GenerateFilterDescription<T>(lambda.Body);
+                }else if (expType == ExpressionType.NotEqual)
+                {
+                    return GenerateNotEqualFilter<T>(expression as BinaryExpression);
+                }
             }
             throw  new NotImplementedException();
         }
@@ -313,31 +316,35 @@ namespace FluentNest
                 var rightFilterName = GenerateFilterName(binaryExpression.Right);
                 return leftFilterName + "_" + expType + "_" + rightFilterName;
             }
-            else if (expType == ExpressionType.MemberAccess)
+            else
             {
-                var memberExpression = expression as MemberExpression;
-                //here we handle binary expressions in the from .field.hasValue
-                if (memberExpression.Member.Name == "HasValue")
+                if (expType == ExpressionType.MemberAccess)
                 {
-                    var parentFieldExpression = (memberExpression.Expression as MemberExpression);
-                    var parentFieldName = GetFieldNameFromMember(parentFieldExpression);
-                    return parentFieldName + ".hasValue";
+                    var memberExpression = expression as MemberExpression;
+                    //here we handle binary expressions in the from .field.hasValue
+                    if (memberExpression.Member.Name == "HasValue")
+                    {
+                        var parentFieldExpression = (memberExpression.Expression as MemberExpression);
+                        var parentFieldName = GetFieldNameFromMember(parentFieldExpression);
+                        return parentFieldName + ".hasValue";
+                    }
+                    return GetFieldNameFromMember(memberExpression);
                 }
-                return GetFieldNameFromMember(memberExpression);
-            }
-            else if (expType == ExpressionType.Lambda)
-            {
-                var lambda = expression as LambdaExpression;
-                return GenerateFilterName(lambda.Body);
-            }
-            else if (expType == ExpressionType.Convert)
-            {
-                var unary = expression as UnaryExpression;
-                return GenerateFilterName(unary.Operand);
-            }else if (expType == ExpressionType.Constant)
-            {
-                var constExp = expression as ConstantExpression;
-                return constExp.Value.ToString();
+                if (expType == ExpressionType.Lambda)
+                {
+                    var lambda = expression as LambdaExpression;
+                    return GenerateFilterName(lambda.Body);
+                }
+                if (expType == ExpressionType.Convert)
+                {
+                    var unary = expression as UnaryExpression;
+                    return GenerateFilterName(unary.Operand);
+                }
+                if (expType == ExpressionType.Constant)
+                {
+                    var constExp = expression as ConstantExpression;
+                    return constExp.Value.ToString();
+                }
             }
             throw new NotImplementedException();
         }
@@ -392,29 +399,30 @@ namespace FluentNest
             return new QueryContainerDescriptor<T>().AndValueWithin(propertyGetter, list);
         }
 
-        private static object GetValue(Expression member)
+        private static object GetValue(BinaryExpression binaryExpression)
         {
-            var convertedMember = ExplicitlyConvertEnums(member);
+            var leftHand = binaryExpression.Left;
+            var valueExpression = binaryExpression.Right;
 
-            var objectMember = Expression.Convert(convertedMember, typeof(object));
-            var getterLambda = Expression.Lambda<Func<object>>(objectMember);
-            var getter = getterLambda.Compile();
-            var value = getter();
-            return value;
-        }
-
-        /// <summary>
-        /// This is necessary in order to avoid the automatic cast of enums to the underlying integer representation
-        /// </summary>
-        private static Expression ExplicitlyConvertEnums(Expression member)
-        {
-            var unaryExpression = member as UnaryExpression;
-            if (unaryExpression != null && unaryExpression.Operand.Type.IsEnum)
+            if (leftHand is UnaryExpression)
             {
-                return Expression.Convert(member, unaryExpression.Operand.Type);
+                // This is necessary in order to avoid the automatic cast of enums to the underlying integer representation
+                // In some cases the lambda comes in the shape (Convert(EngineType), 0), where 0 represents the first case of the EngineType enum
+                // In such cases, we don't wante the value in the Terms to be 0, but rather we pass the enum value (eg. EngineType.Diesel)
+                // and we let the serializer to do it's job and spit out Term("fieldName","diesel") or Term("fieldName","0") depending whether it is converting enums as integers or strings
+                // or anything else
+                var unaryExpression = leftHand as UnaryExpression;
+                if (unaryExpression.Operand.Type.IsEnum)
+                {
+                    valueExpression = Expression.Convert(binaryExpression.Right, unaryExpression.Operand.Type);
+                }
             }
 
-            return member;
+            var objectMember = Expression.Convert(valueExpression, typeof(object));
+            var getterLambda = Expression.Lambda<Func<object>>(objectMember);
+            var getter = getterLambda.Compile();
+            return getter();
+
         }
 
         public static T Parse<T>(string value)

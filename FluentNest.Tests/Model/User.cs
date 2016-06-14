@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TestModel
+namespace FluentNest.Tests.Model
 {
     public class User
     {
