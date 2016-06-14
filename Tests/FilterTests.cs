@@ -268,6 +268,7 @@ namespace Tests
         [Fact]
         public void Guid_Filter_Test()
         {
+            AddSimpleTestData();
             var result = client.Search<Car>(sc => sc.Index(CarIndex).FilterOn(x => x.Guid == MyFavoriteGuid));
             Check.That(result.Documents).HasSize(1);
         }

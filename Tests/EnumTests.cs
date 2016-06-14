@@ -17,8 +17,8 @@ namespace Tests
     {
         public void AddSimpleTestData()
         {
-            client.DeleteIndex(CarIndex);
-            client.CreateIndex(CarIndex, x => x.Mappings(
+            Client.DeleteIndex(CarIndex);
+            Client.CreateIndex(CarIndex, x => x.Mappings(
                 m => m.Map<Car>(t => t
                     .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
 
@@ -29,7 +29,7 @@ namespace Tests
                     Timestamp = new DateTime(2010, i + 1, 1),
                     Name = "Car" + i,
                     Price = 10,
-                    Sold = i % 2 == 0 ? true : false,
+                    Sold = i % 2 == 0,
                     CarType = "Type" + i % 3,
                     Length = i,
                     EngineType = i % 2 == 0 ? EngineType.Diesel : EngineType.Standard,
@@ -37,9 +37,9 @@ namespace Tests
                     ConditionalRanking = i % 2 == 0 ? null : (int?)i,
                     Description = "Desc" + i,
                 };
-                client.Index(car);
+                Client.Index(car, ind => ind.Index(CarIndex));
             }
-            client.Flush(CarIndex);
+            Client.Flush(CarIndex);
         }
 
         private class StringEnumContractSerializer : JsonNetSerializer
@@ -66,7 +66,7 @@ namespace Tests
         public void Filtering_on_enum_property_should_work()
         {
             AddSimpleTestData();
-            var result = client.Search<Car>(s => s.Index(CarIndex).FilterOn(x => x.EngineType == EngineType.Diesel));
+            var result = Client.Search<Car>(s => s.Index(CarIndex).FilterOn(x => x.EngineType == EngineType.Diesel));
             Check.That(result.Hits.Count()).IsEqualTo(5);
         }
     }

@@ -16,8 +16,8 @@ namespace Tests
     {
         public void AddSimpleTestData()
         {
-            client.DeleteIndex(Index<Car>());
-            client.CreateIndex(Index<Car>(), x => x.Mappings(
+            Client.DeleteIndex(Index<Car>());
+            Client.CreateIndex(Index<Car>(), x => x.Mappings(
                 m => m.Map<Car>(t => t
             .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
 
@@ -28,7 +28,7 @@ namespace Tests
                     Timestamp = new DateTime(2010, i + 1, 1),
                     Name = "Car" + i,
                     Price = 10,
-                    Sold = i % 2 == 0 ? true : false,
+                    Sold = i % 2 == 0,
                     CarType = "Type" + i % 3,
                     Length = i,
                     EngineType = i % 2 == 0 ? EngineType.Diesel : EngineType.Standard,
@@ -36,15 +36,9 @@ namespace Tests
                     ConditionalRanking = i % 2 == 0 ? null : (int?)i,
                     Description = "Desc" + i,
                 };
-
-                using (var ms = new MemoryStream())
-                {
-                    client.Serializer.Serialize(car, ms);
-                    Console.WriteLine(Encoding.UTF8.GetString(ms.ToArray()));
-                }
-                client.Index(car);
+                Client.Index(car);
             }
-            client.Flush(Index<Car>());
+            Client.Flush(CarIndex);
         }
 
         [Fact]
@@ -52,7 +46,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result =client.Search<Car>(search =>search.Aggregations(agg => agg
+            var result =Client.Search<Car>(search =>search.Aggregations(agg => agg
                 .SumBy(s => s.Price)
                 .GroupBy(s => s.EngineType)
                 .GroupBy(b => b.CarType)
@@ -79,7 +73,7 @@ namespace Tests
         {
             AddSimpleTestData();
 
-            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .SumBy(s => s.Price)
                 .GroupBy(s => s.EngineType))
             );
@@ -98,7 +92,7 @@ namespace Tests
             AddSimpleTestData();
 
             var result =
-                client.Search<Car>(search => search.Aggregations(x => x.GroupBy(s => s.Price)));
+                Client.Search<Car>(search => search.Aggregations(x => x.GroupBy(s => s.Price)));
 
             var carTypes = result.Aggs.GetDictionary<Car, decimal>(x => x.Price);
             Check.That(carTypes).HasSize(1);
@@ -110,7 +104,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result = client.Search<Car>(search => search.Aggregations(agg => agg
+            var result = Client.Search<Car>(search => search.Aggregations(agg => agg
                 .SumBy(s => s.Price)
                 .GroupBy("engineType")
             ));
@@ -124,7 +118,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result = client.Search<Car>(search => search.Aggregations(agg => agg
+            var result = Client.Search<Car>(search => search.Aggregations(agg => agg
                 .SumBy(s => s.Price)
                 .GroupBy(new List<string> { "engineType", "carType" })
             ));
@@ -144,7 +138,7 @@ namespace Tests
         public void StandardTwoLevelGroupByWithSum()
         {
             AddSimpleTestData();
-            var result = client.Search<Car>(s => s
+            var result = Client.Search<Car>(s => s
                 .Aggregations(fstAgg => fstAgg
                     .Terms("firstLevel", f => f
                         .Field(z => z.CarType)
@@ -178,7 +172,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result = client.Search<Car>(search => search.Aggregations(agg => agg
+            var result = Client.Search<Car>(search => search.Aggregations(agg => agg
                 .DistinctBy(x => x.CarType)
                 .DistinctBy(x => x.EngineType)
             ));
@@ -202,7 +196,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result = client.Search<Car>(search => search
+            var result = Client.Search<Car>(search => search
                 .FilterOn(f=> f.CarType == "type0")
                 .Aggregations(agg => agg
                     .DistinctBy(x => x.CarType)
@@ -230,7 +224,7 @@ namespace Tests
             var filter = Filters.CreateFilter<Car>(x => x.Timestamp > new DateTime(2010,2,1) && x.Timestamp < new DateTime(2010, 8, 1))
                 .AndFilteredOn<Car>(x => x.CarType == "type0");
 
-            var result = client.Search<Car>(sc => sc.FilterOn(filter).Aggregations(agg => agg
+            var result = Client.Search<Car>(sc => sc.FilterOn(filter).Aggregations(agg => agg
                 .DistinctBy(x => x.CarType)
                 .DistinctBy(x => x.EngineType)
             ));
@@ -250,8 +244,8 @@ namespace Tests
         [Fact]
         public void Terms_Aggregation_Big_Size()
         {
-            client.DeleteIndex(Index<User>());
-            client.CreateIndex(Index<Car>());
+            Client.DeleteIndex(Index<User>());
+            Client.CreateIndex(Index<Car>());
             for (int i = 0; i < 1000; i++)
             {
                 var user = new User
@@ -261,11 +255,11 @@ namespace Tests
                 };
 
                 
-                client.Index(user);
+                Client.Index(user);
             }
-            client.Flush(Index<User>());
+            Client.Flush(Index<User>());
     
-            var result = client.Search<User>(sc => sc.Aggregations(agg => agg.DistinctBy(x=>x.Nationality)));
+            var result = Client.Search<User>(sc => sc.Aggregations(agg => agg.DistinctBy(x=>x.Nationality)));
 
             var nationalities = result.Aggs.GetDistinct<User, string>(x => x.Nationality).ToList();
 
@@ -278,7 +272,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result = client.Search<Car>(search => search.Aggregations(agg => agg
+            var result = Client.Search<Car>(search => search.Aggregations(agg => agg
                 .TopHits(3, x => x.Name)
                 .GroupBy(b => b.CarType)
             ));
@@ -300,7 +294,7 @@ namespace Tests
         {
             AddSimpleTestData();
 
-            var result = client.Search<Car>(search => search.Aggregations(agg => agg
+            var result = Client.Search<Car>(search => search.Aggregations(agg => agg
                 //get name and weight for each retrived document
                 .TopHits(3, x => x.Name, x => x.Weight)
                 .GroupBy(b => b.CarType)
@@ -326,7 +320,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result = client.Search<Car>(search => search.Aggregations(x => x
+            var result = Client.Search<Car>(search => search.Aggregations(x => x
                 .TopHits(3)
                 .GroupBy(b => b.CarType))
             );
@@ -346,8 +340,8 @@ namespace Tests
         [Fact]
         public void TopHits_In_Double_GroupBy()
         {
-            client.DeleteIndex(Index<User>());
-            client.CreateIndex(Index<User>());
+            Client.DeleteIndex(Index<User>());
+            Client.CreateIndex(Index<User>());
             for (int i = 0; i < 1000; i++)
             {
                 var user = new User
@@ -357,11 +351,11 @@ namespace Tests
                     Active = i%3 == 0
                 };
 
-                client.Index(user);
+                Client.Index(user);
             }
-            client.Flush(Index<User>());
+            Client.Flush(Index<User>());
 
-            var result = client.Search<User>(search => search.Aggregations(agg => agg
+            var result = Client.Search<User>(search => search.Aggregations(agg => agg
                 .TopHits(40, x => x.Name) 
                 .GroupBy(b => b.Active)
                 .GroupBy(b => b.Nationality))
@@ -391,8 +385,8 @@ namespace Tests
         [Fact]
         public void TopHits_Sorted_SettingSize()
         {
-            client.DeleteIndex(Index<User>());
-            client.CreateIndex(Index<User>());
+            Client.DeleteIndex(Index<User>());
+            Client.CreateIndex(Index<User>());
             for (int i = 0; i < 100; i++)
             {
                 var user = new User
@@ -402,11 +396,11 @@ namespace Tests
                     Age = (i+1) % 10
                 };
 
-                client.Index(user);
+                Client.Index(user);
             }
-            client.Flush(Index<User>());
+            Client.Flush(Index<User>());
 
-            var result = client.Search<User>(search => search.Aggregations(agg => agg
+            var result = Client.Search<User>(search => search.Aggregations(agg => agg
                 // get 40 first users, sort by name. for each user retrieve name and email
                 .SortedTopHits(40, x=>x.Name, SortType.Ascending, x => x.Name, y=>y.Email)
                 .SortedTopHits(40, x=>x.Name, SortType.Descending, x=>x.Name, y=>y.Email)

@@ -35,20 +35,14 @@ namespace Tests
                     Description = "Desc" + i,
                 };
 
-                using (var ms = new MemoryStream())
-                {
-                    client.Serializer.Serialize(car, ms);
-                    Console.WriteLine(Encoding.UTF8.GetString(ms.ToArray()));
-                }
                 client.Index(car);
             }
-            client.Flush(Infer.Index<Car>());
+            client.Flush(CarIndex);
         }
 
         [Fact]
         public void SumTest()
         {
-
             AddSimpleTestData();           
             var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .SumBy(x=>x.Price)

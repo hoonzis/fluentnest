@@ -12,7 +12,7 @@ namespace Tests
 {
     public class TestsBase
     {
-        protected ElasticClient client;
+        protected ElasticClient Client;
         protected IndexName CarIndex = Infer.Index<Car>();
 
         public TestsBase(Func<ConnectionSettings, IElasticsearchSerializer> serializerFactory = null)
@@ -22,14 +22,14 @@ namespace Tests
 
             var settings = new ConnectionSettings(connectionPool, serializerFactory).DefaultIndex("my-application");
 
-            client = new ElasticClient(settings);
+            Client = new ElasticClient(settings);
         }
 
         public void EntityToConsole<T>(T entity)
         {
             using (var ms = new MemoryStream())
             {
-                client.Serializer.Serialize(entity, ms);
+                Client.Serializer.Serialize(entity, ms);
                 Console.WriteLine(Encoding.UTF8.GetString(ms.ToArray()));
             }
         }
