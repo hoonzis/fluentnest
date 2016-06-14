@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Linq;
-using FluentNest;
+using FluentNest.Tests.Model;
 using Nest;
 using Newtonsoft.Json.Converters;
 using NFluent;
-using TestModel;
 using Xunit;
 
-namespace Tests
+namespace FluentNest.Tests
 {
     public class EnumTests : TestsBase
     {
@@ -24,7 +23,7 @@ namespace Tests
         public void Filtering_on_enum_property_should_work()
         {
             AddSimpleTestData();
-            var result = client.Search<Car>(s => s.Filter(Filters.CreateFilter<Car>(x => x.EngineType == EngineType.Diesel)));
+            var result = Client.Search<Car>(s => s.Filter(Filters.CreateFilter<Car>(x => x.EngineType == EngineType.Diesel)));
 
             Check.That(result.Hits.Count()).IsEqualTo(5);
         }

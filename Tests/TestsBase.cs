@@ -1,17 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using FluentNest.Tests.Model;
 using Nest;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using TestModel;
 
-namespace Tests
+namespace FluentNest.Tests
 {
     public class TestsBase
     {
-        protected ElasticClient client;
+        protected ElasticClient Client;
 
         public TestsBase(params Func<ConnectionSettings, ConnectionSettings>[] additionalSettings)
         {
@@ -24,13 +21,13 @@ namespace Tests
 
             settings = additionalSettings.Aggregate(settings, (current, newSetting) => newSetting(current));
 
-            client = new ElasticClient(settings);
+            Client = new ElasticClient(settings);
         }
 
         public void AddSimpleTestData()
         {
-            client.DeleteIndex(x => x.Index<Car>());
-            client.CreateIndex(c => c.Index<Car>().AddMapping<Car>(x => x
+            Client.DeleteIndex(x => x.Index<Car>());
+            Client.CreateIndex(c => c.Index<Car>().AddMapping<Car>(x => x
             .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed)))));
 
             for (int i = 0; i < 10; i++)
@@ -49,11 +46,11 @@ namespace Tests
                     Description = "Desc" + i,
                 };
 
-                var json = Encoding.UTF8.GetString(client.Serializer.Serialize(car));
+                var json = Encoding.UTF8.GetString(Client.Serializer.Serialize(car));
                 Console.WriteLine(json);
-                client.Index(car);
+                Client.Index(car);
             }
-            client.Flush(x => x.Index<Car>());
+            Client.Flush(x => x.Index<Car>());
         }
     }
 }

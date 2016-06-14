@@ -1,33 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using FluentNest;
+using FluentNest.Tests.Model;
 using Nest;
 using NFluent;
-using TestModel;
 using Xunit;
 
-namespace Tests
+namespace FluentNest.Tests
 {
-    public class HistogramTests
+    public class HistogramTests : TestsBase
     {
-        private ElasticClient client;
-
-        public HistogramTests()
+        private new void AddSimpleTestData()
         {
-            var node = new Uri("http://localhost:9200");
-
-            var settings = new ConnectionSettings(
-                node,
-                defaultIndex: "my-application"
-            );
-
-            client = new ElasticClient(settings);
-        }
-
-        private void AddSimpleTestData()
-        {
-            client.DeleteIndex(x => x.Index<Car>());
+            Client.DeleteIndex(x => x.Index<Car>());
             for (int i = 0; i < 10; i++)
             {
                 var car = new Car
@@ -40,9 +25,9 @@ namespace Tests
                     Length = i*2,
                     Weight = i
                 };
-                client.Index(car);
+                Client.Index(car);
             }
-            client.Flush(x => x.Index<Car>());
+            Client.Flush(x => x.Index<Car>());
         }
 
         [Fact]
@@ -50,7 +35,7 @@ namespace Tests
         {
             AddSimpleTestData();
 
-            var histogram = client.Search<Car>(s => s.Aggregations(a => a
+            var histogram = Client.Search<Car>(s => s.Aggregations(a => a
                 .DateHistogram(x => x.Timestamp, DateInterval.Month)
                 .GroupBy(x => x.CarType))
             );
@@ -69,7 +54,7 @@ namespace Tests
         public void HistogramOfSumsStandardWay()
         {
             AddSimpleTestData();
-            var result = client.Search<Car>(s => s.Aggregations(a => a.DateHistogram("by_month",
+            var result = Client.Search<Car>(s => s.Aggregations(a => a.DateHistogram("by_month",
                 d => d.Field(x => x.Timestamp)
                         .Interval(DateInterval.Month)
                         .Aggregations(
@@ -86,7 +71,7 @@ namespace Tests
         public void SumInMonthlyHistogram()
         {
             AddSimpleTestData();
-            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .SumBy(x=>x.Price)
                 .IntoDateHistogram(date => date.Timestamp, DateInterval.Month))
             );
@@ -103,7 +88,7 @@ namespace Tests
             var start = new DateTime(2010, 1, 1);
             var end = new DateTime(2010, 4, 4);
 
-            var result = client.Search<Car>(sc => sc
+            var result = Client.Search<Car>(sc => sc
                 .FilteredOn(f => f.Timestamp < end && f.Timestamp > start)
                 .Aggregations(agg => agg
                     .SumBy(x => x.Price)
@@ -120,7 +105,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result = client.Search<Car>(sc => sc
+            var result = Client.Search<Car>(sc => sc
                 .Aggregations(x => x
                     .SumBy(y => y.Price)
                     .IntoHistogram(y => y.Length, 5)

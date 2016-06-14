@@ -1,24 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using FluentNest;
-using FSharpModel;
+using FluentNest.Tests.Model;
 using Nest;
 using NFluent;
-using TestModel;
+using Tests.Model;
 using Xunit;
 
-namespace Tests
+namespace FluentNest.Tests
 {
     public class FilterTests : TestsBase
     {
-        private void AddSimpleTestData()
+        private new void AddSimpleTestData()
         {
-            client.DeleteIndex(x => x.Index<Car>());
-            client.CreateIndex(c => c.Index<Car>().AddMapping<Car>(x => x
+            Client.DeleteIndex(x => x.Index<Car>());
+            Client.CreateIndex(c => c.Index<Car>().AddMapping<Car>(x => x
             .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed)))));
-            client.DeleteIndex(x => x.Index<User>());
-            client.CreateIndex(c => c.Index<User>().AddMapping<User>(x => x
+            Client.DeleteIndex(x => x.Index<User>());
+            Client.CreateIndex(c => c.Index<User>().AddMapping<User>(x => x
             .Properties(prop => prop.String(str => str.Name(s => s.Email).Index(FieldIndexOption.NotAnalyzed)))));
             
             for (int i = 0; i < 10; i++)
@@ -32,7 +31,7 @@ namespace Tests
                     CarType = "Type" + i%2,
                     Emissions = i+1
                 };
-                client.Index(car);
+                Client.Index(car);
             }
 
             for (int i = 0; i < 10; i++)
@@ -44,13 +43,12 @@ namespace Tests
                     Age = i+1,
                     Enabled = i%2 == 0,
                     Active = i % 2 == 0,
-                    Type = i % 2 == 0 ? UserType.Admin : UserType.Standard,
                     CreationTime = DateTime.Now
                 };
-                client.Index<User>(user);
+                Client.Index<User>(user);
             }
-            client.Flush(x => x.Index<User>());
-            client.Flush(x => x.Index<Car>());
+            Client.Flush(x => x.Index<User>());
+            Client.Flush(x => x.Index<Car>());
         }
 
 
@@ -61,7 +59,7 @@ namespace Tests
 
             var startDate = new DateTime(2010, 1, 1);
             var endDate = new DateTime(2010, 3, 1);
-            var result = client.Search<Car>(s => s.FilterOn(x => x.Timestamp >= startDate && x.Timestamp <= endDate && x.CarType == "type0"));
+            var result = Client.Search<Car>(s => s.FilterOn(x => x.Timestamp >= startDate && x.Timestamp <= endDate && x.CarType == "type0"));
 
 
             Check.That(result.Documents).HasSize(2);
@@ -73,7 +71,7 @@ namespace Tests
             AddSimpleTestData();
 
             var startDate = new DateTime(2010, 1, 1);
-            var result = client.Search<Car>(s => s.FilterOn(x => x.Timestamp == startDate));
+            var result = Client.Search<Car>(s => s.FilterOn(x => x.Timestamp == startDate));
             
             Check.That(result.Documents).HasSize(1);
         }
@@ -84,7 +82,7 @@ namespace Tests
             AddSimpleTestData();
             var startDate = new DateTime(2010, 1, 1);
             var endDate = new DateTime(2010, 3, 1);
-            var result = client.Search<Car>(s => s
+            var result = Client.Search<Car>(s => s
                 .FilterOn(x => x.Timestamp > startDate && x.Timestamp < endDate));
             Check.That(result.Documents).HasSize(1);
         }
@@ -96,11 +94,11 @@ namespace Tests
 
             var carType = "Type0".ToLower();
             //Standard Nest way of getting the docuements. Values are lowered by ES
-            var result = client.Search<Car>(s => s.Filter(x => x.Term(f => f.CarType, carType)));
+            var result = Client.Search<Car>(s => s.Filter(x => x.Term(f => f.CarType, carType)));
             Check.That(result.Documents).HasSize(5);
             
             //Best way
-            result = client.Search<Car>(s => s.FilterOn(x => x.CarType == carType));
+            result = Client.Search<Car>(s => s.FilterOn(x => x.CarType == carType));
             Check.That(result.Documents).HasSize(5);
 
         }
@@ -113,7 +111,7 @@ namespace Tests
             var startDate = new DateTime(2010, 1, 1);
             var endDate = new DateTime(2010, 5, 1);
          
-            var result = client.Search<Car>(s => s.Query(
+            var result = Client.Search<Car>(s => s.Query(
                     q=>q.Filtered(fil=>fil.Filter(
                         x => x.And(
                             left=>left.Range(f=>f.OnField(fd=>fd.Timestamp).Greater(startDate)),
@@ -125,7 +123,7 @@ namespace Tests
             Check.That(result.Documents).HasSize(3);
 
             //Much better
-            result = client.Search<Car>(s => s.FilteredOn(f => f.Timestamp > startDate && f.Timestamp < endDate));
+            result = Client.Search<Car>(s => s.FilteredOn(f => f.Timestamp > startDate && f.Timestamp < endDate));
             Check.That(result.Documents).HasSize(3);
         }
 
@@ -134,16 +132,16 @@ namespace Tests
         {
             AddSimpleTestData();
 
-            var allUsers = client.Search<User>(x=>x.MatchAll());
+            var allUsers = Client.Search<User>(x=>x.MatchAll());
             Check.That(allUsers.Documents).HasSize(10);
 
             //these two searches should provide the same result
             var result =
-                client.Search<User>(
+                Client.Search<User>(
                     s => s.Query(q => q.Filtered(f => f.Filter(fil => fil.Term(term => term.Email, "Email@email1.com")))));
             Check.That(result.Documents).HasSize(5);
 
-            result = client.Search<User>(s => s.FilteredOn(f => f.Email == "Email@email1.com"));
+            result = Client.Search<User>(s => s.FilteredOn(f => f.Email == "Email@email1.com"));
             Check.That(result.Documents).HasSize(5);
         }
 
@@ -156,7 +154,7 @@ namespace Tests
                 .CreateFilter<User>(x => x.Name == "name1" && x.Age >= 5)
                 .AndFilteredOn<User>(x => x.Email == "Email@email1.com");
 
-            var users = client.Search<User>(s => s.Filter(filter));
+            var users = Client.Search<User>(s => s.Filter(filter));
             Check.That(users.Documents).HasSize(1);            
         }
 
@@ -168,7 +166,7 @@ namespace Tests
             var filter = Filters
                 .CreateFilter<User>(x => x.Enabled == true);
 
-            var allUsers = client.Search<User>(s => s.Filter(filter));
+            var allUsers = Client.Search<User>(s => s.Filter(filter));
             Check.That(allUsers.Documents).HasSize(5);
         }
 
@@ -181,7 +179,7 @@ namespace Tests
                 .CreateFilter<User>(x => x.Name == "name1" && x.Age >= 5)
                 .AndFilteredOn<User>(x => x.Email == "Email@email1.com");
             
-            var result = client.Search<User>(sc => sc
+            var result = Client.Search<User>(sc => sc
                 .FilteredOn(filter)
                 .Aggregations(agg => agg
                 .SumBy(x=>x.Age)
@@ -199,7 +197,7 @@ namespace Tests
         public void Or_Filter_Test()
         {
             AddSimpleTestData();
-            var users = client.Search<User>(s => s.FilterOn(x=> x.Name == "name1" || x.Age >= 5));
+            var users = Client.Search<User>(s => s.FilterOn(x=> x.Name == "name1" || x.Age >= 5));
             Check.That(users.Documents).HasSize(7);
         }
 
@@ -211,7 +209,7 @@ namespace Tests
             var filter = Filters
                 .CreateFilter<User>(x => x.Name != "name1" && x.Name != "name2");
 
-            var allUsers = client.Search<User>(s => s.Filter(filter));
+            var allUsers = Client.Search<User>(s => s.Filter(filter));
             Check.That(allUsers.Documents).HasSize(4);
         }
 
@@ -219,7 +217,7 @@ namespace Tests
         public void Bool_filter_test()
         {
             AddSimpleTestData();
-            var allUsers = client.Search<User>(s => s.FilterOn(f=>f.Active));
+            var allUsers = Client.Search<User>(s => s.FilterOn(f=>f.Active));
             Check.That(allUsers.Documents).HasSize(5);
         }
 
@@ -228,7 +226,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var allUsers = client.Search<Car>(s=>s.FilterOn(x=>x.Timestamp == new DateTime(2010,1,1)));
+            var allUsers = Client.Search<Car>(s=>s.FilterOn(x=>x.Timestamp == new DateTime(2010,1,1)));
             Check.That(allUsers.Documents).HasSize(1);
         }
 
@@ -236,24 +234,16 @@ namespace Tests
         public void Decimal_Filter_Comparison_Test()
         {
             AddSimpleTestData();
-            var allUsers = client.Search<Car>(s => s.FilterOn(x=>x.Emissions > 2 && x.Emissions < 6));
+            var allUsers = Client.Search<Car>(s => s.FilterOn(x=>x.Emissions > 2 && x.Emissions < 6));
             Check.That(allUsers.Documents).HasSize(3);
         }
-
-        [Fact(Skip = "Discriminated unions serialization causes problems")]
-        public void DiscriminatedUnion_Filter()
-        {
-            AddSimpleTestData();
-            var allUsers = client.Search<User>(s => s.FilterOn(x => x.Type == UserType.Admin));
-            Check.That(allUsers.Documents).HasSize(5);
-        }
-
+        
         [Fact]
         public void Filter_ValueWithin_Test()
         {
             AddSimpleTestData();
             var list = new List<string> {"name1", "name2"};
-            var users = client.Search<User>(sc => sc.FilteredOn(Filters.ValueWithin<User>(x => x.Name, list)));
+            var users = Client.Search<User>(sc => sc.FilteredOn(Filters.ValueWithin<User>(x => x.Name, list)));
             Check.That(users.Documents).HasSize(6);
         }
 
@@ -263,8 +253,8 @@ namespace Tests
             AddSimpleTestData();
             var filter = Filters.CreateFilter<User>(x => x.Age > 8);
             var sc = new SearchDescriptor<User>().FilteredOn(filter.AndValueWithin<User>(x=>x.Name, new List<string> { "name1", "name2" } ));
-            var json = Encoding.UTF8.GetString(client.Serializer.Serialize(sc));
-            var allUsers = client.Search<User>(sc);
+            var json = Encoding.UTF8.GetString(Client.Serializer.Serialize(sc));
+            var allUsers = Client.Search<User>(sc);
             Check.That(json).Contains("\"name1\"");
             Check.That(allUsers.Documents).HasSize(1);
         }
@@ -273,8 +263,8 @@ namespace Tests
         public void Guid_Filter_Test()
         {
             var indexName = "cars3";
-            client.DeleteIndex(indexName);
-            var createIndexResult = client.CreateIndex(indexName, i => i.AddMapping<Car>(x => x
+            Client.DeleteIndex(indexName);
+            var createIndexResult = Client.CreateIndex(indexName, i => i.AddMapping<Car>(x => x
             .Properties(prop => prop.String(str => str.Name(s => s.Guid).Index(FieldIndexOption.NotAnalyzed)))));
             Check.That(createIndexResult.Acknowledged).IsTrue();
             for (int i = 0; i < 10; i++)
@@ -294,12 +284,12 @@ namespace Tests
                     car.Guid = "17c175f0-15ae-4f94-8d34-66574d7784d4";
                 }
 
-                client.Index(car, ind => ind.Index(indexName));
+                Client.Index(car, ind => ind.Index(indexName));
             }
-            client.Flush(x => x.Index(indexName));
+            Client.Flush(x => x.Index(indexName));
 
             var sc = new SearchDescriptor<Car>().Index(indexName).FilteredOn(x => x.Guid == "17c175f0-15ae-4f94-8d34-66574d7784d4");
-            var result = client.Search<Car>(sc);
+            var result = Client.Search<Car>(sc);
             Check.That(result.Documents).HasSize(1);
         }
     }

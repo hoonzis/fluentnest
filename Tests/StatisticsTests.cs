@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Linq;
-using FluentNest;
-using Nest;
+using FluentNest.Tests.Model;
 using NFluent;
-using TestModel;
 using Xunit;
 
-namespace Tests
+namespace FluentNest.Tests
 {
     public class StatisticsTests : TestsBase
     {
@@ -15,7 +13,7 @@ namespace Tests
         {
 
             AddSimpleTestData();           
-            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .SumBy(x=>x.Price)
             ));
 
@@ -28,7 +26,7 @@ namespace Tests
         public void ConditionalStats_Without_FluentNest()
         {
             AddSimpleTestData();
-            var result = client.Search<Car>(search => search
+            var result = Client.Search<Car>(search => search
                 .Aggregations(agg => agg
                     .Filter("filterOne", f => f.Filter(innerFilter => innerFilter.Term(fd => fd.EngineType, EngineType.Diesel))
                     .Aggregations(innerAgg => innerAgg.Sum("sumAgg", innerField => 
@@ -56,7 +54,7 @@ namespace Tests
         public void CountAndCardinalityTest()
         {
             AddSimpleTestData();
-            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .CountBy(x=>x.Price)
                 .CardinalityBy(x => x.EngineType)
             ));
@@ -70,7 +68,7 @@ namespace Tests
         public void CardinalityFilterTest()
         {
             AddSimpleTestData();
-            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .CardinalityBy(x => x.EngineType, x => x.EngineType == EngineType.Standard)
             ));
 
@@ -85,7 +83,7 @@ namespace Tests
         {
             AddSimpleTestData();
 
-            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .SumBy(x => x.Price, x => x.Sold == true)
             ));
 
@@ -98,7 +96,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result = client.Search<Car>(s => s.Aggregations(agg => agg
+            var result = Client.Search<Car>(s => s.Aggregations(agg => agg
                 .CountBy(x => x.Name, c => c.EngineType == EngineType.Diesel)
                 .SumBy(x => x.Price)
                 .AverageBy(x => x.Length)
@@ -124,7 +122,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result = client.Search<Car>(s => s.Aggregations(agg => agg
+            var result = Client.Search<Car>(s => s.Aggregations(agg => agg
                 .SumBy(x => x.Price)
                 .AverageBy(x => x.Length)
                 .CountBy(x => x.CarType)
@@ -163,7 +161,7 @@ namespace Tests
         public void SumOfNullableDecimal()
         {
             AddSimpleTestData();
-            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg.SumBy(x => x.Weight)));
+            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg.SumBy(x => x.Weight)));
             var sum = result.Aggs.GetSum<Car,decimal?>(x => x.Weight);
 
             var container = result.Aggs.AsContainer<Car>();
@@ -179,7 +177,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result =client.Search<Car>(sc => sc.Aggregations(agg => agg
+            var result =Client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue)
             ));
 
@@ -198,7 +196,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue)
                 .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue && x.CarType == "Type1")
             ));
@@ -215,7 +213,7 @@ namespace Tests
         {
             AddSimpleTestData();
             
-            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .PercentilesBy(x=>x.Price)
             ));
 
@@ -233,7 +231,7 @@ namespace Tests
         {
             AddSimpleTestData();
 
-            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg.MaxBy(x=>x.Length)));
+            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg.MaxBy(x=>x.Length)));
 
             var container = result.Aggs.AsContainer<Car>();
             var max = container.GetMax(x => x.Length);
@@ -245,7 +243,7 @@ namespace Tests
         {
             AddSimpleTestData();
 
-            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .MinBy(x => x.Length)
                 .MaxBy(x=> x.Length))
             );
@@ -265,7 +263,7 @@ namespace Tests
             AddSimpleTestData();
 
             var result =
-                client.Search<Car>(
+                Client.Search<Car>(
                     search =>
                         search.Take(10).Aggregations(agg => agg
                             .MinBy(x => x.PriceLimit)
@@ -287,7 +285,7 @@ namespace Tests
             AddSimpleTestData();
 
             var result =
-                client.Search<Car>(
+                Client.Search<Car>(
                     search =>
                         search.Take(10).Aggregations(agg => agg
                             .MinBy(x => x.Length)
@@ -310,7 +308,7 @@ namespace Tests
             AddSimpleTestData();
 
             var result =
-                client.Search<Car>(
+                Client.Search<Car>(
                     search =>
                         search.Take(10).Aggregations(agg => agg
                             .MinBy(x => x.Timestamp)
@@ -332,7 +330,7 @@ namespace Tests
             //very stupid test, getting tyhe single value of engine type when engine type is diesel
             AddSimpleTestData();
 
-            var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
+            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue)
                 .FirstBy(x => x.EngineType, c => c.EngineType == EngineType.Diesel)
                 .FirstBy(x => x.CarType, c => c.Sold == true)

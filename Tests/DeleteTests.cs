@@ -1,9 +1,8 @@
-﻿using FluentNest;
+﻿using FluentNest.Tests.Model;
 using NFluent;
-using TestModel;
 using Xunit;
 
-namespace Tests
+namespace FluentNest.Tests
 {
     public class DeleteTests : TestsBase
     {
@@ -11,8 +10,8 @@ namespace Tests
         public void DeleteByQuery()
         {
             AddSimpleTestData();
-            client.DeleteByQuery<Car>(s => s.FilteredOn(x => x.Sold == true));
-            var result = client.Search<Car>(sc => sc.MatchAll());
+            Client.DeleteByQuery<Car>(s => s.FilteredOn(x => x.Sold == true));
+            var result = Client.Search<Car>(sc => sc.MatchAll());
             Check.That(result.Hits).HasSize(5);
         }
 
@@ -21,8 +20,8 @@ namespace Tests
         {
             AddSimpleTestData();
             var filter = Filters.CreateFilter<Car>(x => x.EngineType == EngineType.Diesel);
-            client.DeleteByQuery<Car>(s => s.FilteredOn(filter));
-            var result = client.Search<Car>(sc => sc.MatchAll());
+            Client.DeleteByQuery<Car>(s => s.FilteredOn(filter));
+            var result = Client.Search<Car>(sc => sc.MatchAll());
             Check.That(result.Hits).HasSize(5);
         }
     }
