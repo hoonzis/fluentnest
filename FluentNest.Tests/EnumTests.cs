@@ -16,12 +16,13 @@ namespace FluentNest.Tests
         public EnumTests()
             : base(AddEnumStringConverter)
         {
-
+            Console.WriteLine("This tests is using String Serializer for Enums, the engine type enum should spit out words like 'Diesel' ...");
         }
 
         [Fact]
         public void Filtering_on_enum_property_should_work()
         {
+           
             AddSimpleTestData();
             var result = Client.Search<Car>(s => s.Filter(Filters.CreateFilter<Car>(x => x.EngineType == EngineType.Diesel)));
 

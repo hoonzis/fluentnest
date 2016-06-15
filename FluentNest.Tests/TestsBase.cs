@@ -14,10 +14,19 @@ namespace FluentNest.Tests
         {
             var node = new Uri("http://localhost:9200");
 
+            Console.WriteLine("Createing new instance of connection settings");
             var settings = new ConnectionSettings(
                 node,
                 defaultIndex: "my-application"
                 );
+
+            if (additionalSettings.Length > 0)
+            {
+                Console.WriteLine("Additional converters will be applied");
+            }else
+            {
+                Console.WriteLine("No additional converters applied - the enums should be serialized as integers");
+            }
 
             settings = additionalSettings.Aggregate(settings, (current, newSetting) => newSetting(current));
 

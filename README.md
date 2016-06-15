@@ -1,6 +1,5 @@
 # FluentNest
-[![Nuget Package](https://img.shields.io/nuget/v/fluentnest.svg)](https://www.nuget.org/packages/fluentnest)
-[![Build status](https://ci.appveyor.com/api/projects/status/wrorpoekyw416hn1?svg=true)](https://ci.appveyor.com/project/hoonzis/fluentnest)
+This is version of FluentNest compatible with ElasticSerach 1. Check the [current version](https://github.com/hoonzis/fluentnest) to get the latest available nuget packages.
 
 LINQ-like query language for ElasticSearch built on top of NEST.
 

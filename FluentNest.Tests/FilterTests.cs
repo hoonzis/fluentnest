@@ -11,6 +11,11 @@ namespace FluentNest.Tests
 {
     public class FilterTests : TestsBase
     {
+        public FilterTests()
+        {
+            Console.WriteLine("This tests is using the default serializer for enums, they should be serialized as integers");
+        }
+
         private new void AddSimpleTestData()
         {
             Client.DeleteIndex(x => x.Index<Car>());
