@@ -1,13 +1,14 @@
 # FluentNest
 
-| Elastic Search & Nest Version | Build | Nuget  |
-| ------------- |:-------------:| :-----:|
-| 1.7.* and greater| [![Build 2.0.0](https://ci.appveyor.com/api/projects/status/wrorpoekyw416hn1/branch/master?svg=true)](https://ci.appveyor.com/project/hoonzis/fluentnest) | [![Nuget Package](https://img.shields.io/nuget/v/fluentnest.svg)](https://www.nuget.org/packages/fluentnest) |
-| 2.0.* and greater| [![Build 2.0.0](https://ci.appveyor.com/api/projects/status/wrorpoekyw416hn1/branch/2.0.0?svg=true)](https://ci.appveyor.com/project/hoonzis/fluentnest)|[![Nuget Package](https://img.shields.io/badge/nuget-v1.0.116-blue.svg)](https://www.nuget.org/packages/FluentNest/1.0.166) |
+LINQ-like query language for ElasticSearch built on top of NEST, aimed at simplifying analytical queries. Compatible with ElastichSearch 1 and 2.
 
-LINQ-like query language for ElasticSearch built on top of NEST.
+| Elastic Search & Nest Version | Build | Nuget | Branch |
+| ------------- |:-------------:| :-----:|
+| 1.7.* and greater| [![Build 2.0.0](https://ci.appveyor.com/api/projects/status/wrorpoekyw416hn1/branch/1.0.0?svg=true)](https://ci.appveyor.com/project/hoonzis/fluentnest) | [![Nuget Package](https://img.shields.io/badge/nuget-v1.0.116-blue.svg)](https://www.nuget.org/packages/FluentNest/1.0.166) | [1.0.0](https://github.com/hoonzis/fluentnest/tree/1.0.0) |
+| 2.0.* and greater| [![Build 2.0.0](https://ci.appveyor.com/api/projects/status/wrorpoekyw416hn1?svg=true)](https://ci.appveyor.com/project/hoonzis/fluentnest)|[![Nuget Package](https://img.shields.io/nuget/v/fluentnest.svg)](https://www.nuget.org/packages/fluentnest) | [master](https://github.com/hoonzis/fluentnest/) |
 
 NEST for querying ElasticSearch is great, but complex queries are hard to read and reason about. The same can be said about the basic JSON ElasticSearch query language. This library contains set of methods that give you more LINQ-like feeling. Currently mainly aggregations and filters are covered. This page contains few examples, more details are available in the [wiki](https://github.com/hoonzis/fluentnest/wiki/FluentNest-wiki). Motivation and few more implementation details are described in [this blog post.](http://www.hoonzis.com/fluent-interface-for-elastic-search/).
+
 
 ### Statistics
 ```Csharp
