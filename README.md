@@ -40,14 +40,14 @@ var result = client.Search<Car>(search => search.Aggregations(aggs => aggs
 ```
 
 ### Filtering and expressions to queries compilation
-Filtering on multiple conditions might be complicated since you have to compose filters using *Or*, *And*, *Range* methods, often resulting in huge lambdas. **FluentNest** can compile small expressions into NEST query language. Examples:
+Filtering on multiple conditions might be complicated since you have to compose filters using *Or*, *And*, *Range* methods, often resulting in huge lambdas. *FluentNest* can compile small expressions into NEST query language. Examples:
 
 ```CSharp
-client.Search<Car>(s => s.FilteredOn(f => f.Timestamp > startDate && f.Timestamp < endDate));
-client.Search<Car>(s => s.FilteredOn(f=> f.Ranking.HasValue || f.IsAllowed);
-client.Search<Car>(s => s.FilteredOn(f=> f.Ranking!=null || f.IsAllowed == true);
+client.Search<Car>(s => s.FilterOn(f => f.Timestamp > startDate && f.Timestamp < endDate));
+client.Search<Car>(s => s.FilterOn(f=> f.Ranking.HasValue || f.IsAllowed);
+client.Search<Car>(s => s.FilterOn(f=> f.Ranking!=null || f.IsAllowed == true);
 ```
-**HasValue** on a nullable as well as **!=null** are compiled into an **Exists** filter. Boolean values or expressions of style **==true** are compiled into bool filters. Note that the same expressions can be used for conditional statistics as well as for general filters which affect the whole query. Comparisons of values are compiled into **Terms** filters.
+*HasValue* or null-checks are compiled into an **Exists** filter. Boolean values or expressions are compiled into **Bool** filters. Note that the same expressions can be used for conditional statistics as well as for general filters which affect the whole query. Comparisons of values are compiled into **Terms** filters.
 
 ### Grouped statistics
 Quite often you might want to calculate a sum per group. With FluentNest you can write:
