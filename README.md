@@ -1,6 +1,9 @@
 # FluentNest
-[![Nuget Package](https://img.shields.io/nuget/v/fluentnest.svg)](https://www.nuget.org/packages/fluentnest)
-[![Build status](https://ci.appveyor.com/api/projects/status/wrorpoekyw416hn1?svg=true)](https://ci.appveyor.com/project/hoonzis/fluentnest)
+
+| Elastic Search & Nest Version | Build | Nuget  |
+| ------------- |:-------------:| :-----:|
+| 1.7.* and greater| [![Build 2.0.0](https://ci.appveyor.com/api/projects/status/wrorpoekyw416hn1/branch/master?svg=true)](https://ci.appveyor.com/project/hoonzis/fluentnest) | [![Nuget Package](https://img.shields.io/nuget/v/fluentnest.svg)](https://www.nuget.org/packages/fluentnest) |
+| 2.0.* and greater| [![Build 2.0.0](https://ci.appveyor.com/api/projects/status/wrorpoekyw416hn1/branch/2.0.0?svg=true)](https://ci.appveyor.com/project/hoonzis/fluentnest)|[![Nuget Package](https://img.shields.io/badge/nuget-v1.0.116-blue.svg)](https://www.nuget.org/packages/FluentNest/1.0.166) |
 
 LINQ-like query language for ElasticSearch built on top of NEST.
 
