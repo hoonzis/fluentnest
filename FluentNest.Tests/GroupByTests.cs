@@ -166,12 +166,12 @@ namespace FluentNest.Tests
             AddSimpleTestData();
 
             var result = Client.Search<Car>(search => search.Aggregations(agg => agg
-                .DistinctBy(x => x.CarId)
-                .DistinctBy(x=>x.AnotherId)
+                .DistinctBy(x => x.LongField)
+                .DistinctBy(x=>x.IntField)
             ));
 
-            var carIds = result.Aggs.GetDistinct<Car, long>(x => x.CarId).ToList();
-            var anotherIds = result.Aggs.GetDistinct<Car, long>(x => x.AnotherId).ToList();
+            var carIds = result.Aggs.GetDistinct<Car, long>(x => x.LongField).ToList();
+            var anotherIds = result.Aggs.GetDistinct<Car, long>(x => x.IntField).ToList();
             Check.That(carIds).HasSize(10);
             Check.That(anotherIds).HasSize(10);
         }
