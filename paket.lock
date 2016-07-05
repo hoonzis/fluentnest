@@ -1,7 +1,6 @@
 FRAMEWORK: >= NET45
 NUGET
   remote: https://www.nuget.org/api/v2
-  specs:
     Elasticsearch.Net (1.5)
     FSharp.Core (4.0.0.1)
     NEST (1.5)

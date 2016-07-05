@@ -160,18 +160,20 @@ namespace FluentNest.Tests
             Check.That(engineTypes).ContainsExactly(EngineType.Diesel, EngineType.Standard);
         }
 
-
         [Fact]
-        public void Distinct_Long_Test()
+        public void Distinct_Long_Int_Test()
         {
             AddSimpleTestData();
 
             var result = Client.Search<Car>(search => search.Aggregations(agg => agg
-                .DistinctBy(x => x.Id)               
+                .DistinctBy(x => x.CarId)
+                .DistinctBy(x=>x.AnotherId)
             ));
 
-            var carIds = result.Aggs.GetDistinct<Car, long>(x => x.Id).ToList();
+            var carIds = result.Aggs.GetDistinct<Car, long>(x => x.CarId).ToList();
+            var anotherIds = result.Aggs.GetDistinct<Car, long>(x => x.AnotherId).ToList();
             Check.That(carIds).HasSize(10);
+            Check.That(anotherIds).HasSize(10);
         }
 
         [Fact]
