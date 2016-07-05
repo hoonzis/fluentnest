@@ -76,6 +76,11 @@ namespace FluentNest
         {
             var aggName = fieldGetter.GetAggName(AggType.GroupBy);
             var itemsTerms = aggs.Terms(aggName);
+            if (itemsTerms == null)
+            {
+                var availableAggregations = aggs.Aggregations.Select(x => x.Key).Aggregate((agg, x) => agg + "m" + x);
+                throw new InvalidOperationException($"There is no aggregegation with name: {aggName} available aggregations: {availableAggregations}");
+            }
             return itemsTerms.Items;
         }
 

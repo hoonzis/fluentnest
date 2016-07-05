@@ -23,5 +23,6 @@ namespace FluentNest.Tests.Model
         public decimal Emissions { get; set; }
         public string Description { get; set; }
         public string Guid { get; set; }
+        public long Id { get; set; }
     }
 }

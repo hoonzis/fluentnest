@@ -53,6 +53,7 @@ namespace FluentNest.Tests
                     Weight = 5,
                     ConditionalRanking = i%2 ==0 ? null : (int?)i,
                     Description = "Desc" + i,
+                    Id = i
                 };
 
                 var json = Encoding.UTF8.GetString(Client.Serializer.Serialize(car));

@@ -162,18 +162,23 @@ namespace FluentNest
         {
             var aggName = fieldGetter.GetAggName(AggType.Distinct);
             var itemsTerms = aggs.Terms(aggName);
-            if ((typeof(V).IsEnum))
+            var targetType = typeof (V);
+            if (targetType.IsEnum)
             {
                 return itemsTerms.Items.Select((x => Filters.Parse<V>(x.Key)));
             }
-            else if (typeof(V) == typeof(string))
+
+            if (targetType == typeof(string))
             {
-                return itemsTerms.Items.Select((x => (V)(object)(x.Key)));
+                return itemsTerms.Items.Select(x => x.Key).Cast<V>();
             }
-            else
+
+            if (targetType == typeof(long) || targetType == typeof(int))
             {
-                return itemsTerms.Items.Select((x => (V)(object)(x.Key)));
+                return itemsTerms.Items.Select(x => long.Parse(x.Key)).Cast<V>();
             }
+
+            throw new NotImplementedException("You can get only distinct values of Strings, Enums, ints or long");
         }
 
         public static IEnumerable<T> GetTopHits<T>(this AggregationsHelper aggs) where T:class 

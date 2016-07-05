@@ -160,6 +160,20 @@ namespace FluentNest.Tests
             Check.That(engineTypes).ContainsExactly(EngineType.Diesel, EngineType.Standard);
         }
 
+
+        [Fact]
+        public void Distinct_Long_Test()
+        {
+            AddSimpleTestData();
+
+            var result = Client.Search<Car>(search => search.Aggregations(agg => agg
+                .DistinctBy(x => x.Id)               
+            ));
+
+            var carIds = result.Aggs.GetDistinct<Car, long>(x => x.Id).ToList();
+            Check.That(carIds).HasSize(10);
+        }
+
         [Fact]
         public void Simple_Filtered_Distinct_Test()
         {
@@ -399,5 +413,23 @@ namespace FluentNest.Tests
             Check.That(descendingHits[2].Name).Equals("User70");
             Check.That(descendingHits[3].Name).Equals("User60");
         }
+
+        [Fact]
+        public void GettingNonExistingGroup_Test()
+        {
+
+            AddSimpleTestData();
+
+            var result = Client.Search<Car>(search => search.Aggregations(agg => agg
+                .GroupBy(b => b.CarType)
+            ));
+
+            var exception = Record.Exception(() => result.Aggs.GetGroupBy<Car>(x => x.EngineType));
+            
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidOperationException>(exception);
+            Check.That(exception.Message).Contains("available aggregations: GroupByCarType");
+        }
+
     }
 }
