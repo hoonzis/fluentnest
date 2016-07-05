@@ -1,7 +1,6 @@
 FRAMEWORK: >= NET45
 NUGET
   remote: https://www.nuget.org/api/v2
-  specs:
     Elasticsearch.Net (2.3.2) - framework: net45, >= net46
     NEST (2.3.2)
       Elasticsearch.Net (>= 2.3.2) - framework: net45, >= net46

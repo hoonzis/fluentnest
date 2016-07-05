@@ -58,10 +58,6 @@
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TestModel\TestModel.csproj">
-      <Project>{b94072a6-42d4-4c73-8ea9-5d9cda4c2fcb}</Project>
-      <Name>TestModel</Name>
-    </ProjectReference>
     <ProjectReference Include="..\FluentNest\FluentNest.csproj">
       <Project>{4aa84915-4e63-48b5-b27b-579a56954b67}</Project>
       <Name>FluentNest</Name>
