@@ -49,6 +49,7 @@
     <Compile Include="Model\Car.cs" />
     <Compile Include="Model\CarType.cs" />
     <Compile Include="Model\User.cs" />
+    <Compile Include="PropertyNamesTests.cs" />
     <Compile Include="StatisticsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestsBase.cs" />
