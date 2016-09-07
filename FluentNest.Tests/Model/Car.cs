@@ -27,6 +27,8 @@ namespace FluentNest.Tests.Model
         public int Age { get; set; }
         public bool Enabled { get; set; }
 
+        public string BIG_CASE_NAME { get; set; }
+
         // Of course cars don't have emails, but for my tests it's usefull
         public string Email { get; set; }
     }

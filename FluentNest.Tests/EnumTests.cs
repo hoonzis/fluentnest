@@ -13,6 +13,26 @@ namespace FluentNest.Tests
 {
     public class EnumTests : TestsBase
     {
+        private class StringEnumContractSerializer : JsonNetSerializer
+        {
+            public StringEnumContractSerializer(IConnectionSettingsValues settings)
+                : base(settings)
+            {
+
+            }
+            protected override IList<Func<Type, JsonConverter>> ContractConverters
+                => new List<Func<Type, JsonConverter>>()
+                {
+                    t => t.IsEnum ? new StringEnumConverter() : null
+                };
+        }
+
+        public EnumTests()
+            : base(x => new StringEnumContractSerializer(x))
+        {
+
+        }
+
         public void AddSimpleTestData()
         {
             Client.DeleteIndex(CarIndex);
@@ -39,27 +59,7 @@ namespace FluentNest.Tests
             }
             Client.Flush(CarIndex);
         }
-
-        private class StringEnumContractSerializer : JsonNetSerializer
-        {
-            public StringEnumContractSerializer(IConnectionSettingsValues settings)
-                : base (settings)
-            {
-                
-            }
-            protected override IList<Func<Type, JsonConverter>> ContractConverters
-                => new List<Func<Type, JsonConverter>>()
-                {
-                    t => t.IsEnum ? new StringEnumConverter() : null
-                };
-        }
-
-        public EnumTests()
-            : base(x => new StringEnumContractSerializer(x))
-        {
-            
-        }
-
+        
         [Fact]
         public void Filtering_on_enum_property_should_work()
         {

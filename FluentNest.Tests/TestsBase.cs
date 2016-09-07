@@ -15,22 +15,26 @@ namespace Tests
         protected ElasticClient Client;
         protected IndexName CarIndex = Infer.Index<Car>();
 
-        public TestsBase(Func<ConnectionSettings, IElasticsearchSerializer> serializerFactory = null)
+        public TestsBase(Func<ConnectionSettings, IElasticsearchSerializer> serializerFactory = null, Func<ConnectionSettings, ConnectionSettings> additionalSettings = null)
         {
             var node = new Uri("http://localhost:9200");
             var connectionPool = new SingleNodeConnectionPool(node);
 
             var settings = new ConnectionSettings(connectionPool, serializerFactory).DefaultIndex("my-application" + Guid.NewGuid());
+            if (additionalSettings != null)
+            {
+                settings = additionalSettings(settings);
+            }
 
             Client = new ElasticClient(settings);
         }
 
-        public void EntityToConsole<T>(T entity)
+        public string Serialize<T>(T entity)
         {
             using (var ms = new MemoryStream())
             {
                 Client.Serializer.Serialize(entity, ms);
-                Console.WriteLine(Encoding.UTF8.GetString(ms.ToArray()));
+                return Encoding.UTF8.GetString(ms.ToArray());
             }
         }
     }
