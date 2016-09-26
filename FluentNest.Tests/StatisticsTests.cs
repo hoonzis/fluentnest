@@ -275,12 +275,11 @@ namespace FluentNest.Tests
         public void Agg_On_NUllable_Field_With_No_Result()
         {
             //all price limit values are null - the result should be null
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
 
             var result =
                 Client.Search<Car>(
-                    search =>
-                        search.Take(10).Aggregations(agg => agg
+                    search => search.Index(index).Take(10).Aggregations(agg => agg
                             .MinBy(x => x.PriceLimit)
                             .MaxBy(x=>x.PriceLimit)
                             .PercentilesBy(x=> x.PriceLimit)));
