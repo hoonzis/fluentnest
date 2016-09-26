@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using FluentNest.Tests.Model;
 using Nest;
 using NFluent;
@@ -11,10 +12,10 @@ namespace FluentNest.Tests
 {
     public class HistogramTests : TestsBase
     {
-        private void AddSimpleTestData()
+        private string AddSimpleTestData()
         {
-            Client.DeleteIndex(CarIndex);
-            Client.CreateIndex(CarIndex, x => x.Mappings(m => m.Map<Car>(t => t.Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
+            var indexName = "index_" + Guid.NewGuid();
+            Client.CreateIndex(indexName, x => x.Mappings(m => m.Map<Car>(t => t.Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
             for (int i = 0; i < 10; i++)
             {
                 var car = new Car
@@ -27,17 +28,18 @@ namespace FluentNest.Tests
                     Length = i*2,
                     Weight = i
                 };
-                Client.Index(car);
+                Client.Index(car, ind => ind.Index(indexName));
             }
-            Client.Flush(Infer.Index<Car>());
+            Client.Flush(indexName);
+            return indexName;
         }
 
         [Fact]
         public void MonthlyHistogramPerCarType()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
 
-            var histogram = Client.Search<Car>(s => s.Aggregations(a => a
+            var histogram = Client.Search<Car>(s => s.Index(index).Aggregations(a => a
                 .DateHistogram(x => x.Timestamp, DateInterval.Month)
                 .GroupBy(x => x.CarType))
             );
@@ -61,13 +63,15 @@ namespace FluentNest.Tests
             // third type from marz to october
             var thirdType = carTypes["type2"];
             Check.That(thirdType).HasSize(7);
+
+            Client.DeleteIndex(index);
         }
 
         [Fact]
         public void HistogramOfSumsStandardWay()
         {
-            AddSimpleTestData();
-            var result = Client.Search<Car>(s => s.Aggregations(a => a.DateHistogram("by_month",
+            var index = AddSimpleTestData();
+            var result = Client.Search<Car>(s => s.Index(index).Aggregations(a => a.DateHistogram("by_month",
                 d => d.Field(x => x.Timestamp)
                         .Interval(DateInterval.Month)
                         .Aggregations(
@@ -78,13 +82,14 @@ namespace FluentNest.Tests
             var firstMonth = histogram.Buckets[0];
             var priceSum = firstMonth.Sum("priceSum");
             Check.That(priceSum.Value.Value).Equals(10d);
+            Client.DeleteIndex(index);
         }
 
         [Fact]
         public void SumInMonthlyHistogram()
         {
-            AddSimpleTestData();
-            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg
+            var index = AddSimpleTestData();
+            var result = Client.Search<Car>(sc => sc.Index(index).Aggregations(agg => agg
                 .SumBy(x=>x.Price)
                 .IntoDateHistogram(date => date.Timestamp, DateInterval.Month))
             );
@@ -97,11 +102,11 @@ namespace FluentNest.Tests
         [Fact]
         public void MonthlySumHistogramFilteredOnDates()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
             var start = new DateTime(2010, 1, 1);
             var end = new DateTime(2010, 4, 4);
 
-            var result = Client.Search<Car>(sc => sc
+            var result = Client.Search<Car>(sc => sc.Index(index)
                 .FilterOn(f => f.Timestamp < end && f.Timestamp > start)
                 .Aggregations(agg => agg
                     .SumBy(x => x.Price)
@@ -111,14 +116,15 @@ namespace FluentNest.Tests
             var histogram = result.Aggs.GetDateHistogram<Car>(x => x.Timestamp);
 
             Check.That(histogram).HasSize(3);
+            Client.DeleteIndex(index);
         }
 
         [Fact]
         public void StandardHistogramTest()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
             
-            var result = Client.Search<Car>(sc => sc
+            var result = Client.Search<Car>(sc => sc.Index(index)
                 .Aggregations(x => x
                     .SumBy(y => y.Price)
                     .IntoHistogram(y => y.Length, 5)
@@ -126,6 +132,7 @@ namespace FluentNest.Tests
 
             var histogram = result.Aggs.GetHistogram<Car>(x => x.Length);
             Check.That(histogram).HasSize(4);
+            Client.DeleteIndex(index);
         }
     }
 }

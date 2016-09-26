@@ -33,7 +33,7 @@ namespace FluentNest
         }
 
         public static AggregationContainerDescriptor<T> IntoHistogram<T>(this AggregationContainerDescriptor<T> innerAggregation,
-            Expression<Func<T, Object>> fieldGetter, int interval) where T : class
+            Expression<Func<T, object>> fieldGetter, int interval) where T : class
         {
             AggregationContainerDescriptor<T> v = new AggregationContainerDescriptor<T>();
             var fieldName = GetName(fieldGetter);
@@ -61,26 +61,21 @@ namespace FluentNest
             {
                 var ubody = (UnaryExpression) exp.Body;
                 body = ubody.Operand as MemberExpression;
-            }
 
+                if (body == null)
+                {
+                    throw new NotImplementedException("Left side expression too complicated - could not deduce name");
+                }
+            }
 
             return body.Member.Name;
         }
 
         public static string GetAggName<T, TK>(this Expression<Func<T, TK>> exp, AggType type)
         {
-            var body = exp.Body as MemberExpression;
-
-            if (body == null)
-            {
-                var ubody = (UnaryExpression) exp.Body;
-                body = ubody.Operand as MemberExpression;
-            }
-
-
-            return type + body.Member.Name;
+            var name = GetName(exp);
+            return type + name;
         }
-
 
         public static IList<DateHistogramBucket> GetDateHistogram<T>(this KeyedBucket item,
             Expression<Func<T, Object>> fieldGetter)
@@ -111,89 +106,23 @@ namespace FluentNest
             var value = GetValue(binaryExpression);
             var memberAccessor = binaryExpression.Left as MemberExpression;
             var fieldName = GetFieldNameFromMember(memberAccessor);
+            var filterDescriptor = new QueryContainerDescriptor<T>();
 
             if (value is DateTime)
             {
-                return GenerateComparisonFilter<T>((DateTime) value, type, fieldName);
+                return filterDescriptor.DateRange(x => x.RangeOnDate(type, (DateTime)value).Field(fieldName));
             }
+
             if (value is double || value is decimal)
             {
-                return GenerateComparisonFilter<T>(Convert.ToDouble(value), type, fieldName);
+                return filterDescriptor.Range(x => x.RangeOnNumber(type, Convert.ToDouble(value)).Field(fieldName));
             }
+
             if (value is int || value is long)
             {
-                return GenerateComparisonFilter<T>(Convert.ToInt64(value), type, fieldName);
+                return filterDescriptor.Range(x => x.RangeOnNumber(type, Convert.ToInt64(value)).Field(fieldName));
             }
             throw new InvalidOperationException("Comparison on non-supported type");
-        }
-
-        public static QueryContainer GenerateComparisonFilter<T>(DateTime value, ExpressionType type, string fieldName)
-            where T : class
-        {
-            var filterDescriptor = new QueryContainerDescriptor<T>();
-            if (type == ExpressionType.LessThan)
-            {
-                return filterDescriptor.DateRange(x => x.LessThan(value).Field(fieldName));
-            }
-            if (type == ExpressionType.GreaterThan)
-            {
-                return filterDescriptor.DateRange(x => x.GreaterThan(value).Field(fieldName));
-            }
-            if (type == ExpressionType.LessThanOrEqual)
-            {
-                return filterDescriptor.DateRange(x => x.LessThanOrEquals(value).Field(fieldName));
-            }
-            if (type == ExpressionType.GreaterThanOrEqual)
-            {
-                return filterDescriptor.DateRange(x => x.GreaterThanOrEquals(value).Field(fieldName));
-            }
-            throw new NotImplementedException();
-        }
-
-        public static QueryContainer GenerateComparisonFilter<T>(long value, ExpressionType type, string fieldName)
-            where T : class
-        {
-            var filterDescriptor = new QueryContainerDescriptor<T>();
-            if (type == ExpressionType.LessThan)
-            {
-                return filterDescriptor.Range(x => x.LessThan(value).Field(fieldName));
-            }
-            if (type == ExpressionType.GreaterThan)
-            {
-                return filterDescriptor.Range(x => x.GreaterThan(value).Field(fieldName));
-            }
-            if (type == ExpressionType.LessThanOrEqual)
-            {
-                return filterDescriptor.Range(x => x.LessThanOrEquals(value).Field(fieldName));
-            }
-            if (type == ExpressionType.GreaterThanOrEqual)
-            {
-                return filterDescriptor.Range(x => x.GreaterThanOrEquals(value).Field(fieldName));
-            }
-            throw new NotImplementedException();
-        }
-
-        public static QueryContainer GenerateComparisonFilter<T>(double value, ExpressionType type, string fieldName)
-            where T : class
-        {
-            var filterDescriptor = new QueryContainerDescriptor<T>();
-            if (type == ExpressionType.LessThan)
-            {
-                return filterDescriptor.Range(x => x.LessThan(value).Field(fieldName));
-            }
-            if (type == ExpressionType.GreaterThan)
-            {
-                return filterDescriptor.Range(x => x.GreaterThan(value).Field(fieldName));
-            }
-            if (type == ExpressionType.LessThanOrEqual)
-            {
-                return filterDescriptor.Range(x => x.LessThanOrEquals(value).Field(fieldName));
-            }
-            if (type == ExpressionType.GreaterThanOrEqual)
-            {
-                return filterDescriptor.Range(x => x.GreaterThanOrEquals(value).Field(fieldName));
-            }
-            throw new NotImplementedException();
         }
 
         public static QueryContainer GenerateEqualityFilter<T>(this BinaryExpression binaryExpression) where T : class
@@ -214,11 +143,10 @@ namespace FluentNest
         public static QueryContainer GenerateBoolFilter<T>(this Expression expression) where T : class
         {
             var filterDescriptor = new QueryContainerDescriptor<T>();
-            var fieldName = GenerateFilterName(expression);
+            var fieldName = expression.GenerateFilterName();
             return filterDescriptor.Term(fieldName, true);
         }
-
-
+        
         public static Expression<Func<T,object>>  GetFieldExpression<T>(this Expression expression)
         {
             var memberExpression = expression as MemberExpression;
@@ -243,6 +171,19 @@ namespace FluentNest
             return FirstCharacterToLower(expression.Member.Name);
         }
 
+        public static bool IsComparisonType(this ExpressionType expType)
+        {
+            return expType == ExpressionType.LessThan || expType == ExpressionType.GreaterThan || expType == ExpressionType.LessThanOrEqual || expType == ExpressionType.GreaterThanOrEqual;
+        }
+
+        public static string GetFieldName(this Expression exp)
+        {
+            var binary = (BinaryExpression)exp;
+            var memberAccessor = binary.Left as MemberExpression;
+            var fieldName = GetFieldNameFromMember(memberAccessor);
+            return fieldName;
+        }
+        
         public static QueryContainer GenerateFilterDescription<T>(this Expression expression) where T:class
         {
             var expType = expression.NodeType;
@@ -250,6 +191,25 @@ namespace FluentNest
             if (expType == ExpressionType.AndAlso)
             {
                 var binaryExpression = (BinaryExpression)expression;
+
+                // handle special cases of two comparisons on the same field which should be compiled into a range request
+                if (binaryExpression.Left.NodeType.IsComparisonType() && binaryExpression.Right.NodeType.IsComparisonType())
+                {
+                    if(binaryExpression.Left.GetFieldName() == binaryExpression.Right.GetFieldName())
+                    {
+                        //we supose that on left hand and right hand we have a binary expressions
+                        var leftBinary = (BinaryExpression)binaryExpression.Left;
+                        var leftValue = GetValue(leftBinary);
+                        
+                        var memberAccessor = leftBinary.Left as MemberExpression;
+                        var fieldName = GetFieldNameFromMember(memberAccessor);
+
+                        var rightBinary = (BinaryExpression)binaryExpression.Right;
+                        var rightValue = GetValue(rightBinary);
+                        return Ranges.GenerateRangeFilter<T>(fieldName, leftValue, leftBinary.NodeType, rightValue, rightBinary.NodeType);
+                    }
+                }
+                
                 var leftFilter = GenerateFilterDescription<T>(binaryExpression.Left);
                 var rightFilter = GenerateFilterDescription<T>(binaryExpression.Right);
                 var filterDescriptor = new QueryContainerDescriptor<T>();
@@ -264,14 +224,17 @@ namespace FluentNest
                 var filterDescriptor = new QueryContainerDescriptor<T>();
                 return filterDescriptor.Bool(x => x.Should(leftFilter, rightFilter).MinimumShouldMatch(1));
             }
+
             if (expType == ExpressionType.Equal)
             {
                 return GenerateEqualityFilter<T>(expression as BinaryExpression);
             }
+
             if(expType == ExpressionType.LessThan || expType == ExpressionType.GreaterThan || expType == ExpressionType.LessThanOrEqual || expType == ExpressionType.GreaterThanOrEqual)
             {
                 return GenerateComparisonFilter<T>(expression,expType);
             }
+
             if (expType == ExpressionType.MemberAccess)
             {
                 var memberExpression = (MemberExpression)expression;
@@ -284,7 +247,9 @@ namespace FluentNest
                     var filterDescriptor = new QueryContainerDescriptor<T>();
                     return filterDescriptor.Exists(x => x.Field(parentFieldName));
                 }
+
                 var isProperty = memberExpression.Member.MemberType == MemberTypes.Property;
+
                 if (isProperty)
                 {
                     var propertyType = ((PropertyInfo) memberExpression.Member).PropertyType;
@@ -308,53 +273,7 @@ namespace FluentNest
             
             throw  new NotImplementedException();
         }
-
-        public static string GenerateFilterName(this Expression expression)
-        {
-            var expType = expression.NodeType;
-
-            if (expType == ExpressionType.AndAlso || expType == ExpressionType.Or || expType == ExpressionType.OrElse || expType == ExpressionType.Equal 
-                || expType == ExpressionType.LessThan || expType == ExpressionType.GreaterThan || expType == ExpressionType.LessThanOrEqual || expType == ExpressionType.GreaterThanOrEqual
-                || expType == ExpressionType.NotEqual)
-            {
-                var binaryExpression = (BinaryExpression)expression;
-                var leftFilterName = GenerateFilterName(binaryExpression.Left);
-                var rightFilterName = GenerateFilterName(binaryExpression.Right);
-                return leftFilterName + "_" + expType + "_" + rightFilterName;
-            }
-            else
-            {
-                if (expType == ExpressionType.MemberAccess)
-                {
-                    var memberExpression = (MemberExpression)expression;
-                    //here we handle binary expressions in the from .field.hasValue
-                    if (memberExpression.Member.Name == "HasValue")
-                    {
-                        var parentFieldExpression = (memberExpression.Expression as MemberExpression);
-                        var parentFieldName = GetFieldNameFromMember(parentFieldExpression);
-                        return parentFieldName + ".hasValue";
-                    }
-                    return GetFieldNameFromMember(memberExpression);
-                }
-                if (expType == ExpressionType.Lambda)
-                {
-                    var lambda = (LambdaExpression)expression;
-                    return GenerateFilterName(lambda.Body);
-                }
-                if (expType == ExpressionType.Convert)
-                {
-                    var unary = (UnaryExpression)expression;
-                    return GenerateFilterName(unary.Operand);
-                }
-                if (expType == ExpressionType.Constant)
-                {
-                    var constExp = (ConstantExpression)expression;
-                    return constExp.Value.ToString();
-                }
-            }
-            throw new NotImplementedException();
-        }
-
+        
         public static SearchDescriptor<T> FilterOn<T>(this SearchDescriptor<T> searchDescriptor, Expression<Func<T, bool>> filterRule) where T : class
         {
             var filterDescriptor = GenerateFilterDescription<T>(filterRule.Body);

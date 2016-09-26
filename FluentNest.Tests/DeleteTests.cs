@@ -9,10 +9,10 @@ namespace FluentNest.Tests
 {
     public class DeleteTests : TestsBase
     {
-        public void AddSimpleTestData()
+        public string AddSimpleTestData()
         {
-            Client.DeleteIndex(CarIndex);
-            Client.CreateIndex(CarIndex, x => x.Mappings(
+            var indexName = "index_" + Guid.NewGuid();
+            Client.CreateIndex(indexName, x => x.Mappings(
                 m => m.Map<Car>(t => t
             .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
 
@@ -28,32 +28,35 @@ namespace FluentNest.Tests
                     Weight = 5
                 };
 
-                Client.Index(car);
+                Client.Index(car, ind => ind.Index(indexName));
             }
-            Client.Flush(CarIndex);
+            Client.Flush(indexName);
+            return indexName;
         }
 
         [Fact]
         public void DeleteByQuery()
         {
-            AddSimpleTestData();
-            var deleteResult = Client.DeleteByQuery<Car>(CarIndex, typeof(Car),s  => s.FilterOn(x => x.Sold));
+            var index = AddSimpleTestData();
+            var deleteResult = Client.DeleteByQuery<Car>(index, Types.AllTypes,s  => s.FilterOn(x => x.Sold));
             Check.That(deleteResult.IsValid).IsTrue();
-            Client.Refresh(CarIndex);
-            var result = Client.Search<Car>(sc=>sc.Index(CarIndex).MatchAll());
+            Client.Refresh(index);
+            var result = Client.Search<Car>(sc=>sc.Index(index).MatchAll());
             Check.That(result.Hits).HasSize(5);
+            Client.DeleteIndex(index);
         }
 
         [Fact]
         public void DeleteByQuery_FilterCreatedSeparately()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
             var filter = Filters.CreateFilter<Car>(x => x.EngineType == EngineType.Diesel);
-            var deleteResult = Client.DeleteByQuery<Car>(CarIndex, Types.AllTypes, s => s.FilterOn(filter));
+            var deleteResult = Client.DeleteByQuery<Car>(index, Types.AllTypes, s => s.FilterOn(filter));
             Check.That(deleteResult.IsValid).IsTrue();
-            Client.Refresh(CarIndex);
-            var result = Client.Search<Car>(sc => sc.MatchAll());
+            Client.Refresh(index);
+            var result = Client.Search<Car>(sc => sc.Index(index).MatchAll());
             Check.That(result.Hits).HasSize(5);
+            Client.DeleteIndex(index);
         }
     }
 }

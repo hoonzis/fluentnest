@@ -33,10 +33,10 @@ namespace FluentNest.Tests
 
         }
 
-        public void AddSimpleTestData()
+        public string AddSimpleTestData()
         {
-            Client.DeleteIndex(CarIndex);
-            Client.CreateIndex(CarIndex, x => x.Mappings(
+            var indexName = "index_" + Guid.NewGuid();
+            Client.CreateIndex(indexName, x => x.Mappings(
                 m => m.Map<Car>(t => t
                     .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
 
@@ -55,17 +55,19 @@ namespace FluentNest.Tests
                     ConditionalRanking = i % 2 == 0 ? null : (int?)i,
                     Description = "Desc" + i,
                 };
-                Client.Index(car, ind => ind.Index(CarIndex));
+                Client.Index(car, ind => ind.Index(indexName));
             }
-            Client.Flush(CarIndex);
+            Client.Flush(indexName);
+            return indexName;
         }
         
         [Fact]
         public void Filtering_on_enum_property_should_work()
         {
-            AddSimpleTestData();
-            var result = Client.Search<Car>(s => s.Index(CarIndex).FilterOn(x => x.EngineType == EngineType.Diesel));
+            var index = AddSimpleTestData();
+            var result = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.EngineType == EngineType.Diesel));
             Check.That(result.Hits.Count()).IsEqualTo(5);
+            Client.DeleteIndex(index);
         }
     }
 }
