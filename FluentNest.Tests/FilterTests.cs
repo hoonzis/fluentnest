@@ -34,7 +34,8 @@ namespace FluentNest.Tests
                     Price = 10,
                     Sold = i % 2 == 0,
                     CarType = "Type" + i%2,
-                    Emissions = i+1
+                    Emissions = i+1,
+                    IntField = i
                 };
                 Client.Index(car);
             }
@@ -236,13 +237,35 @@ namespace FluentNest.Tests
         }
 
         [Fact]
-        public void Decimal_Filter_Comparison_Test()
+        public void Decimal_Two_Side_Range_Test()
         {
             AddSimpleTestData();
             var allUsers = Client.Search<Car>(s => s.FilterOn(x=>x.Emissions > 2 && x.Emissions < 6));
             Check.That(allUsers.Documents).HasSize(3);
         }
-        
+
+        [Fact]
+        public void Integer_Two_Side_Range_Test()
+        {
+            AddSimpleTestData();
+            var allUsers = Client.Search<Car>(s => s.FilterOn(x => x.IntField > 2 && x.IntField < 6));
+            Check.That(allUsers.Documents).HasSize(3);
+        }
+
+        [Fact]
+        public void Three_Ands_Test()
+        {
+            AddSimpleTestData();
+            Filters.OptimizeAndFilters = true;
+            var sc = new SearchDescriptor<Car>().FilterOn(x => x.Sold == true && x.IntField < 6 && x.Emissions < 5);
+            var json = Encoding.UTF8.GetString(Client.Serializer.Serialize(sc));
+            Console.WriteLine(json);
+            
+            var allUsers = Client.Search<Car>(s => s.FilterOn(x => x.IntField > 2 && x.IntField < 6 && x.Emissions < 5));
+            Check.That(allUsers.Documents).HasSize(1);
+            Filters.OptimizeAndFilters = false;
+        }
+
         [Fact]
         public void Filter_ValueWithin_Test()
         {

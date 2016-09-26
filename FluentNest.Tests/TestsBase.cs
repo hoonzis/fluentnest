@@ -56,9 +56,6 @@ namespace FluentNest.Tests
                     LongField = i,
                     IntField = i
                 };
-
-                var json = Encoding.UTF8.GetString(Client.Serializer.Serialize(car));
-                Console.WriteLine(json);
                 Client.Index(car);
             }
             Client.Flush(x => x.Index<Car>());
