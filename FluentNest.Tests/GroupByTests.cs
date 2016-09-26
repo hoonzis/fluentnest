@@ -12,10 +12,10 @@ namespace FluentNest.Tests
 {   
     public class GroupByTests : TestsBase
     {
-        public void AddSimpleTestData()
+        public string AddSimpleTestData()
         {
-            Client.DeleteIndex(Infer.Index<Car>());
-            Client.CreateIndex(Infer.Index<Car>(), x => x.Mappings(
+            var indexName = "index_" + Guid.NewGuid();
+            Client.CreateIndex(indexName, x => x.Mappings(
                 m => m.Map<Car>(t => t
             .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
 
@@ -34,17 +34,18 @@ namespace FluentNest.Tests
                     ConditionalRanking = i % 2 == 0 ? null : (int?)i,
                     Description = "Desc" + i,
                 };
-                Client.Index(car);
+                Client.Index(car, ind => ind.Index(indexName));
             }
-            Client.Flush(CarIndex);
+            Client.Flush(indexName);
+            return indexName;
         }
 
         [Fact]
         public void NestedGroupBy()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
             
-            var result =Client.Search<Car>(search =>search.Aggregations(agg => agg
+            var result =Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg
                 .SumBy(s => s.Price)
                 .GroupBy(s => s.EngineType)
                 .GroupBy(b => b.CarType)
@@ -64,14 +65,15 @@ namespace FluentNest.Tests
                 Check.That(engineTypes).HasSize(2);
                 Check.That(engineTypes.First().Price).Equals(20m);
             }
+            Client.DeleteIndex(index);
         }
 
         [Fact]
         public void GetDictionaryFromGroupBy()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
 
-            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg
+            var result = Client.Search<Car>(sc => sc.Index(index).Aggregations(agg => agg
                 .SumBy(s => s.Price)
                 .GroupBy(s => s.EngineType))
             );
@@ -82,46 +84,49 @@ namespace FluentNest.Tests
             Check.That(carTypesDictionary).HasSize(2);
             Check.That(carTypesList).HasSize(2);
             Check.That(carTypesDictionary.Keys).ContainsExactly(EngineType.Diesel, EngineType.Standard);
+            Client.DeleteIndex(index);
         }
 
         [Fact]
         public void GetDictionaryWithDecimalKeysFromGroupBy()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
 
             var result =
-                Client.Search<Car>(search => search.Aggregations(x => x.GroupBy(s => s.Price)));
+                Client.Search<Car>(search => search.Index(index).Aggregations(x => x.GroupBy(s => s.Price)));
 
             var carTypes = result.Aggs.GetDictionary<Car, decimal>(x => x.Price);
             Check.That(carTypes).HasSize(1);
             Check.That(carTypes.Keys).ContainsExactly(10m);
+            Client.DeleteIndex(index);
         }
 
         [Fact]
         public void GroupByStringKeys()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
             
-            var result = Client.Search<Car>(search => search.Aggregations(agg => agg
+            var result = Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg
                 .SumBy(s => s.Price)
                 .GroupBy("engineType")
             ));
 
             var engineTypes = result.Aggs.GetGroupBy("engineType");
             Check.That(engineTypes).HasSize(2);
+            Client.DeleteIndex(index);
         }
 
         [Fact]
         public void DynamicGroupByListOfKeys()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
             
-            var result = Client.Search<Car>(search => search.Aggregations(agg => agg
+            var result = Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg
                 .SumBy(s => s.Price)
                 .GroupBy(new List<string> { "engineType", "carType" })
             ));
 
-            var engineTypes = result.Aggs.GetGroupBy("engineType");
+            var engineTypes = result.Aggs.GetGroupBy("engineType").ToList();
             Check.That(engineTypes).HasSize(2);
 
             foreach (var engineType in engineTypes)
@@ -129,14 +134,16 @@ namespace FluentNest.Tests
                 var carTypes = engineType.GetGroupBy("carType");
                 Check.That(carTypes).HasSize(3);
             }
+
+            Client.DeleteIndex(index);
         }
 
         //Sum of car grouped by engines and carTypes. Just to be compared with the better syntax
         [Fact]
         public void StandardTwoLevelGroupByWithSum()
         {
-            AddSimpleTestData();
-            var result = Client.Search<Car>(s => s
+            var index = AddSimpleTestData();
+            var result = Client.Search<Car>(s => s.Index(index)
                 .Aggregations(fstAgg => fstAgg
                     .Terms("firstLevel", f => f
                         .Field(z => z.CarType)
@@ -163,14 +170,16 @@ namespace FluentNest.Tests
                     Check.That(priceSum).IsPositive();
                 }               
             }
+
+            Client.DeleteIndex(index);
         }
 
         [Fact]
         public void Distinct_Test()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
             
-            var result = Client.Search<Car>(search => search.Aggregations(agg => agg
+            var result = Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg
                 .DistinctBy(x => x.CarType)
                 .DistinctBy(x => x.EngineType)
             ));
@@ -187,14 +196,15 @@ namespace FluentNest.Tests
             Check.That(engineTypes).IsNotNull();
             Check.That(engineTypes).HasSize(2);
             Check.That(engineTypes).ContainsExactly(EngineType.Diesel, EngineType.Standard);
+            Client.DeleteIndex(index);
         }
 
         [Fact]
         public void Simple_Filtered_Distinct_Test()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
             
-            var result = Client.Search<Car>(search => search
+            var result = Client.Search<Car>(search => search.Index(index)
                 .FilterOn(f=> f.CarType == "type0")
                 .Aggregations(agg => agg
                     .DistinctBy(x => x.CarType)
@@ -212,17 +222,18 @@ namespace FluentNest.Tests
             Check.That(engineTypes).IsNotNull();
             Check.That(engineTypes).HasSize(2);
             Check.That(engineTypes).ContainsExactly(EngineType.Diesel, EngineType.Standard);
+            Client.DeleteIndex(index);
         }
 
         [Fact]
         public void Distinct_Time_And_Term_Filter_Test()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
             
             var filter = Filters.CreateFilter<Car>(x => x.Timestamp > new DateTime(2010,2,1) && x.Timestamp < new DateTime(2010, 8, 1))
                 .AndFilteredOn<Car>(x => x.CarType == "type0");
 
-            var result = Client.Search<Car>(sc => sc.FilterOn(filter).Aggregations(agg => agg
+            var result = Client.Search<Car>(sc => sc.Index(index).FilterOn(filter).Aggregations(agg => agg
                 .DistinctBy(x => x.CarType)
                 .DistinctBy(x => x.EngineType)
             ));
@@ -237,28 +248,14 @@ namespace FluentNest.Tests
             Check.That(engineTypes).IsNotNull();
             Check.That(engineTypes).HasSize(2);
             Check.That(engineTypes).ContainsExactly(EngineType.Diesel, EngineType.Standard);
+            Client.DeleteIndex(index);
         }
 
         [Fact]
         public void Terms_Aggregation_Big_Size()
         {
-            Client.DeleteIndex(Infer.Index<User>());
-            Client.CreateIndex(Infer.Index<User>());
-            for (int i = 0; i < 200; i++)
-            {
-                var user = new User
-                {
-                    Name = "User" + i,
-                    Nationality = "Nationality" + i%20
-                };
-
-                
-                Client.Index(user);
-            }
-            Client.Flush(Infer.Index<User>());
-    
-            var result = Client.Search<User>(sc => sc.Aggregations(agg => agg.DistinctBy(x=>x.Nationality)));
-
+            var index = CreateUsersIndex(200, 20);
+            var result = Client.Search<User>(sc => sc.Index(index).Aggregations(agg => agg.DistinctBy(x=>x.Nationality)));
             var nationalities = result.Aggs.GetDistinct<User, string>(x => x.Nationality).ToList();
 
             Check.That(nationalities).IsNotNull();
@@ -268,9 +265,9 @@ namespace FluentNest.Tests
         [Fact]
         public void GroupBy_With_TopHits_Specifying_Properties()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
             
-            var result = Client.Search<Car>(search => search.Aggregations(agg => agg
+            var result = Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg
                 .TopHits(3, x => x.Name)
                 .GroupBy(b => b.CarType)
             ));
@@ -285,14 +282,16 @@ namespace FluentNest.Tests
                 Check.That(hits[0].Name).IsNotNull();
                 Check.That(hits[0].Weight).IsNull();
             }
+
+            Client.DeleteIndex(index);
         }
 
         [Fact]
         public void GroupBy_With_TopHits_Specifying_More_Properties()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
 
-            var result = Client.Search<Car>(search => search.Aggregations(agg => agg
+            var result = Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg
                 //get name and weight for each retrived document
                 .TopHits(3, x => x.Name, x => x.Weight)
                 .GroupBy(b => b.CarType)
@@ -311,14 +310,15 @@ namespace FluentNest.Tests
                 // description must be null
                 Check.That(hits[0].Description).IsNull();
             }
+            Client.DeleteIndex(index);
         }
 
         [Fact]
         public void GroupBy_With_TopHits_NoProperties_GetsWholeSource()
         {
-            AddSimpleTestData();
+            var index = AddSimpleTestData();
             
-            var result = Client.Search<Car>(search => search.Aggregations(x => x
+            var result = Client.Search<Car>(search => search.Index(index).Aggregations(x => x
                 .TopHits(3)
                 .GroupBy(b => b.CarType))
             );
@@ -333,27 +333,15 @@ namespace FluentNest.Tests
                 Check.That(hits[0].Weight).IsNotNull();
                 Check.That(hits[0].Description).IsNotNull();
             }
+            Client.DeleteIndex(index);
         }
         
         [Fact]
         public void TopHits_In_Double_GroupBy()
         {
-            Client.DeleteIndex(Infer.Index<User>());
-            Client.CreateIndex(Infer.Index<User>());
-            for (int i = 0; i < 250; i++)
-            {
-                var user = new User
-                {
-                    Name = "User" + i,
-                    Nationality = "Nationality" + i % 2,
-                    Active = i%3 == 0
-                };
+            var indexName = CreateUsersIndex(250, 2);
 
-                Client.Index(user);
-            }
-            Client.Flush(Infer.Index<User>());
-
-            var result = Client.Search<User>(search => search.Aggregations(agg => agg
+            var result = Client.Search<User>(search => search.Index(indexName).Aggregations(agg => agg
                 .TopHits(40, x => x.Name) 
                 .GroupBy(b => b.Active)
                 .GroupBy(b => b.Nationality))
@@ -380,25 +368,33 @@ namespace FluentNest.Tests
             }
         }
 
-        [Fact]
-        public void TopHits_Sorted_SettingSize()
+        private string CreateUsersIndex(int size, int nationalitiesCount)
         {
-            Client.DeleteIndex(Infer.Index<User>());
-            Client.CreateIndex(Infer.Index<User>());
-            for (int i = 0; i < 100; i++)
+            var indexName = "index_" + Guid.NewGuid();
+            Client.CreateIndex(indexName);
+            var users = new List<User>();
+            for (int i = 0; i < size; i++)
             {
                 var user = new User
                 {
                     Name = "User" + i,
-                    Nationality = "Nationality" + i % 10,
-                    Age = (i+1) % 10
+                    Nationality = "Nationality" + i % nationalitiesCount,
+                    Active = i%3 == 0,
+                    Age =  (i + 1) % 10
                 };
 
-                Client.Index(user);
+                users.Add(user);
             }
-            Client.Flush(Infer.Index<User>());
+            Client.Bulk(x => x.CreateMany(users).Index(indexName));
+            Client.Flush(indexName);
+            return indexName;
+        }
 
-            var result = Client.Search<User>(search => search.Aggregations(agg => agg
+        [Fact]
+        public void TopHits_Sorted_SettingSize()
+        {
+            var index = CreateUsersIndex(100, 10);
+            var result = Client.Search<User>(search => search.Index(index).Aggregations(agg => agg
                 // get 40 first users, sort by name. for each user retrieve name and email
                 .SortedTopHits(40, x=>x.Name, SortType.Ascending, x => x.Name, y=>y.Email)
                 .SortedTopHits(40, x=>x.Name, SortType.Descending, x=>x.Name, y=>y.Email)

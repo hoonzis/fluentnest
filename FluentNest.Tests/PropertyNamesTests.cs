@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using FluentNest.Tests.Model;
 using Nest;
 using NFluent;
@@ -15,10 +16,10 @@ namespace FluentNest.Tests
 
         }
 
-        private void AddSimpleTestData()
+        private string AddSimpleTestData()
         {
-            Client.DeleteIndex(CarIndex);
-            Client.CreateIndex(CarIndex, x => x.Mappings(m => m
+            var indexName = "index_" + Guid.NewGuid();
+            Client.CreateIndex(indexName, x => x.Mappings(m => m
             .Map<Car>(t => t
                 .Properties(prop => prop.String(str => str.Name(s => s.Guid).Index(FieldIndexOption.NotAnalyzed)))
                 .Properties(prop => prop.String(str => str.Name(s => s.Email).Index(FieldIndexOption.NotAnalyzed)))
@@ -31,22 +32,24 @@ namespace FluentNest.Tests
                     BIG_CASE_NAME = "big" + i % 3
                 };
 
-                Client.Index(car, ind => ind.Index(CarIndex));
+                Client.Index(car, ind => ind.Index(indexName));
             }
-            Client.Flush(CarIndex);
+            Client.Flush(indexName);
+            return indexName;
         }
 
         [Fact]
         public void TestCasing()
         {
-            AddSimpleTestData();
+            var indexName = AddSimpleTestData();
             var filter = Filters.CreateFilter<Car>(f => f.BIG_CASE_NAME == "big1");
             filter = filter.AndFilteredOn<Car>(f => f.BIG_CASE_NAME != "big2");
-            var sc = new SearchDescriptor<Car>().FilterOn(filter);           
+            var sc = new SearchDescriptor<Car>().Index(indexName).FilterOn(filter);           
             var query = Serialize(sc);
             Check.That(query).Contains("BIG_CASE_NAME");
             var cars = Client.Search<Car>(sc).Hits.Select(h => h.Source);
             Check.That(cars).HasSize(3);
+            Client.DeleteIndex(indexName);
         }
     }
 }
