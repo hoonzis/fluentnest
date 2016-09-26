@@ -59,7 +59,7 @@ namespace FluentNest
                 return filterDescriptor.DateRange(x => x.RangeOnDate(leftType, leftDate).RangeOnDate(rightType, rightDate).Field(fieldName));
             }
 
-            if (leftValue is decimal || leftValue is double)
+            if (leftValue is decimal || leftValue is double || leftValue is long || leftValue is int)
             {
                 var left = Convert.ToDouble(leftValue);
                 var right = Convert.ToDouble(rightValue);

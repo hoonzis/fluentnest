@@ -36,7 +36,8 @@ namespace FluentNest.Tests
                     Email = "Email@email" + i % 2 + ".com",
                     Age = i + 1,
                     Enabled = i % 2 == 0,
-                    Active = i % 2 == 0
+                    Active = i % 2 == 0, 
+                    EngineType = i % 2 == 0 ? EngineType.Diesel : EngineType.Standard
                 };
                 cars.Add(car);
             }
@@ -44,28 +45,88 @@ namespace FluentNest.Tests
             Client.Flush(indexName);
             return indexName;
         }
-        
+
         // This should confirm the theory that a two side range is faster then a bool with 2-one sided ranges
         [Fact]
-        public void TwoSideRange()
+        public void WithMergedRange()
         {
             var stopWatch = new Stopwatch();
             var index = AddSimpleTestData();
-            stopWatch.Start();
-
-            var allCars = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.Emissions > 2 && x.Emissions < 6 && x.Active == true));
-            stopWatch.Stop();
-            var firstTime = stopWatch.Elapsed;
+            var sc = new SearchDescriptor<Car>().Index(index).FilterOn(x => x.Emissions > 2 && x.Emissions < 6 && x.Price < 20);
+            var json = Serialize(sc);
+            Console.WriteLine(json);
 
             stopWatch.Start();
-            var allCars2 = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.Emissions > 2 && x.Active == true && x.Emissions < 6));
+            var allCars = Client.Search<Car>(sc);
             stopWatch.Stop();
-            var secondtime = stopWatch.Elapsed;
-            Check.That(firstTime).IsLessThan(secondtime);
-            Check.That(allCars.Documents).HasSize(2);
-            Check.That(allCars2.Documents).HasSize(2);
 
-            Client.DeleteIndex(index);
+            Console.WriteLine("Query time:" + stopWatch.Elapsed);
+            Check.That(allCars.Documents).HasSize(3);
+        }
+
+        [Fact]
+        public void WithoutMergedRange()
+        {
+            var stopWatch = new Stopwatch();
+            var index = AddSimpleTestData();
+            var sc = new SearchDescriptor<Car>().Index(index).FilterOn(x => x.Emissions > 2 && x.Price < 20 && x.Emissions < 6);
+            var json = Serialize(sc);
+            Console.WriteLine(json);
+
+            stopWatch.Start();
+            var allCars2 = Client.Search<Car>(sc);
+            stopWatch.Stop();
+
+            Console.WriteLine("Query time:" + stopWatch.Elapsed);
+            Check.That(allCars2.Documents).HasSize(3);
+        }
+
+
+        [Fact]
+        public void WithoutMergedAndFilters()
+        {
+            var stopWatch = new Stopwatch();
+            var index = AddSimpleTestData();
+            Filters.OptimizeAndFilters = false;
+
+            var sc =
+                new SearchDescriptor<Car>().Index(index).FilterOn(
+                    x =>
+                        x.Emissions < 6 && x.Sold == true && x.Price > 4 && x.EngineType == EngineType.Diesel &&
+                        x.Length < 4);
+
+            var json = Serialize(sc);
+            Console.WriteLine(json);
+
+            stopWatch.Start();
+            var allCars = Client.Search<Car>(sc);
+            stopWatch.Stop();
+
+            Console.WriteLine("Query time:" + stopWatch.Elapsed); Console.Write("Query time:" + stopWatch.Elapsed);
+            Check.That(allCars.Documents).HasSize(3);
+        }
+
+        [Fact]
+        public void WithMergedAndFilters()
+        {
+            var stopWatch = new Stopwatch();
+            var index = AddSimpleTestData();
+            Filters.OptimizeAndFilters = true;
+            var sc =
+                new SearchDescriptor<Car>().Index(index).FilterOn(
+                    x =>
+                        x.Emissions < 6 && x.Sold == true && x.Price > 4 && x.EngineType == EngineType.Diesel &&
+                        x.Length < 4);
+
+            var json = Serialize(sc);
+            Console.WriteLine(json);
+
+            stopWatch.Start();
+            var cars = Client.Search<Car>(sc);
+            stopWatch.Stop();
+
+            Console.WriteLine("Query time:" + stopWatch.Elapsed);
+            Check.That(cars.Documents).HasSize(3);
         }
     }
 }
