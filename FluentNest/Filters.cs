@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using Nest;
@@ -9,6 +10,8 @@ namespace FluentNest
 {
     public static class Filters
     {
+        public static bool OptimizeAndFilters = false;
+
         public static string FirstCharacterToLower(this string str)
         {
             if (string.IsNullOrEmpty(str) || char.IsLower(str, 0))
@@ -209,10 +212,41 @@ namespace FluentNest
                         return Ranges.GenerateRangeFilter<T>(fieldName, leftValue, leftBinary.NodeType, rightValue, rightBinary.NodeType);
                     }
                 }
-                
-                var leftFilter = GenerateFilterDescription<T>(binaryExpression.Left);
+
                 var rightFilter = GenerateFilterDescription<T>(binaryExpression.Right);
                 var filterDescriptor = new QueryContainerDescriptor<T>();
+
+                if (OptimizeAndFilters)
+                {
+                    // Detecting a series of And filters
+                    var leftSide = binaryExpression.Left;
+                    var accumulatedExpressions = new List<Expression>();
+                    while (leftSide.NodeType == ExpressionType.AndAlso)
+                    {
+
+                        var asBinary = (BinaryExpression)leftSide;
+                        if (asBinary.Left.NodeType != ExpressionType.AndAlso)
+                        {
+                            accumulatedExpressions.Add(asBinary.Left);
+                        }
+
+                        if (asBinary.Right.NodeType != ExpressionType.AndAlso)
+                        {
+                            accumulatedExpressions.Add(asBinary.Right);
+                        }
+
+                        leftSide = asBinary.Left;
+                    }
+
+                    if (accumulatedExpressions.Count > 0)
+                    {
+                        var filters = accumulatedExpressions.Select(GenerateFilterDescription<T>).ToList();
+                        filters.Add(rightFilter);
+                        return filterDescriptor.Bool(s=> s.Must(filters.ToArray()));
+                    }
+                }
+
+                var leftFilter = GenerateFilterDescription<T>(binaryExpression.Left);
                 return filterDescriptor.Bool(s => s.Must(leftFilter, rightFilter));
             }
             

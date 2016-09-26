@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using FluentNest.Tests.Model;
 using Nest;
 using NFluent;
@@ -239,12 +240,34 @@ namespace FluentNest.Tests
         }
 
         [Fact]
-        public void Decimal_Filter_Comparison_Test()
+        public void Decimal_Two_Side_Range_Test()
         {
             var index = AddSimpleTestData();
             var allCars = Client.Search<Car>(s => s.Index(index).FilterOn(x=>x.Emissions > 2 && x.Emissions < 6));
             Client.DeleteIndex(index);
             Check.That(allCars.Documents).HasSize(3);
+        }
+
+        [Fact]
+        public void Integer_Two_Side_Range_Test()
+        {
+            var index = AddSimpleTestData();
+            var allUsers = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.Age > 2 && x.Age < 6));
+            Check.That(allUsers.Documents).HasSize(3);
+        }
+
+        [Fact]
+        public void Three_Ands_Test()
+        {
+            var index = AddSimpleTestData();
+            Filters.OptimizeAndFilters = true;
+            var sc = new SearchDescriptor<Car>().Index(index).FilterOn(x => x.Sold == true && x.Age < 6 && x.Emissions < 5);
+            var json = Serialize(sc);
+            Console.WriteLine(json);
+
+            var allUsers = Client.Search<Car>(sc);
+            Check.That(allUsers.Documents).HasSize(2);
+            Filters.OptimizeAndFilters = false;
         }
 
         [Fact]
