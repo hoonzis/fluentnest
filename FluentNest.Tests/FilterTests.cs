@@ -74,19 +74,7 @@ namespace FluentNest.Tests
             Client.DeleteIndex(index);
             Check.That(result.Documents).HasSize(1);
         }
-
-        [Fact]
-        public void TestSimpleComparisonFilter()
-        {
-            var index = AddSimpleTestData();
-            var startDate = new DateTime(2010, 1, 1);
-            var endDate = new DateTime(2010, 3, 1);
-            var result = Client.Search<Car>(s => s.Index(index)
-                .FilterOn(x => x.Timestamp > startDate && x.Timestamp < endDate));
-            Check.That(result.Documents).HasSize(1);
-            Client.DeleteIndex(index);
-        }
-
+        
         [Fact]
         public void TestEqualityFilter()
         {
@@ -158,20 +146,7 @@ namespace FluentNest.Tests
             Client.DeleteIndex(index);
             Check.That(cars.Documents).HasSize(1);            
         }
-
-        [Fact]
-        public void TestBooleanFilter()
-        {
-            var index = AddSimpleTestData();
-
-            var filter = Filters
-                .CreateFilter<Car>(x => x.Enabled == true);
-
-            var allCars = Client.Search<Car>(s => s.Index(index).Query(_ => filter));
-            Check.That(allCars.Documents).HasSize(5);
-            Client.DeleteIndex(index);
-        }
-
+        
         [Fact]
         public void MultipleFiltersAndSomeAggregations()
         {
@@ -225,19 +200,14 @@ namespace FluentNest.Tests
             var index = AddSimpleTestData();
             var allCars = Client.Search<Car>(s=>s.Index(index).FilterOn(f=>f.Active));
             Check.That(allCars.Documents).HasSize(5);
+
+            var filter = Filters.CreateFilter<Car>(x => x.Enabled == true);
+
+            var allCars2 = Client.Search<Car>(s => s.Index(index).Query(_ => filter));
+            Check.That(allCars2.Documents).HasSize(5);
             Client.DeleteIndex(index);
         }
-
-        [Fact]
-        public void Time_equality_filter()
-        {
-            var index = AddSimpleTestData();
-            
-            var allCars = Client.Search<Car>(s=>s.Index(index).FilterOn(x=>x.Timestamp == new DateTime(2010,1,1)));
-            Check.That(allCars.Documents).HasSize(1);
-            Client.DeleteIndex(index);
-        }
-
+        
         [Fact]
         public void Decimal_Two_Side_Range_Test()
         {

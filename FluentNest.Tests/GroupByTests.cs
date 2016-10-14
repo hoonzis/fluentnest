@@ -44,8 +44,38 @@ namespace FluentNest.Tests
         public void NestedGroupBy()
         {
             var index = AddSimpleTestData();
-            
-            var result =Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg
+
+            // The standard NEST way without FluentNest
+            var result = Client.Search<Car>(s => s.Index(index)
+                .Aggregations(fstAgg => fstAgg
+                    .Terms("firstLevel", f => f
+                        .Field(z => z.CarType)
+                        .Aggregations(sndLevel => sndLevel
+                            .Terms("secondLevel", f2 => f2.Field(f3 => f3.EngineType)
+                                .Aggregations(sums => sums
+                                    .Sum("priceSum", son => son
+                                    .Field(f4 => f4.Price))
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+
+            var carTypesAgg = result.Aggs.Terms("firstLevel");
+
+            foreach (var carType in carTypesAgg.Buckets)
+            {
+                var engineTypes = carType.Terms("secondLevel");
+                foreach (var engineType in engineTypes.Buckets)
+                {
+                    var priceSum = (decimal)engineType.Sum("priceSum").Value;
+                    Check.That(priceSum).IsPositive();
+                }
+            }
+
+            // Now with FluentNest
+            result =Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg
                 .SumBy(s => s.Price)
                 .GroupBy(s => s.EngineType)
                 .GroupBy(b => b.CarType)
@@ -138,42 +168,6 @@ namespace FluentNest.Tests
             Client.DeleteIndex(index);
         }
 
-        //Sum of car grouped by engines and carTypes. Just to be compared with the better syntax
-        [Fact]
-        public void StandardTwoLevelGroupByWithSum()
-        {
-            var index = AddSimpleTestData();
-            var result = Client.Search<Car>(s => s.Index(index)
-                .Aggregations(fstAgg => fstAgg
-                    .Terms("firstLevel", f => f
-                        .Field(z => z.CarType)
-                        .Aggregations(sndLevel => sndLevel
-                            .Terms("secondLevel", f2 => f2.Field(f3 => f3.EngineType)
-                                .Aggregations(sums => sums
-                                    .Sum("priceSum", son => son
-                                    .Field(f4 => f4.Price))
-                                )
-                            )
-                        )
-                    )
-                )
-            );
-
-            var carTypes = result.Aggs.Terms("firstLevel");
-
-            foreach (var carType in carTypes.Buckets)
-            {
-                var engineTypes = carType.Terms("secondLevel");
-                foreach (var engineType in engineTypes.Buckets)
-                {
-                    var priceSum = (decimal)engineType.Sum("priceSum").Value;
-                    Check.That(priceSum).IsPositive();
-                }               
-            }
-
-            Client.DeleteIndex(index);
-        }
-
         [Fact]
         public void Distinct_Test()
         {
@@ -261,33 +255,8 @@ namespace FluentNest.Tests
             Check.That(nationalities).IsNotNull();
             Check.That(nationalities).HasSize(20);
         }
-
         [Fact]
-        public void GroupBy_With_TopHits_Specifying_Properties()
-        {
-            var index = AddSimpleTestData();
-            
-            var result = Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg
-                .TopHits(3, x => x.Name)
-                .GroupBy(b => b.CarType)
-            ));
-
-
-            var carTypes = result.Aggs.GetGroupBy<Car>(x => x.CarType).ToList();
-            Check.That(carTypes).HasSize(3);
-            foreach (var carType in carTypes)
-            {
-                var hits = carType.GetTopHits<Car>().ToList();
-                Check.That(hits).HasSize(3);
-                Check.That(hits[0].Name).IsNotNull();
-                Check.That(hits[0].Weight).IsNull();
-            }
-
-            Client.DeleteIndex(index);
-        }
-
-        [Fact]
-        public void GroupBy_With_TopHits_Specifying_More_Properties()
+        public void GroupBy_With_TopHits_Specifying_Properties_To_Fetch()
         {
             var index = AddSimpleTestData();
 
