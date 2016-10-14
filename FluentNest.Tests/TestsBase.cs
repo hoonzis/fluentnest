@@ -67,7 +67,12 @@ namespace Tests
         public void CheckSD<T>(SearchDescriptor<T> sc, string testName) where T: class
         {
             var json = Serialize(sc);
-            Check.That(json).Equals(testResults[testName]);
+            var escaped = string.Join("", json.Where(c => !char.IsWhiteSpace(c)));
+
+            var expected = testResults[testName];
+            var escapedExpected = string.Join("", expected.Where(c => !char.IsWhiteSpace(c)));
+
+            Check.That(escaped).Equals(escapedExpected);
         } 
     }
 }
