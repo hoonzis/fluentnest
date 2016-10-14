@@ -197,3 +197,4 @@ FakesAssemblies/
 
 # Paket binary
 paket.exe
+*.v2.ncrunchsolution

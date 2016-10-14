@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using FluentNest.Tests.Model;
 using Nest;
 using NFluent;
@@ -11,13 +10,6 @@ namespace FluentNest.Tests
 {
     public class FilterTests : TestsBase
     {
-        private readonly Dictionary<string, string> testResults;
-
-        public FilterTests()
-        {
-            testResults = LoadTestResults(nameof(FilterTests));
-        }
-
         private const string MyFavoriteGuid = "test-test";
 
         private string AddSimpleTestData()
