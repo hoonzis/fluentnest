@@ -14,8 +14,38 @@ namespace FluentNest.Tests
         public void NestedGroupBy()
         {
             AddSimpleTestData();
-            
-            var result =Client.Search<Car>(search =>search.Aggregations(agg => agg
+
+            // The standard NEST way without FluentNest
+            var result = Client.Search<Car>(sc => sc
+                .Aggregations(fstAgg => fstAgg
+                    .Terms("firstLevel", f => f
+                        .Field(z => z.CarType)
+                        .Aggregations(sndLevel => sndLevel
+                            .Terms("secondLevel", f2 => f2.Field(f3 => f3.EngineType)
+                                .Aggregations(sums => sums
+                                    .Sum("priceSum", son => son
+                                    .Field(f4 => f4.Price))
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+
+            var carTypesAgg = result.Aggs.Terms("firstLevel");
+
+            foreach (var carType in carTypesAgg.Items)
+            {
+                var engineTypes = carType.Terms("secondLevel");
+                foreach (var engineType in engineTypes.Items)
+                {
+                    var priceSum = (decimal)engineType.Sum("priceSum").Value;
+                    Check.That(priceSum).IsPositive();
+                }
+            }
+
+            // Now with FluentNest
+            result = Client.Search<Car>(search =>search.Aggregations(agg => agg
                 .SumBy(s => s.Price)
                 .GroupBy(s => s.EngineType)
                 .GroupBy(b => b.CarType)
@@ -101,41 +131,7 @@ namespace FluentNest.Tests
                 Check.That(carTypes).HasSize(3);
             }
         }
-
-        //Sum of car grouped by engines and carTypes. Just to be compared with the better syntax
-        [Fact]
-        public void StandardTwoLevelGroupByWithSum()
-        {
-            AddSimpleTestData();
-            var result = Client.Search<Car>(s => s
-                .Aggregations(fstAgg => fstAgg
-                    .Terms("firstLevel", f => f
-                        .Field(z => z.CarType)
-                        .Aggregations(sndLevel => sndLevel
-                            .Terms("secondLevel", f2 => f2.Field(f3 => f3.EngineType)
-                                .Aggregations(sums => sums
-                                    .Sum("priceSum", son => son
-                                    .Field(f4 => f4.Price))
-                                )
-                            )
-                        )
-                    )
-                )
-            );
-
-            var carTypes = result.Aggs.Terms("firstLevel");
-
-            foreach (var carType in carTypes.Items)
-            {
-                var engineTypes = carType.Terms("secondLevel");
-                foreach (var engineType in engineTypes.Items)
-                {
-                    var priceSum = (decimal)engineType.Sum("priceSum").Value;
-                    Check.That(priceSum).IsPositive();
-                }               
-            }
-        }
-
+        
         [Fact]
         public void Distinct_Test()
         {
@@ -250,7 +246,7 @@ namespace FluentNest.Tests
             Check.That(nationalities).IsNotNull();
             Check.That(nationalities).HasSize(50);
         }
-
+        
         [Fact]
         public void GroupBy_With_TopHits_Specifying_Properties()
         {
@@ -274,7 +270,7 @@ namespace FluentNest.Tests
         }
 
         [Fact]
-        public void GroupBy_With_TopHits_Specifying_More_Properties()
+        public void GroupBy_With_TopHits_Specifying_Properties_To_Fetch()
         {
             AddSimpleTestData();
 

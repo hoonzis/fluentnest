@@ -26,5 +26,6 @@ namespace FluentNest.Tests.Model
         public long LongField { get; set; }
         public int IntField { get; set; }
         public int Age { get; set; }
+        public bool Enabled { get; set; }
     }
 }

@@ -51,34 +51,33 @@ namespace FluentNest.Tests
         }
 
         [Fact]
-        public void HistogramOfSumsStandardWay()
+        public void SumInMonthlyHistogram()
         {
             AddSimpleTestData();
+
+            // First the standad NEST way
             var result = Client.Search<Car>(s => s.Aggregations(a => a.DateHistogram("by_month",
-                d => d.Field(x => x.Timestamp)
-                        .Interval(DateInterval.Month)
-                        .Aggregations(
-                            aggs => aggs.Sum("priceSum", dField => dField.Field(field => field.Price))))));
+               d => d.Field(x => x.Timestamp)
+                       .Interval(DateInterval.Month)
+                       .Aggregations(
+                           aggs => aggs.Sum("priceSum", dField => dField.Field(field => field.Price))))));
 
             var histogram = result.Aggs.DateHistogram("by_month");
             Check.That(histogram.Items).HasSize(10);
             var firstMonth = histogram.Items[0];
             var priceSum = firstMonth.Sum("priceSum");
             Check.That(priceSum.Value.Value).Equals(10d);
-        }
 
-        [Fact]
-        public void SumInMonthlyHistogram()
-        {
-            AddSimpleTestData();
-            var result = Client.Search<Car>(sc => sc.Aggregations(agg => agg
+
+            // Now with FluentNest
+            result = Client.Search<Car>(sc => sc.Aggregations(agg => agg
                 .SumBy(x=>x.Price)
                 .IntoDateHistogram(date => date.Timestamp, DateInterval.Month))
             );
 
-            var histogram = result.Aggs.GetDateHistogram<Car>(x => x.Timestamp);
-            Check.That(histogram).HasSize(10);
-            Check.That(histogram.All(x => x.GetSum<Car, decimal>(s => s.Price) == 10m)).IsTrue();
+            var histogram2 = result.Aggs.GetDateHistogram<Car>(x => x.Timestamp);
+            Check.That(histogram2).HasSize(10);
+            Check.That(histogram2.All(x => x.GetSum<Car, decimal>(s => s.Price) == 10m)).IsTrue();
         }
 
         [Fact]

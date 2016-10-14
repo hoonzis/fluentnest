@@ -81,18 +81,7 @@ namespace FluentNest.Tests
             
             Check.That(result.Documents).HasSize(1);
         }
-
-        [Fact]
-        public void TestSimpleComparisonFilter()
-        {
-            AddSimpleTestData();
-            var startDate = new DateTime(2010, 1, 1);
-            var endDate = new DateTime(2010, 3, 1);
-            var result = Client.Search<Car>(s => s
-                .FilterOn(x => x.Timestamp > startDate && x.Timestamp < endDate));
-            Check.That(result.Documents).HasSize(1);
-        }
-
+        
         [Fact]
         public void TestEqualityFilter()
         {
@@ -163,19 +152,7 @@ namespace FluentNest.Tests
             var users = Client.Search<User>(s => s.Filter(filter));
             Check.That(users.Documents).HasSize(1);            
         }
-
-        [Fact]
-        public void TestBooleanFilter()
-        {
-            AddSimpleTestData();
-
-            var filter = Filters
-                .CreateFilter<User>(x => x.Enabled == true);
-
-            var allUsers = Client.Search<User>(s => s.Filter(filter));
-            Check.That(allUsers.Documents).HasSize(5);
-        }
-
+        
         [Fact]
         public void MultipleFiltersAndSomeAggregations()
         {
@@ -226,16 +203,7 @@ namespace FluentNest.Tests
             var allUsers = Client.Search<User>(s => s.FilterOn(f=>f.Active));
             Check.That(allUsers.Documents).HasSize(5);
         }
-
-        [Fact]
-        public void Time_equality_filter()
-        {
-            AddSimpleTestData();
-            
-            var allUsers = Client.Search<Car>(s=>s.FilterOn(x=>x.Timestamp == new DateTime(2010,1,1)));
-            Check.That(allUsers.Documents).HasSize(1);
-        }
-
+        
         [Fact]
         public void Decimal_Two_Side_Range_Test()
         {
