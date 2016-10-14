@@ -117,7 +117,7 @@ namespace FluentNest.Tests
         {
             var index = AddSimpleTestData();
 
-            //these two searches should provide the same result
+            // these two searches should provide the same result
             var result =
                 Client.Search<Car>(
                     s =>
@@ -218,6 +218,15 @@ namespace FluentNest.Tests
         }
 
         [Fact]
+        public void Guid_Filter_Test()
+        {
+            var index = AddSimpleTestData();
+            var result = Client.Search<Car>(sc => sc.Index(index).FilterOn(x => x.Guid == MyFavoriteGuid));
+            Check.That(result.Documents).HasSize(1);
+            Client.DeleteIndex(index);
+        }
+
+        [Fact]
         public void Integer_Two_Side_Range_Test()
         {
             var sc = new SearchDescriptor<Car>().FilterOn(x => x.Age > 2 && x.Age < 6);
@@ -240,23 +249,11 @@ namespace FluentNest.Tests
         }
 
         [Fact]
-        public void Filter_ValueWithin_OnExistingFilter()
+        public void Filter_ValueWithin_AddedOnExistingFilter()
         {
-            var index = AddSimpleTestData();
             var filter = Filters.CreateFilter<Car>(x => x.Age > 8);
-            var sc = new SearchDescriptor<Car>().Index(index).FilterOn(filter.AndValueWithin<Car>(x=>x.Name, new List<string> { "name1", "name2" } ));
-            var allCars = Client.Search<Car>(sc);
-            Check.That(allCars.Documents).HasSize(1);
-            Client.DeleteIndex(index);
-        }
-
-        [Fact]
-        public void Guid_Filter_Test()
-        {
-            var index = AddSimpleTestData();
-            var result = Client.Search<Car>(sc => sc.Index(index).FilterOn(x => x.Guid == MyFavoriteGuid));
-            Check.That(result.Documents).HasSize(1);
-            Client.DeleteIndex(index);
+            var sc = new SearchDescriptor<Car>().FilterOn(filter.AndValueWithin<Car>(x=>x.Name, new List<string> { "name1", "name2" } ));
+            CheckSD(sc, "Filter_ValueWithin_AddedOnExistingFilter");
         }
     }
 }

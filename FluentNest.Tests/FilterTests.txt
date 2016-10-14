@@ -56,3 +56,27 @@
     }
   }
 }
+###Filter_ValueWithin_AddedOnExistingFilter***
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "range": {
+            "age": {
+              "gt": 8.0
+            }
+          }
+        },
+        {
+          "terms": {
+            "name": [
+              "name1",
+              "name2"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
