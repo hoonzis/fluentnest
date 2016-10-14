@@ -81,37 +81,11 @@ namespace FluentNest.Tests
             Check.That(allCars2.Documents).HasSize(3);
         }
 
-
-        [Fact]
-        public void WithoutMergedAndFilters()
-        {
-            var stopWatch = new Stopwatch();
-            var index = AddSimpleTestData();
-            Filters.OptimizeAndFilters = false;
-
-            var sc =
-                new SearchDescriptor<Car>().Index(index).FilterOn(
-                    x =>
-                        x.Emissions < 6 && x.Sold == true && x.Price > 4 && x.EngineType == EngineType.Diesel &&
-                        x.Length < 4);
-
-            var json = Serialize(sc);
-            Console.WriteLine(json);
-
-            stopWatch.Start();
-            var allCars = Client.Search<Car>(sc);
-            stopWatch.Stop();
-
-            Console.WriteLine("Query time:" + stopWatch.Elapsed); Console.Write("Query time:" + stopWatch.Elapsed);
-            Check.That(allCars.Documents).HasSize(3);
-        }
-
         [Fact]
         public void WithMergedAndFilters()
         {
             var stopWatch = new Stopwatch();
             var index = AddSimpleTestData();
-            Filters.OptimizeAndFilters = true;
             var sc =
                 new SearchDescriptor<Car>().Index(index).FilterOn(
                     x =>

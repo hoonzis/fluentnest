@@ -11,6 +11,13 @@ namespace FluentNest.Tests
 {
     public class FilterTests : TestsBase
     {
+        private readonly Dictionary<string, string> testResults;
+
+        public FilterTests()
+        {
+            testResults = LoadTestResults(nameof(FilterTests));
+        }
+
         private const string MyFavoriteGuid = "test-test";
 
         private string AddSimpleTestData()
@@ -251,33 +258,23 @@ namespace FluentNest.Tests
         [Fact]
         public void Integer_Two_Side_Range_Test()
         {
-            var index = AddSimpleTestData();
-            var allUsers = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.Age > 2 && x.Age < 6));
-            Check.That(allUsers.Documents).HasSize(3);
+            var sc = new SearchDescriptor<Car>().FilterOn(x => x.Age > 2 && x.Age < 6);
+            CheckSD(sc, "Integer_Two_Side_Range_Test");
         }
 
         [Fact]
         public void Three_Ands_Test()
         {
-            var index = AddSimpleTestData();
-            Filters.OptimizeAndFilters = true;
-            var sc = new SearchDescriptor<Car>().Index(index).FilterOn(x => x.Sold == true && x.Age < 6 && x.Emissions < 5);
-            var json = Serialize(sc);
-            Console.WriteLine(json);
-
-            var allUsers = Client.Search<Car>(sc);
-            Check.That(allUsers.Documents).HasSize(2);
-            Filters.OptimizeAndFilters = false;
+            var sc = new SearchDescriptor<Car>().FilterOn(x => x.Sold == true && x.Age < 6 && x.Emissions < 5);
+            CheckSD(sc, "Three_Ands_Test");
         }
 
         [Fact]
         public void Filter_ValueWithin_Test()
         {
-            var index = AddSimpleTestData();
             var list = new List<string> {"name1", "name2"};
-            var cars = Client.Search<Car>(sc => sc.Index(index).FilterOn(Filters.ValueWithin<Car>(x => x.Name, list)));
-            Check.That(cars.Documents).HasSize(6);
-            Client.DeleteIndex(index);
+            var sc = new SearchDescriptor<Car>().FilterOn(Filters.ValueWithin<Car>(x => x.Name, list));
+            CheckSD(sc, "Filter_ValueWithin_Test");
         }
 
         [Fact]

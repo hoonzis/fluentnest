@@ -1,0 +1,58 @@
+﻿###Three_Ands_Test***
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "sold": {
+              "value": true
+            }
+          }
+        },
+        {
+          "range": {
+            "age": {
+              "lt": 6.0
+            }
+          }
+        },
+        {
+          "range": {
+            "emissions": {
+              "lt": 5.0
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+###Integer_Two_Side_Range_Test***
+{
+  "query": {
+    "range": {
+      "age": {
+        "gt": 2.0,
+        "lt": 6.0
+      }
+    }
+  }
+}
+###Filter_ValueWithin_Test***
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "terms": {
+            "name": [
+              "name1",
+              "name2"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
