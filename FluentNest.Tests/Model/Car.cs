@@ -25,5 +25,6 @@ namespace FluentNest.Tests.Model
         public string Guid { get; set; }
         public long LongField { get; set; }
         public int IntField { get; set; }
+        public int Age { get; set; }
     }
 }

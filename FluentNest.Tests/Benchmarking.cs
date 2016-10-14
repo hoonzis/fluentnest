@@ -106,7 +106,6 @@ namespace FluentNest.Tests
         {
             var stopWatch = new Stopwatch();
             AddSimpleTestData(5);
-            Filters.OptimizeAndFilters = true;
             var sc =
                 new SearchDescriptor<Car>().FilterOn(
                     x =>

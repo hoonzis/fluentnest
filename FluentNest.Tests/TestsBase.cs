@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using FluentNest.Tests.Model;
 using Nest;
+using NFluent;
 
 namespace FluentNest.Tests
 {
@@ -10,6 +13,7 @@ namespace FluentNest.Tests
     {
         protected ElasticClient Client;
 
+        private readonly Dictionary<string, string> testResults;
         public TestsBase(params Func<ConnectionSettings, ConnectionSettings>[] additionalSettings)
         {
             var node = new Uri("http://localhost:9200");
@@ -31,6 +35,8 @@ namespace FluentNest.Tests
             settings = additionalSettings.Aggregate(settings, (current, newSetting) => newSetting(current));
 
             Client = new ElasticClient(settings);
+
+            testResults = LoadTestResults(this.GetType().Name);
         }
 
         public void AddSimpleTestData()
@@ -60,5 +66,39 @@ namespace FluentNest.Tests
             }
             Client.Flush(x => x.Index<Car>());
         }
+
+        public string Serialize<T>(T entity)
+        {
+            var bytes = Client.Serializer.Serialize(entity);
+            return Encoding.UTF8.GetString(bytes);
+        }
+
+        public Dictionary<string, string> LoadTestResults(string className)
+        {
+            var fileName = className + ".txt";
+            if (!File.Exists(fileName))
+            {
+                return new Dictionary<string, string>();
+            }
+
+            var testLines  = File.ReadAllText(className + ".txt").Split("###".ToCharArray()).Select(x=>x.Trim());
+            var values = testLines.Where(x=>x.Contains("***")).Select(x=>x.Trim()).Select(x =>
+            {
+                var testContent = x.Split("***".ToCharArray()).Where(y => !string.IsNullOrWhiteSpace(y)).ToArray();
+                return new
+                {
+                    Name = testContent[0].Trim(),
+                    Json = testContent[1].Trim()
+                };
+            });
+
+            return values.ToDictionary(x => x.Name, y => y.Json);
+        }
+
+        public void CheckSD<T>(SearchDescriptor<T> sc, string testName) where T: class
+        {
+            var json = Serialize(sc);
+            Check.That(json).Equals(testResults[testName]);
+        } 
     }
 }

@@ -247,32 +247,23 @@ namespace FluentNest.Tests
         [Fact]
         public void Integer_Two_Side_Range_Test()
         {
-            AddSimpleTestData();
-            var allUsers = Client.Search<Car>(s => s.FilterOn(x => x.IntField > 2 && x.IntField < 6));
-            Check.That(allUsers.Documents).HasSize(3);
+             var sc = new SearchDescriptor<Car>().FilterOn(x => x.Age > 2 && x.Age < 6);
+            CheckSD(sc, "Integer_Two_Side_Range_Test");
         }
 
         [Fact]
         public void Three_Ands_Test()
         {
-            AddSimpleTestData();
-            Filters.OptimizeAndFilters = true;
-            var sc = new SearchDescriptor<Car>().FilterOn(x => x.Sold == true && x.IntField < 6 && x.Emissions < 5);
-            var json = Encoding.UTF8.GetString(Client.Serializer.Serialize(sc));
-            Console.WriteLine(json);
-            
-            var allUsers = Client.Search<Car>(s => s.FilterOn(x => x.IntField > 2 && x.IntField < 6 && x.Emissions < 5));
-            Check.That(allUsers.Documents).HasSize(1);
-            Filters.OptimizeAndFilters = false;
+            var sc = new SearchDescriptor<Car>().FilterOn(x => x.Sold == true && x.Age < 6 && x.Emissions < 5);
+            CheckSD(sc, "Three_Ands_Test");
         }
 
         [Fact]
         public void Filter_ValueWithin_Test()
         {
-            AddSimpleTestData();
             var list = new List<string> {"name1", "name2"};
-            var users = Client.Search<User>(sc => sc.FilteredOn(Filters.ValueWithin<User>(x => x.Name, list)));
-            Check.That(users.Documents).HasSize(6);
+            var sc = new SearchDescriptor<Car>().FilteredOn(Filters.ValueWithin<User>(x => x.Name, list));
+            CheckSD(sc, "Filter_ValueWithin_Test");
         }
 
         [Fact]
@@ -280,7 +271,7 @@ namespace FluentNest.Tests
         {
             AddSimpleTestData();
             var filter = Filters.CreateFilter<User>(x => x.Age > 8);
-            var sc = new SearchDescriptor<User>().FilteredOn(filter.AndValueWithin<User>(x=>x.Name, new List<string> { "name1", "name2" } ));
+            var sc = new SearchDescriptor<User>().FilteredOn(filter.AndValueWithin<User>(x => x.Name, new List<string> { "name1", "name2" }));
             var json = Encoding.UTF8.GetString(Client.Serializer.Serialize(sc));
             var allUsers = Client.Search<User>(sc);
             Check.That(json).Contains("\"name1\"");

@@ -10,8 +10,6 @@ namespace FluentNest
 {
     public static class Filters
     {
-        public static bool OptimizeAndFilters = false;
-
         public static string FirstCharacterToLower(this string str)
         {
             if (string.IsNullOrEmpty(str) || char.IsLower(str, 0))
@@ -222,8 +220,6 @@ namespace FluentNest
                 var filterDescriptor = new FilterDescriptor<T>();
                 var rightFilter = GenerateFilterDescription<T>(binaryExpression.Right);
 
-                if (OptimizeAndFilters)
-                {
                     // Detecting a series of And filters
                     var leftSide = binaryExpression.Left;
                     var accumulatedExpressions = new List<Expression>();
@@ -250,7 +246,7 @@ namespace FluentNest
                         filters.Add(rightFilter);
                         return filterDescriptor.And(filters.ToArray());
                     }
-                }
+                
 
                 var leftFilter = GenerateFilterDescription<T>(binaryExpression.Left);
                 return filterDescriptor.And(leftFilter, rightFilter);

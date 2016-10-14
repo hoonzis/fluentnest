@@ -1,0 +1,61 @@
+﻿###Three_Ands_Test***
+{
+  "filter": {
+    "and": {
+      "filters": [
+        {
+          "term": {
+            "sold": true
+          }
+        },
+        {
+          "range": {
+            "age": {
+              "lt": "6"
+            }
+          }
+        },
+        {
+          "range": {
+            "emissions": {
+              "lt": "5"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+###Integer_Two_Side_Range_Test***
+{
+  "filter": {
+    "range": {
+      "age": {
+        "lt": "6",
+        "gt": "2"
+      }
+    }
+  }
+}
+###Filter_ValueWithin_Test***
+{
+  "query": {
+    "filtered": {
+      "filter": {
+        "and": {
+          "filters": [
+            {
+              "terms": {
+                "name": [
+                  "name1",
+                  "name2"
+                ]
+              }
+            },
+            {}
+          ]
+        }
+      }
+    }
+  }
+}
