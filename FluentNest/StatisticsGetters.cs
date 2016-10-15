@@ -75,14 +75,13 @@ namespace FluentNest
                 var sumAggs = aggs.Sum(aggName);
                 return ValueAsUndType<K>(sumAggs);
             }
-            else
-            {
-                var filterName = filterRule.GenerateFilterName();
-                var filterAgg = aggs.Filter(filterName);
-                var sumAgg = filterAgg.Sum(aggName);
+            
+            var filterName = filterRule.GenerateFilterName();
+            var filterAgg = aggs.Filter(filterName);
+            var sumAgg = filterAgg.Sum(aggName);
 
-                return ValueAsUndType<K>(sumAgg);
-            }
+            return ValueAsUndType<K>(sumAgg);
+            
         }
 
         public static K GetFirstBy<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter, Expression<Func<T, object>> filterRule = null)
