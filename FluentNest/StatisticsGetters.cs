@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 using Nest;
 
 namespace FluentNest
@@ -67,13 +64,13 @@ namespace FluentNest
             return (int)itemsTerms.Value.Value;
         }
 
-        public static K GetSum<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        public static TK GetSum<T,TK>(this AggregationsHelper aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
             var aggName = fieldGetter.GetAggName(AggType.Sum);
             if (filterRule == null)
             {
                 var sumAggs = aggs.Sum(aggName);
-                return ValueAsUndType<K>(sumAggs);
+                return ValueAsUndType<TK>(sumAggs);
             }
             else
             {
@@ -81,7 +78,7 @@ namespace FluentNest
                 var filterAgg = aggs.Filter(filterName);
                 var sumAgg = filterAgg.Sum(aggName);
 
-                return ValueAsUndType<K>(sumAgg);
+                return ValueAsUndType<TK>(sumAgg);
             }
         }
 

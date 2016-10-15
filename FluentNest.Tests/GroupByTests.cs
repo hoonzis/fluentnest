@@ -56,7 +56,8 @@ namespace FluentNest.Tests
             Check.That(carTypes).HasSize(3);
             foreach (var carType in carTypes)
             {
-                var engineTypes = carType.GetGroupBy<Car, CarType>(x => x.EngineType, k => new CarType
+                var container = carType.AsContainer<Car>();
+                var engineTypes = container.GetGroupBy(x => x.EngineType, k => new CarType
                 {
                     Type = k.Key,
                     Price = k.GetSum<Car, decimal>(x => x.Price)
@@ -77,8 +78,10 @@ namespace FluentNest.Tests
                 .GroupBy(s => s.EngineType))
             );
 
-            var carTypesList = result.Aggs.GetGroupBy<Car>(x => x.EngineType);
-            var carTypesDictionary = result.Aggs.GetDictionary<Car,EngineType>(x => x.EngineType);
+            
+            var container = result.Aggs.AsContainer<Car>();
+            var carTypesList = container.GetGroupBy(x => x.EngineType);
+            var carTypesDictionary = container.GetDictionary(x => x.EngineType);
             
             Check.That(carTypesDictionary).HasSize(2);
             Check.That(carTypesList).HasSize(2);
@@ -93,7 +96,8 @@ namespace FluentNest.Tests
             var result =
                 Client.Search<Car>(search => search.Aggregations(x => x.GroupBy(s => s.Price)));
 
-            var carTypes = result.Aggs.GetDictionary<Car, decimal>(x => x.Price);
+            var container = result.Aggs.AsContainer<Car>();
+            var carTypes = container.GetDictionary(x => x.Price);
             Check.That(carTypes).HasSize(1);
             Check.That(carTypes.Keys).ContainsExactly(10m);
         }
@@ -426,7 +430,19 @@ namespace FluentNest.Tests
             
             Assert.NotNull(exception);
             Assert.IsType<InvalidOperationException>(exception);
-            Check.That(exception.Message).Contains("available aggregations: GroupByCarType");
+            Check.That(exception.Message).Contains("Available aggregations: GroupByCarType");
+        }
+
+        [Fact]
+        public void NoAggregations_On_The_Result_Test()
+        {
+            var result = Client.Search<Car>(search => search.Aggregations(agg => agg));
+
+            var exception = Record.Exception(() => result.Aggs.GetGroupBy<Car>(x => x.CarType));
+
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidOperationException>(exception);
+            Check.That(exception.Message).Contains("No aggregations");
         }
 
     }

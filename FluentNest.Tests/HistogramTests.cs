@@ -40,9 +40,9 @@ namespace FluentNest.Tests
                 .GroupBy(x => x.CarType))
             );
 
-            var carTypes =
-                histogram.Aggs.GetDictionary<Car, IList<HistogramItem>>(x => x.CarType,
-                    v => v.GetDateHistogram<Car>(f => f.Timestamp));
+            var container = histogram.Aggs.AsContainer<Car>();
+
+            var carTypes = container.GetDictionary(x => x.CarType, v => v.GetDateHistogram<Car>(f => f.Timestamp));
 
             Check.That(carTypes).HasSize(3);
 
