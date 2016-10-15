@@ -12,6 +12,7 @@
         Cardinality,
         Stats,
         GroupBy,
-        TopHits
+        TopHits,
+        First
     }
 }

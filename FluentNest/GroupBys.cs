@@ -52,22 +52,13 @@ namespace FluentNest
             var aggregations = reversedAndLowered.Aggregate(innerAggregation, (s, i) => s.GroupBy(i));
             return aggregations;
         }
-
+        
         /// <summary>
         /// Retrieves the terms aggregation just by it's name
         /// </summary>
         public static IEnumerable<KeyedBucket> GetGroupBy(this AggregationsHelper aggs, string aggName)
         {
-            if (aggs.Aggregations == null || aggs.Aggregations.Count == 0)
-            {
-                throw new InvalidOperationException("No aggregations available on the result");
-            }
-
-            if (!aggs.Aggregations.ContainsKey(aggName))
-            {
-                var availableAggregations = aggs.Aggregations.Select(x => x.Key).Aggregate((agg, x) => agg + "m" + x);
-                throw new InvalidOperationException($"Aggregation {aggName} not in the result. Available aggregations: {availableAggregations}");
-            }
+            aggs.CheckForAggregationInResult(aggName);
             var itemsTerms = aggs.Terms(aggName);
             return itemsTerms.Buckets;
         }
@@ -79,6 +70,23 @@ namespace FluentNest
         {
             var aggName = fieldGetter.GetAggName(AggType.GroupBy);
             return aggs.GetGroupBy(aggName);
+        }
+
+        /// <summary>
+        /// Checks if aggregation with given name is available on the result and throws if not
+        /// </summary>
+        public static void CheckForAggregationInResult(this AggregationsHelper aggs, string aggName)
+        {
+            if (aggs.Aggregations == null || aggs.Aggregations.Count == 0)
+            {
+                throw new InvalidOperationException("No aggregations available on the result");
+            }
+
+            if (!aggs.Aggregations.ContainsKey(aggName))
+            {
+                var availableAggregations = aggs.Aggregations.Select(x => x.Key).Aggregate((agg, x) => agg + "m" + x);
+                throw new InvalidOperationException($"Aggregation {aggName} not in the result. Available aggregations: {availableAggregations}");
+            }
         }
     }
 }

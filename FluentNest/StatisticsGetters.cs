@@ -15,146 +15,124 @@ namespace FluentNest
         /// <summary>
         /// Takes a value metric and forces a conversion to certain type
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <typeparam name="K"></typeparam>
-        /// <param name="agg"></param>
-        /// <returns></returns>
-        private static K ValueAsUndType<K>(ValueAggregate agg)
+        private static TK ValueAsUndType<TK>(ValueAggregate agg)
         {
-            var type = typeof(K);
+            var type = typeof(TK);
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 var undType = Nullable.GetUnderlyingType(type);
                 if (!agg.Value.HasValue)
                 {
-                    return (K)(Object)null;
+                    return (TK)(object)null;
                 }
                 var valueAsUndType = Convert.ChangeType(agg.Value, undType);
-                return (K)(Object)valueAsUndType;
+                return (TK)(object)valueAsUndType;
             }
 
-            //seems that by default ES stores the datetime value as unix timestamp in miliseconds
-            else if (typeof (K) == typeof (DateTime) && agg.Value.HasValue)
+            // seems that by default ES stores the datetime value as unix timestamp in miliseconds
+            if (typeof (TK) == typeof (DateTime) && agg.Value.HasValue)
             {
                 DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
-                return (K)(Object)origin.AddMilliseconds(agg.Value.Value);
+                return (TK)(object)origin.AddMilliseconds(agg.Value.Value);
             }
-            else
+            return (TK)Convert.ChangeType(agg.Value, typeof(TK));
+
+        }
+
+        public static AggregationsHelper GetAggregationContainingResult<T>(this AggregationsHelper aggs,
+            Expression<Func<T, object>> filterRule = null)
+        {
+            if (filterRule == null)
             {
-                return (K)Convert.ChangeType(agg.Value, typeof(K));
+                return aggs;
             }
+
+            var filterName = filterRule.GenerateFilterName();
+            aggs.CheckForAggregationInResult(filterName);
+            return aggs.Filter(filterName);
         }
 
         public static int GetCardinality<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
+            var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Cardinality);
-            ValueAggregate itemsTerms;
-
-            if (filterRule == null)
-            {
-                itemsTerms = aggs.Cardinality(aggName);
-            }
-            else
-            {
-                var filterName = filterRule.GenerateFilterName();
-                var filterAgg = aggs.Filter(filterName);
-                itemsTerms = filterAgg.Cardinality(aggName);
-            }
-
-            if (itemsTerms?.Value == null)
-                throw new InvalidOperationException("Cardinality not available");
-
+            aggWithResult.CheckForAggregationInResult(aggName);
+            var itemsTerms = aggWithResult.Cardinality(aggName);
             return (int)itemsTerms.Value.Value;
         }
 
-        public static K GetSum<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        public static TK GetSum<T,TK>(this AggregationsHelper aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
+            var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Sum);
-            if (filterRule == null)
-            {
-                var sumAggs = aggs.Sum(aggName);
-                return ValueAsUndType<K>(sumAggs);
-            }
-            
-            var filterName = filterRule.GenerateFilterName();
-            var filterAgg = aggs.Filter(filterName);
-            var sumAgg = filterAgg.Sum(aggName);
-
-            return ValueAsUndType<K>(sumAgg);
-            
+            aggWithResult.CheckForAggregationInResult(aggName);
+            var sumAgg = aggWithResult.Sum(aggName);
+            return ValueAsUndType<TK>(sumAgg);
         }
 
-        public static K GetFirstBy<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        public static TK GetFirstBy<T,TK>(this AggregationsHelper aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
-            var aggName = fieldGetter.GetAggName(AggType.Sum);
-            if (filterRule == null)
-            {
-                var terms = aggs.Terms(aggName);
-                return Filters.StringToAnything<K>(terms.Buckets[0].Key);
-            }
-            else
-            {
-                var filterName = filterRule.GenerateFilterName();
-                var filterAgg = aggs.Filter(filterName);
-                var termsAgg = filterAgg.Terms(aggName);
-                return Filters.StringToAnything<K>(termsAgg.Buckets[0].Key);
-            }
+            var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
+            var aggName = fieldGetter.GetAggName(AggType.First);
+            aggWithResult.CheckForAggregationInResult(aggName);
+            var termsAgg = aggWithResult.Terms(aggName);
+            return Filters.StringToAnything<TK>(termsAgg.Buckets[0].Key);
         }
 
-        public static K GetAverage<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter)
+        public static TK GetAverage<T,TK>(this AggregationsHelper aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
+            var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Average);
-            var avgAgg = aggs.Average(aggName);
-            return ValueAsUndType<K>(avgAgg);
+            aggWithResult.CheckForAggregationInResult(aggName);
+            var avgAgg = aggWithResult.Average(aggName);
+            return ValueAsUndType<TK>(avgAgg);
         }
 
-        public static K GetMin<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter)
+        public static TK GetMin<T,TK>(this AggregationsHelper aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
+            var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Min);
-            var minAgg = aggs.Min(aggName);
-            return ValueAsUndType<K>(minAgg);
+            aggWithResult.CheckForAggregationInResult(aggName);
+            var minAgg = aggWithResult.Min(aggName);
+            return ValueAsUndType<TK>(minAgg);
         }
 
-        public static K GetMax<T,K>(this AggregationsHelper aggs, Expression<Func<T, K>> fieldGetter)
+        public static TK GetMax<T,TK>(this AggregationsHelper aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
+            var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Max);
-            var maxAgg = aggs.Max(aggName);
-            return ValueAsUndType<K>(maxAgg);
+            aggWithResult.CheckForAggregationInResult(aggName);
+            var maxAgg = aggWithResult.Max(aggName);
+            return ValueAsUndType<TK>(maxAgg);
         }
 
-        public static IList<PercentileItem> GetPercentile<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter)
+        public static IList<PercentileItem> GetPercentile<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
+            var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Percentile);
-            var itemsTerms = aggs.Percentiles(aggName);
+            aggWithResult.CheckForAggregationInResult(aggName);
+            var itemsTerms = aggWithResult.Percentiles(aggName);
             return itemsTerms.Items;
         }
 
-        public static StatsAggregate GetStats<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter)
+        public static StatsAggregate GetStats<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
+            var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Stats);
-            var itemsTerms = aggs.Stats(aggName);
+            aggWithResult.CheckForAggregationInResult(aggName);
+            var itemsTerms = aggWithResult.Stats(aggName);
             return itemsTerms;
         }
 
         public static int? GetCount<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
+            var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Count);
-            if (filterRule == null)
-            {
-                var itemsTerms = aggs.ValueCount(aggName);
-                if (!itemsTerms.Value.HasValue)
-                    return null;
-                return (int)itemsTerms.Value;
-            }
-            else
-            {
-                var condAggName = filterRule.GenerateFilterName();
-                var filterAgg = aggs.Filter(condAggName);
-                var sumAgg = filterAgg.Sum(aggName);
-                if (!sumAgg.Value.HasValue)
-                    return null;
-                return (int)sumAgg.Value;
-            }
+            aggWithResult.CheckForAggregationInResult(aggName);
+            var itemsTerms = aggWithResult.ValueCount(aggName);
+            if (!itemsTerms.Value.HasValue)
+                return null;
+            return (int)itemsTerms.Value;
         }
 
         public static IEnumerable<V> GetDistinct<T, V>(this AggregationsHelper aggs, Expression<Func<T, V>> fieldGetter)

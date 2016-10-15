@@ -1,111 +1,104 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Runtime.Remoting.Messaging;
 using Nest;
 
 namespace FluentNest
 {
     public static class Statistics
     {
+
+        public static Func<AggregationContainerDescriptor<T>, AggregationContainerDescriptor<T>>  GetAggregationFunc<T>(Expression<Func<T, object>> fieldGetter, AggType aggType) where T : class
+        {
+            var aggName = fieldGetter.GetAggName(aggType);
+            switch (aggType)
+            {
+                case AggType.Sum:
+                    return x => x.Sum(aggName, field => field.Field(fieldGetter));
+                case AggType.Count:
+                    return x => x.ValueCount(aggName, field => field.Field(fieldGetter));
+                case AggType.Average:
+                    return x => x.Average(aggName, field => field.Field(fieldGetter));
+                case AggType.Cardinality:
+                    return x => x.Cardinality(aggName, field => field.Field(fieldGetter));
+                case AggType.Stats:
+                    return x => x.Stats(aggName, field => field.Field(fieldGetter));
+                case AggType.Max:
+                    return x => x.Max(aggName, field => field.Field(fieldGetter));
+                case AggType.Min:
+                    return x => x.Min(aggName, field => field.Field(fieldGetter));
+                case AggType.First:
+                    return x => x.Terms(aggName, field => field.Field(fieldGetter));
+                case AggType.Percentile:
+                    return x => x. Percentiles(aggName, field => field.Field(fieldGetter));
+            }
+
+            throw new NotImplementedException();
+        }
+
+        public static AggregationContainerDescriptor<T> GetStatsDescriptor<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, AggType aggType, Expression<Func<T, bool>> filterRule = null) where T : class
+        {
+            var aggFunc = GetAggregationFunc<T>(fieldGetter, aggType);
+
+            if (filterRule == null)
+            {
+                return aggFunc(agg);
+            }
+
+            var filterName = filterRule.GenerateFilterName();
+            agg.Filter(filterName, f => f.Filter(fd => filterRule.Body.GenerateFilterDescription<T>()).Aggregations(aggFunc));
+            return agg;
+        }
+
         public static AggregationContainerDescriptor<T> SumBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
         {
-            var aggName = fieldGetter.GetAggName(AggType.Sum);
-            if (filterRule == null)
-            {
-                return agg.Sum(aggName, x => x.Field(fieldGetter));
-            }
-            
-            var filterName = filterRule.GenerateFilterName();
-            agg.Filter(filterName,
-                f =>
-                    f.Filter(fd => filterRule.Body.GenerateFilterDescription<T>())
-                        .Aggregations(innerAgg => innerAgg.Sum(aggName, field => field.Field(fieldGetter))));
-            return agg;
+            return agg.GetStatsDescriptor(fieldGetter, AggType.Sum, filterRule);
         }
-
-        public static AggregationContainerDescriptor<T> FirstBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
-        {
-            var aggName = fieldGetter.GetAggName(AggType.Sum);
-            if (filterRule == null)
-            {
-                return agg.Terms(aggName, x => x.Field(fieldGetter));
-            }
-
-            var filterName = filterRule.GenerateFilterName();
-            agg.Filter(filterName,
-                f =>
-                    f.Filter(fd => filterRule.Body.GenerateFilterDescription<T>())
-                        .Aggregations(innerAgg => innerAgg.Terms(aggName, field => field.Field(fieldGetter))));
-            return agg;
-        }
-
+        
         public static AggregationContainerDescriptor<T> CountBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
         {
-            var aggName = fieldGetter.GetAggName(AggType.Count);
-            if (filterRule == null)
-            {
-                return agg.ValueCount(aggName, x => x.Field(fieldGetter));
-            }
-            
-            var filterName = filterRule.GenerateFilterName();
-            agg.Filter(filterName,
-                f =>
-                    f.Filter(fd => filterRule.Body.GenerateFilterDescription<T>())
-                        .Aggregations(innerAgg => innerAgg.ValueCount(aggName, field => field.Field(fieldGetter))));
-            return agg;
+            return agg.GetStatsDescriptor(fieldGetter, AggType.Count, filterRule);
         }
 
         public static AggregationContainerDescriptor<T> CardinalityBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
         {
-            var aggName = fieldGetter.GetAggName(AggType.Cardinality);
+            return agg.GetStatsDescriptor(fieldGetter, AggType.Cardinality, filterRule);
+        }
+        
+        public static AggregationContainerDescriptor<T> AverageBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
+        {
+            return agg.GetStatsDescriptor(fieldGetter, AggType.Average, filterRule);
+        }
 
-            if (filterRule == null)
-            {
-                return agg.Cardinality(aggName, x => x.Field(fieldGetter));
-            }
+        public static AggregationContainerDescriptor<T> PercentilesBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
+        {
+            return agg.GetStatsDescriptor(fieldGetter, AggType.Percentile, filterRule);
+        }
 
-            var filterName = filterRule.GenerateFilterName();
-            agg.Filter(filterName,
-                f =>
-                    f.Filter(fd => filterRule.Body.GenerateFilterDescription<T>())
-                        .Aggregations(innerAgg => innerAgg.Cardinality(aggName, field => field.Field(fieldGetter))));
+        public static AggregationContainerDescriptor<T> MaxBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
+        {
+            return agg.GetStatsDescriptor(fieldGetter, AggType.Max, filterRule);
+        }
 
-            return agg;
+        public static AggregationContainerDescriptor<T> MinBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
+        {
+            return agg.GetStatsDescriptor(fieldGetter, AggType.Min, filterRule);
+        }
+
+        public static AggregationContainerDescriptor<T> StatsBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
+        {
+            return agg.GetStatsDescriptor(fieldGetter, AggType.Stats, filterRule);
+        }
+
+        public static AggregationContainerDescriptor<T> FirstBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
+        {
+            return agg.GetStatsDescriptor(fieldGetter, AggType.First, filterRule);
         }
 
         public static AggregationContainerDescriptor<T> DistinctBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Distinct);
             return agg.Terms(aggName, x => x.Field(fieldGetter).Size(int.MaxValue));
-        }
-
-        public static AggregationContainerDescriptor<T> AverageBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
-        {
-            var aggName = fieldGetter.GetAggName(AggType.Average);
-            return agg.Average(aggName, x => x.Field(fieldGetter));
-        }
-
-        public static AggregationContainerDescriptor<T> PercentilesBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
-        {
-            var aggName = fieldGetter.GetAggName(AggType.Percentile);
-            return agg.Percentiles(aggName, x => x.Field(fieldGetter));
-        }
-
-        public static AggregationContainerDescriptor<T> MaxBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
-        {
-            var aggName = fieldGetter.GetAggName(AggType.Max);
-            return agg.Max(aggName, x => x.Field(fieldGetter));
-        }
-
-        public static AggregationContainerDescriptor<T> MinBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
-        {
-            var aggName = fieldGetter.GetAggName(AggType.Min);
-            return agg.Min(aggName, x => x.Field(fieldGetter));
-        }
-
-        public static AggregationContainerDescriptor<T> StatsBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
-        {
-            var aggName = fieldGetter.GetAggName(AggType.Stats);
-            return agg.Stats(aggName, x => x.Field(fieldGetter));
         }
 
         public static AggregationContainerDescriptor<T> TopHits<T>(this AggregationContainerDescriptor<T> agg, int size, params Expression<Func<T, object>>[] fieldGetter) where T : class

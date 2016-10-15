@@ -348,5 +348,15 @@ namespace FluentNest.Tests
             Check.That(lengthFromContainer).Equals(0d);
             Client.DeleteIndex(index);
         }
+
+        [Fact]
+        public void Non_Available_Conditional_Stat()
+        {
+            var result = Client.Search<Car>(search => search.Take(10).Aggregations(agg => agg));
+            var exception = Record.Exception(() => result.Aggs.GetCount<Car>(x => x.CarType));
+            Assert.NotNull(exception);
+            Assert.IsType<InvalidOperationException>(exception);
+            Check.That(exception.Message).Contains("No aggregations");
+        }
     }
 }
