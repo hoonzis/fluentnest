@@ -1,66 +1,31 @@
--
-  branches:
-    only:
-      - master
+branches:
+  only:
+    - 5.x
 
-  version: 2.0.{build}
+version: 5.0.{build}
 
-  os: Visual Studio 2015
+os: Visual Studio 2015
 
-  install:
-  - cmd: choco install elastic -v --ignore-dependencies
-
-  assembly_info:
-    patch: true
-    file: AssemblyInfo.*
-    assembly_version: "{version}"
-    assembly_file_version: "{version}"
-    assembly_informational_version: "{version}"
-
-  before_build:
-  - paket restore
-
-  build:
-    publish_nuget: true
-    project: FluentNest.sln
-
-  deploy:
-    provider: NuGet
-    api_key:
-      secure: Ax/Zt3hfzLf7jMzb9VqiCsTtGCr3c+sf6pozg3KrCm/d+qZnY2IWFmmbQYws5Frh
-    skip_symbols: true
-    artifact: /.*\.nupkg/
-- 
-  branches:
-    only:
-      - 5.x
-
-    version: 5.0.{build}
-
-  os: Visual Studio 2015
-
-  install:
+install:
   - ps: .\run_es.ps1
 
-  assembly_info:
-    patch: true
-    file: AssemblyInfo.*
-    assembly_version: "{version}"
-    assembly_file_version: "{version}"
-    assembly_informational_version: "{version}"
+assembly_info:
+  patch: true
+  file: AssemblyInfo.*
+  assembly_version: "{version}"
+  assembly_file_version: "{version}"
+  assembly_informational_version: "{version}"
 
-  before_build:
-  - paket restore
+before_build:
+  - cmd: paket restore
 
-  build:
-    publish_nuget: true
-    project: FluentNest.sln
+build:
+  publish_nuget: true
+  project: FluentNest.sln
 
-  # deploy:
-  #   provider: NuGet
-  #   api_key:
-  #     secure: Ax/Zt3hfzLf7jMzb9VqiCsTtGCr3c+sf6pozg3KrCm/d+qZnY2IWFmmbQYws5Frh
-  #   skip_symbols: true
-  #   artifact: /.*\.nupkg/
--
-  configuration: Debug
+# deploy:
+#   provider: NuGet
+#   api_key:
+#     secure: Ax/Zt3hfzLf7jMzb9VqiCsTtGCr3c+sf6pozg3KrCm/d+qZnY2IWFmmbQYws5Frh
+#   skip_symbols: true
+#   artifact: /.*\.nupkg/
