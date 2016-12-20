@@ -1,33 +1,16 @@
 Write-Host "Starting elasticsearch script"
 
-Invoke-WebRequest "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-2.3.3.zip" -OutFile .\es.zip;
+# Invoke-WebRequest "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.1.1.zip" -OutFile .\es.zip;
 
-$destFolder = "$pwd\es\elasticsearch-2.3.3";
+$destFolder = "$pwd\elasticsearch-5.1.1";
 
 $shell = new-object -com shell.application;
 
-
-$zip = $shell.NameSpace("$pwd\es.zip");
-
-if (Test-Path $pwd\$destFolder )
+if (Test-Path $destFolder )
 {
-	del $pwd\$destFolder -Force -Recurse
+	del $destFolder -Force -Recurse
 }
 
-md ".\es";
+Expand-Archive -Path es.zip -DestinationPath $pwd
 
-foreach($item in $zip.items())
-{
-	$shell.Namespace("$pwd\es").copyhere($item);
-}
-
-cd $destFolder	
-
-bin\plugin install delete-by-query
-
-.\bin\service.bat install
-
-.\bin\service.bat start
-
-cd ..
-cd ..
+cmd.exe /c "$destFolder\bin\elasticsearch.bat"
