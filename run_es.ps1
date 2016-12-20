@@ -13,4 +13,6 @@ if (Test-Path $destFolder )
 
 Expand-Archive -Path es.zip -DestinationPath $pwd
 
-cmd.exe /c "$destFolder\bin\elasticsearch.bat"
+$elasticsearch = "$destFolder\bin\elasticsearch.bat"
+$arguments = "-d"
+Start-Process -NoNewWindow $elasticsearch $arguments
