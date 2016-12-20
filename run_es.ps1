@@ -1,6 +1,6 @@
 Write-Host "Starting elasticsearch script"
 
-# Invoke-WebRequest "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.1.1.zip" -OutFile .\es.zip;
+Invoke-WebRequest "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.1.1.zip" -OutFile .\es.zip;
 
 $destFolder = "$pwd\elasticsearch-5.1.1";
 
