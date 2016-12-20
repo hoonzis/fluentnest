@@ -15,12 +15,16 @@ namespace FluentNest.Tests
             var indexName = "index_" + Guid.NewGuid();
             Client.CreateIndex(indexName, x => x.Mappings(
                 m => m.Map<Car>(t => t
-            .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
+            .Properties(prop => prop.Keyword(str => str.Name(s => s.EngineType)))
+            .Properties(prop => prop.Text(str => str.Name(s => s.CarType).Fielddata()))
+            .Properties(prop => prop.Text(str => str.Name(s => s.Name).Fielddata()))
+            )));
 
             for (int i = 0; i < 10; i++)
             {
                 var car = new Car
                 {
+                    Id = Guid.NewGuid(),
                     Timestamp = new DateTime(2010, i + 1, 1),
                     Name = "Car" + i,
                     Price = 10,
@@ -320,7 +324,7 @@ namespace FluentNest.Tests
         [Fact]
         public void FirstByTests()
         {
-            //very stupid test, getting tyhe single value of engine type when engine type is diesel
+            //very stupid test, getting the single value of engine type when engine type is diesel
             var index = AddSimpleTestData();
 
             var result = Client.Search<Car>(sc => sc.Index(index).Aggregations(agg => agg

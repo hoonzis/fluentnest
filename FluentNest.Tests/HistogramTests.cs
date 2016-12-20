@@ -15,11 +15,16 @@ namespace FluentNest.Tests
         private string AddSimpleTestData()
         {
             var indexName = "index_" + Guid.NewGuid();
-            Client.CreateIndex(indexName, x => x.Mappings(m => m.Map<Car>(t => t.Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
+            Client.CreateIndex(indexName, x => 
+                x.Mappings(m => m.Map<Car>(t => t
+                .Properties(prop => prop.Keyword(str => str.Name(s => s.EngineType)))
+                .Properties(prop => prop.Text(str => str.Name(s => s.CarType).Fielddata()))
+               )));
             for (int i = 0; i < 10; i++)
             {
                 var car = new Car
                 {
+                    Id = Guid.NewGuid(),
                     Timestamp = new DateTime(2010,i+1,1),
                     Name = "Car" + i,
                     Price = 10,
@@ -81,7 +86,7 @@ namespace FluentNest.Tests
 
             var histogram = result.Aggs.DateHistogram("by_month");
             Check.That(histogram.Buckets).HasSize(10);
-            var firstMonth = histogram.Buckets[0];
+            var firstMonth = histogram.Buckets.First();
             var priceSum = firstMonth.Sum("priceSum");
             Check.That(priceSum.Value.Value).Equals(10d);
 

@@ -18,12 +18,15 @@ namespace FluentNest.Tests
             var indexName = "index_" + Guid.NewGuid();
             Client.CreateIndex(indexName, x => x.Mappings(
                 m => m.Map<Car>(t => t
-            .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
+            .Properties(prop => prop.Keyword(str => str.Name(s => s.EngineType)))
+            .Properties(prop => prop.Text(str => str.Name(s => s.CarType).Fielddata()))
+            )));
 
             for (int i = 0; i < 10; i++)
             {
                 var car = new Car
                 {
+                    Id = Guid.NewGuid(),
                     Timestamp = new DateTime(2010, i + 1, 1),
                     Name = "Car" + i,
                     Price = 10,
@@ -345,12 +348,18 @@ namespace FluentNest.Tests
         private string CreateUsersIndex(int size, int nationalitiesCount)
         {
             var indexName = "index_" + Guid.NewGuid();
-            Client.CreateIndex(indexName);
+            Client.CreateIndex(indexName, x => x.Mappings(
+                 m => m.Map<User>(t => t
+             .Properties(prop => prop.Text(str => str.Name(s => s.Nationality).Fielddata()))
+             .Properties(prop => prop.Text(str => str.Name(s => s.Name).Fielddata()))
+             .Properties(prop => prop.Text(str => str.Name(s => s.Email).Fielddata()))
+             )));
             var users = new List<User>();
             for (int i = 0; i < size; i++)
             {
                 var user = new User
                 {
+                    Id = Guid.NewGuid(),
                     Name = "User" + i,
                     Nationality = "Nationality" + i % nationalitiesCount,
                     Active = i%3 == 0,

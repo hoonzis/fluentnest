@@ -1,11 +1,11 @@
 FRAMEWORK: >= NET45
 NUGET
   remote: https://www.nuget.org/api/v2
-    Elasticsearch.Net (2.4.6) - framework: net45, >= net46
-    NEST (2.3.3)
-      Elasticsearch.Net (>= 2.3.3) - framework: net45, >= net46
-      Newtonsoft.Json (>= 8.0 < 9.0) - framework: net45, >= net46
-    Newtonsoft.Json (8.0.3) - framework: net45, >= net46
+    Elasticsearch.Net (5.0) - framework: net45, >= net46
+    NEST (5.0)
+      Elasticsearch.Net (>= 5.0) - framework: net45, >= net46
+      Newtonsoft.Json (>= 9.0 < 10.0) - framework: net45, >= net46
+    Newtonsoft.Json (9.0.1) - framework: net45, >= net46
     NFluent (1.3.1)
     xunit (2.0)
       xunit.assert (2.0)

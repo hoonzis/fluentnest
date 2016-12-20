@@ -10,6 +10,7 @@ namespace FluentNest.Tests.Model
 
     public class Car
     {
+        public Guid Id { get; set; }
         public String Name { get; set; }
         public decimal Price { get; set; }
         public double Length { get; set; }

@@ -76,7 +76,7 @@ namespace FluentNest
             var aggName = fieldGetter.GetAggName(AggType.First);
             aggWithResult.CheckForAggregationInResult(aggName);
             var termsAgg = aggWithResult.Terms(aggName);
-            return Filters.StringToAnything<TK>(termsAgg.Buckets[0].Key);
+            return Filters.StringToAnything<TK>(termsAgg.Buckets.First().Key);
         }
 
         public static TK GetAverage<T,TK>(this AggregationsHelper aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)

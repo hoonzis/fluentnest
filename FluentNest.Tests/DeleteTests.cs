@@ -14,12 +14,13 @@ namespace FluentNest.Tests
             var indexName = "index_" + Guid.NewGuid();
             Client.CreateIndex(indexName, x => x.Mappings(
                 m => m.Map<Car>(t => t
-            .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
+            .Properties(prop => prop.Keyword(str => str.Name(s => s.EngineType))))));
 
             for (int i = 0; i < 10; i++)
             {
                 var car = new Car
                 {
+                    Id = Guid.NewGuid(),
                     Timestamp = new DateTime(2010, i + 1, 1),
                     Sold = i % 2 == 0,
                     CarType = "Type" + i % 3,
@@ -38,7 +39,7 @@ namespace FluentNest.Tests
         public void DeleteByQuery()
         {
             var index = AddSimpleTestData();
-            var deleteResult = Client.DeleteByQuery<Car>(index, Types.AllTypes,s  => s.FilterOn(x => x.Sold));
+            var deleteResult = Client.DeleteByQuery<Car>(s  => s.FilterOn(x => x.Sold).Index(index).Type(Types.AllTypes));
             Check.That(deleteResult.IsValid).IsTrue();
             Client.Refresh(index);
             var result = Client.Search<Car>(sc=>sc.Index(index).MatchAll());
@@ -51,7 +52,7 @@ namespace FluentNest.Tests
         {
             var index = AddSimpleTestData();
             var filter = Filters.CreateFilter<Car>(x => x.EngineType == EngineType.Diesel);
-            var deleteResult = Client.DeleteByQuery<Car>(index, Types.AllTypes, s => s.FilterOn(filter));
+            var deleteResult = Client.DeleteByQuery<Car>(s => s.FilterOn(filter).Index(index).Type(Types.AllTypes));
             Check.That(deleteResult.IsValid).IsTrue();
             Client.Refresh(index);
             var result = Client.Search<Car>(sc => sc.Index(index).MatchAll());

@@ -56,7 +56,7 @@ namespace FluentNest
         /// <summary>
         /// Retrieves the terms aggregation just by it's name
         /// </summary>
-        public static IEnumerable<KeyedBucket> GetGroupBy(this AggregationsHelper aggs, string aggName)
+        public static IReadOnlyCollection<KeyedBucket<string>> GetGroupBy(this AggregationsHelper aggs, string aggName)
         {
             aggs.CheckForAggregationInResult(aggName);
             var itemsTerms = aggs.Terms(aggName);
@@ -66,7 +66,7 @@ namespace FluentNest
         /// <summary>
         /// Retrieves the list of buckets if terms aggregation is present
         /// </summary>
-        public static IEnumerable<KeyedBucket> GetGroupBy<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter)
+        public static IEnumerable<KeyedBucket<string>> GetGroupBy<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter)
         {
             var aggName = fieldGetter.GetAggName(AggType.GroupBy);
             return aggs.GetGroupBy(aggName);

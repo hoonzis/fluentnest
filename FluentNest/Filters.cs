@@ -78,21 +78,21 @@ namespace FluentNest
             return type + name;
         }
 
-        public static IList<DateHistogramBucket> GetDateHistogram<T>(this KeyedBucket item,
+        public static IReadOnlyCollection<DateHistogramBucket> GetDateHistogram<T>(this KeyedBucket<T> item,
             Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = item.DateHistogram(GetName(fieldGetter));
             return histogramItem.Buckets;
         }
 
-        public static IList<DateHistogramBucket> GetDateHistogram<T>(this AggregationsHelper aggs,
+        public static IReadOnlyCollection<DateHistogramBucket> GetDateHistogram<T>(this AggregationsHelper aggs,
             Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = aggs.DateHistogram(GetName(fieldGetter));
             return histogramItem.Buckets;
         }
 
-        public static IList<HistogramBucket> GetHistogram<T>(this AggregationsHelper aggs,
+        public static IReadOnlyCollection<KeyedBucket<double>> GetHistogram<T>(this AggregationsHelper aggs,
             Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = aggs.Histogram(GetName(fieldGetter));

@@ -104,7 +104,7 @@ namespace FluentNest
         public static AggregationContainerDescriptor<T> TopHits<T>(this AggregationContainerDescriptor<T> agg, int size, params Expression<Func<T, object>>[] fieldGetter) where T : class
         {
             var aggName = AggType.TopHits.ToString();
-            return agg.TopHits(aggName, x => x.Size(size).Source(i=>i.Include(f=>f.Fields(fieldGetter))));
+            return agg.TopHits(aggName, x => x.Size(size).Source(i=>i.Includes(f=>f.Fields(fieldGetter))));
         }
 
         public static AggregationContainerDescriptor<T> SortedTopHits<T>(this AggregationContainerDescriptor<T> agg, int size, Expression<Func<T, object>> fieldSort,SortType sorttype, params Expression<Func<T, object>>[] fieldGetter) where T : class
@@ -120,7 +120,7 @@ namespace FluentNest
             {
                 sortFieldDescriptor = sortFieldDescriptor.Descending();
             }
-            return agg.TopHits(aggName, x => x.Size(size).Source(i => i.Include(f=>f.Fields(fieldGetter))).Sort(s=>sortFieldDescriptor));
+            return agg.TopHits(aggName, x => x.Size(size).Source(i => i.Includes(f=>f.Fields(fieldGetter))).Sort(s=>sortFieldDescriptor));
         }
     }
 }

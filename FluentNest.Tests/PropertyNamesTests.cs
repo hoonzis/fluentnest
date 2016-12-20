@@ -29,6 +29,7 @@ namespace FluentNest.Tests
             {
                 var car = new Car
                 {
+                    Id = Guid.NewGuid(),
                     BIG_CASE_NAME = "big" + i % 3
                 };
 

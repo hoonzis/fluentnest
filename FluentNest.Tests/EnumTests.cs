@@ -44,6 +44,7 @@ namespace FluentNest.Tests
             {
                 var car = new Car
                 {
+                    Id = Guid.NewGuid(),
                     Timestamp = new DateTime(2010, i + 1, 1),
                     Name = "Car" + i,
                     Price = 10,

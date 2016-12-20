@@ -18,8 +18,8 @@ namespace FluentNest.Tests
        
             Client.CreateIndex(indexName, x => x.Mappings(m => m
             .Map<Car>(t => t
-                .Properties(prop => prop.String(str => str.Name(s => s.Guid).Index(FieldIndexOption.NotAnalyzed)))
-                .Properties(prop => prop.String(str => str.Name(s => s.Email).Index(FieldIndexOption.NotAnalyzed)))
+                .Properties(prop => prop.Keyword(str => str.Name(s => s.Guid)))
+                .Properties(prop => prop.Keyword(str => str.Name(s => s.Email)))
             )));
 
             var cars = new List<Car>();
@@ -27,6 +27,7 @@ namespace FluentNest.Tests
             {
                 var car = new Car
                 {
+                    Id = Guid.NewGuid(),
                     Timestamp = new DateTime(2010,(i%12)+1,1),
                     Name = "name"+i%3,
                     Price = 10,
@@ -60,7 +61,7 @@ namespace FluentNest.Tests
             var endDate = new DateTime(2010, 3, 1);
             var result = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.Timestamp >= startDate && x.Timestamp <= endDate && x.CarType == "type0"));
             Client.DeleteIndex(index);
-
+            
             Check.That(result.Documents).HasSize(2);
         }
 
