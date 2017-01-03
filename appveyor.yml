@@ -1,6 +1,6 @@
 branches:
   only:
-    - 5.x
+    - master
 
 version: 5.0.{build}
 
