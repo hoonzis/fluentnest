@@ -38,7 +38,8 @@ namespace FluentNest.Tests
                     Email = "Email@email" + i % 2 + ".com",
                     Age = i + 1,
                     Enabled = i % 2 == 0,
-                    Active = i % 2 == 0
+                    Active = i % 2 == 0,
+                    PriceLimit = i % 2 == 0 ? (decimal?)null : 100m
                 };
                 if (i == 1)
                 {
@@ -255,6 +256,18 @@ namespace FluentNest.Tests
             var filter = Filters.CreateFilter<Car>(x => x.Age > 8);
             var sc = new SearchDescriptor<Car>().FilterOn(filter.AndValueWithin<Car>(x=>x.Name, new List<string> { "name1", "name2" } ));
             CheckSD(sc, "Filter_ValueWithin_AddedOnExistingFilter");
+        }
+
+        [Fact]
+        public void Filter_null()
+        {
+            var index = AddSimpleTestData();
+
+            var filter = Filters.CreateFilter<Car>(x => x.PriceLimit == null);
+
+            var result = Client.Search<Car>(s => s.Index(index).Query(_ => filter));
+            Check.That(result.Documents).HasSize(5);
+            Client.DeleteIndex(index);
         }
     }
 }

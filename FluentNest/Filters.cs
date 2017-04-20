@@ -129,7 +129,12 @@ namespace FluentNest
         public static QueryContainer GenerateEqualityFilter<T>(this BinaryExpression binaryExpression) where T : class
         {           
             var value = GetValue(binaryExpression);
+            
             var queryContainerDescriptor = new QueryContainerDescriptor<T>();
+            if (value == null)
+            {
+                return queryContainerDescriptor.Bool(b => b.MustNot(n => n.Exists(c => c.Field(binaryExpression.Left))));
+            }
             var fieldExpression = GetFieldExpression<T>(binaryExpression.Left);
             return queryContainerDescriptor.Term(fieldExpression, value);
         }
