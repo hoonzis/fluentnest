@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using FluentNest.Tests.Model;
 using Nest;
 using NFluent;
@@ -267,6 +268,33 @@ namespace FluentNest.Tests
 
             var result = Client.Search<Car>(s => s.Index(index).Query(_ => filter));
             Check.That(result.Documents).HasSize(5);
+            Check.That(result.Documents.All(x => !x.PriceLimit.HasValue)).IsTrue();
+            Client.DeleteIndex(index);
+        }
+
+        [Fact]
+        public void Filter_null_with_HasValue()
+        {
+            var index = AddSimpleTestData();
+
+            var filter = Filters.CreateFilter<Car>(x => x.PriceLimit.HasValue);
+
+            var result = Client.Search<Car>(s => s.Index(index).Query(_ => filter));
+            Check.That(result.Documents).HasSize(5);
+            Check.That(result.Documents.All(x => x.PriceLimit.HasValue)).IsTrue();
+            Client.DeleteIndex(index);
+        }
+
+        [Fact]
+        public void Filter_null_with_not_HasValue()
+        {
+            var index = AddSimpleTestData();
+
+            var filter = Filters.CreateFilter<Car>(x => !x.PriceLimit.HasValue);
+
+            var result = Client.Search<Car>(s => s.Index(index).Query(_ => filter));
+            Check.That(result.Documents).HasSize(5);
+            Check.That(result.Documents.All(x => !x.PriceLimit.HasValue)).IsTrue();
             Client.DeleteIndex(index);
         }
     }

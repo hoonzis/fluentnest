@@ -139,6 +139,13 @@ namespace FluentNest
             return queryContainerDescriptor.Term(fieldExpression, value);
         }
 
+        private static QueryContainer GenerateNotFilterDescription<T>(this UnaryExpression expression) where T : class
+        {
+            var filterDescriptor = new QueryContainerDescriptor<T>();
+            var negatedExpression = GenerateFilterDescription<T>(expression.Operand);
+            return filterDescriptor.Bool(x => x.MustNot(negatedExpression));
+        }
+
         public static QueryContainer GenerateNotEqualFilter<T>(this BinaryExpression expression) where T : class
         {
             var equalityFilter = GenerateEqualityFilter<T>(expression);
@@ -305,10 +312,15 @@ namespace FluentNest
             {
                 return GenerateNotEqualFilter<T>(expression as BinaryExpression);
             }
+
+            if (expType == ExpressionType.Not)
+            {
+                return GenerateNotFilterDescription<T>(expression as UnaryExpression);
+            }
             
             throw  new NotImplementedException();
         }
-        
+
         public static SearchDescriptor<T> FilterOn<T>(this SearchDescriptor<T> searchDescriptor, Expression<Func<T, bool>> filterRule) where T : class
         {
             var filterDescriptor = GenerateFilterDescription<T>(filterRule.Body);
