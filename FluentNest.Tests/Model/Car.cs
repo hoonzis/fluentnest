@@ -33,5 +33,6 @@ namespace FluentNest.Tests.Model
         // Of course cars don't have emails, but for my tests it's usefull
         public string Email { get; set; }
         public DateTime? LastControlCheck { get; set; }
+        public DateTime? LastAccident { get; set; }
     }
 }
