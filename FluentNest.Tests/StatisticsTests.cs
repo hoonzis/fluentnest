@@ -35,6 +35,7 @@ namespace FluentNest.Tests
                     Weight = 5,
                     ConditionalRanking = i % 2 == 0 ? null : (int?)i,
                     Description = "Desc" + i,
+                    LastControlCheck = i % 3 == 0 ? new DateTime(2012, i + 1, 1) : (DateTime?)null
                 };
 
                 Client.Index(car, ind => ind.Index(indexName));
@@ -257,7 +258,7 @@ namespace FluentNest.Tests
         }
 
         [Fact]
-        public void MinMaxTest()
+        public void MinMaxTest_DoubleField()
         {
             var index = AddSimpleTestData();
 
@@ -269,6 +270,44 @@ namespace FluentNest.Tests
             var container = result.Aggs.AsContainer<Car>();
             var min = container.GetMin(x => x.Length);
             var max = container.GetMax(x => x.Length);
+
+            Check.That(min).Equals(0d);
+            Check.That(max).Equals(9d);
+            Client.DeleteIndex(index);
+        }
+
+        [Fact]
+        public void MinMaxTest_DateTimeField()
+        {
+            var index = AddSimpleTestData();
+
+            var result = Client.Search<Car>(sc => sc.Index(index).Aggregations(agg => agg
+                .MinBy(x => x.Timestamp)
+                .MaxBy(x => x.Timestamp))
+            );
+
+            var container = result.Aggs.AsContainer<Car>();
+            var min = container.GetMin(x => x.Timestamp);
+            var max = container.GetMax(x => x.Timestamp);
+
+            Check.That(min).Equals(new DateTime(2010, 1, 1));
+            Check.That(max).Equals(new DateTime(2010, 11, 1));
+            Client.DeleteIndex(index);
+        }
+
+        [Fact]
+        public void MinMaxTest_NullableDateTimeField()
+        {
+            var index = AddSimpleTestData();
+
+            var result = Client.Search<Car>(sc => sc.Index(index).Aggregations(agg => agg
+                .MinBy(x => x.LastControlCheck)
+                .MaxBy(x => x.LastControlCheck))
+            );
+
+            var container = result.Aggs.AsContainer<Car>();
+            var min = container.GetMin(x => x.LastControlCheck);
+            var max = container.GetMax(x => x.LastControlCheck);
 
             Check.That(min).Equals(0d);
             Check.That(max).Equals(9d);
