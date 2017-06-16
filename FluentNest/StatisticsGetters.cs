@@ -29,24 +29,19 @@ namespace FluentNest
                 targetType = type;
             }
 
-            if (agg.Value.HasValue)
+            if (agg.Value.HasValue && targetType != null)
             {
-                return Titi<TK>(agg.Value.Value, targetType);
+                // seems that by default ES stores the datetime value as unix timestamp in miliseconds
+                if (targetType == typeof(DateTime))
+                {
+                    DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+                    return (TK)(object)origin.AddMilliseconds(agg.Value.Value);
+                }
+
+                return (TK)Convert.ChangeType(agg.Value.Value, targetType);
             }
 
             return (TK)(object)null;
-        }
-
-        private static TK Titi<TK>(double value, Type target)
-        {
-            // seems that by default ES stores the datetime value as unix timestamp in miliseconds
-            if (target == typeof(DateTime))
-            {
-                DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
-                return (TK)(object)origin.AddMilliseconds(value);
-            }
-
-            return (TK)Convert.ChangeType(value, target);
         }
 
         public static AggregationsHelper GetAggregationContainingResult<T>(this AggregationsHelper aggs,
