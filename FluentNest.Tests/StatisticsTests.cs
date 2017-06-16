@@ -35,7 +35,7 @@ namespace FluentNest.Tests
                     Weight = 5,
                     ConditionalRanking = i % 2 == 0 ? null : (int?)i,
                     Description = "Desc" + i,
-                    LastControlCheck = i % 3 == 0 ? new DateTime(2012, i + 1, 1) : (DateTime?)null
+                    LastControlCheck = i % 2 == 0 ? new DateTime(2012, i + 1, 1) : (DateTime?)null
                 };
 
                 Client.Index(car, ind => ind.Index(indexName));
@@ -309,8 +309,8 @@ namespace FluentNest.Tests
             var min = container.GetMin(x => x.LastControlCheck);
             var max = container.GetMax(x => x.LastControlCheck);
 
-            Check.That(min).Equals(new DateTime(2010, 1, 3));
-            Check.That(max).Equals(new DateTime(2010, 1, 9));
+            Check.That(min).Equals(new DateTime(2012, 1, 1));
+            Check.That(max).Equals(new DateTime(2012, 9, 1));
             Client.DeleteIndex(index);
         }
 
