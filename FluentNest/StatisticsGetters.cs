@@ -18,25 +18,30 @@ namespace FluentNest
         private static TK ValueAsUndType<TK>(ValueAggregate agg)
         {
             var type = typeof(TK);
+
+            Type targetType;
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
-                var undType = Nullable.GetUnderlyingType(type);
-                if (!agg.Value.HasValue)
-                {
-                    return (TK)(object)null;
-                }
-                var valueAsUndType = Convert.ChangeType(agg.Value, undType);
-                return (TK)(object)valueAsUndType;
+                targetType = Nullable.GetUnderlyingType(type);
             }
-
-            // seems that by default ES stores the datetime value as unix timestamp in miliseconds
-            if (typeof (TK) == typeof (DateTime) && agg.Value.HasValue)
+            else
             {
-                DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
-                return (TK)(object)origin.AddMilliseconds(agg.Value.Value);
+                targetType = type;
             }
-            return (TK)Convert.ChangeType(agg.Value, typeof(TK));
 
+            if (agg.Value.HasValue && targetType != null)
+            {
+                // seems that by default ES stores the datetime value as unix timestamp in miliseconds
+                if (targetType == typeof(DateTime))
+                {
+                    DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+                    return (TK)(object)origin.AddMilliseconds(agg.Value.Value);
+                }
+
+                return (TK)Convert.ChangeType(agg.Value.Value, targetType);
+            }
+
+            return (TK)(object)null;
         }
 
         public static AggregationsHelper GetAggregationContainingResult<T>(this AggregationsHelper aggs,
