@@ -35,7 +35,8 @@ namespace FluentNest.Tests
                     Weight = 5,
                     ConditionalRanking = i % 2 == 0 ? null : (int?)i,
                     Description = "Desc" + i,
-                    LastControlCheck = i % 2 == 0 ? new DateTime(2012, i + 1, 1) : (DateTime?)null
+                    LastControlCheck = i % 2 == 0 ? new DateTime(2012, i + 1, 1) : (DateTime?)null,
+                    LastAccident = null
                 };
 
                 Client.Index(car, ind => ind.Index(indexName));
@@ -311,6 +312,25 @@ namespace FluentNest.Tests
 
             Check.That(min).Equals(new DateTime(2012, 1, 1));
             Check.That(max).Equals(new DateTime(2012, 9, 1));
+            Client.DeleteIndex(index);
+        }
+
+        [Fact]
+        public void MinMaxTest_NullableDateTimeField_AlwaysNull()
+        {
+            var index = AddSimpleTestData();
+
+            var result = Client.Search<Car>(sc => sc.Index(index).Aggregations(agg => agg
+                .MinBy(x => x.LastAccident)
+                .MaxBy(x => x.LastAccident))
+            );
+
+            var container = result.Aggs.AsContainer<Car>();
+            var min = container.GetMin(x => x.LastAccident);
+            var max = container.GetMax(x => x.LastAccident);
+
+            Check.That(min).Equals(null);
+            Check.That(max).Equals(null);
             Client.DeleteIndex(index);
         }
 
