@@ -291,7 +291,7 @@ namespace FluentNest.Tests
             var max = container.GetMax(x => x.Timestamp);
 
             Check.That(min).Equals(new DateTime(2010, 1, 1));
-            Check.That(max).Equals(new DateTime(2010, 11, 1));
+            Check.That(max).Equals(new DateTime(2010, 10, 1));
             Client.DeleteIndex(index);
         }
 
@@ -309,8 +309,8 @@ namespace FluentNest.Tests
             var min = container.GetMin(x => x.LastControlCheck);
             var max = container.GetMax(x => x.LastControlCheck);
 
-            Check.That(min).Equals(0d);
-            Check.That(max).Equals(9d);
+            Check.That(min).Equals(new DateTime(2010, 1, 3));
+            Check.That(max).Equals(new DateTime(2010, 1, 9));
             Client.DeleteIndex(index);
         }
 
