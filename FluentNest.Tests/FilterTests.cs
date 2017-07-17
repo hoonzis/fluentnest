@@ -82,11 +82,11 @@ namespace FluentNest.Tests
             var index = AddSimpleTestData();
 
             var carType = "Type0".ToLower();
-            //Standard Nest way of getting the docuements. Values are lowered by ES
+            // Standard Nest way of getting the documents. Values are lowered by ES
             var result = Client.Search<Car>(s => s.Index(index).Query(x => x.Term(f => f.CarType, carType)));
             Check.That(result.Documents).HasSize(5);
             
-            //Best way
+            // Best way
             result = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.CarType == carType));
             Check.That(result.Documents).HasSize(5);
             Client.DeleteIndex(index);

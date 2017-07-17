@@ -15,16 +15,19 @@ namespace FluentNest.Tests
     {
         private class StringEnumContractSerializer : JsonNetSerializer
         {
+            private readonly List<Func<Type, JsonConverter>> contractConverters = new List<Func<Type, JsonConverter>>()
+            {
+                t => t.IsEnum || (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>) && t.GetGenericArguments().First().IsEnum) ? new StringEnumConverter() : null
+            };
+
             public StringEnumContractSerializer(IConnectionSettingsValues settings)
                 : base(settings)
             {
 
             }
+
             protected override IList<Func<Type, JsonConverter>> ContractConverters
-                => new List<Func<Type, JsonConverter>>()
-                {
-                    t => t.IsEnum ? new StringEnumConverter() : null
-                };
+                => contractConverters;
         }
 
         public EnumTests()
@@ -38,7 +41,9 @@ namespace FluentNest.Tests
             var indexName = "index_" + Guid.NewGuid();
             Client.CreateIndex(indexName, x => x.Mappings(
                 m => m.Map<Car>(t => t
-                    .Properties(prop => prop.String(str => str.Name(s => s.EngineType).Index(FieldIndexOption.NotAnalyzed))))));
+                    .Properties(prop => prop
+                    .Keyword(str => str.Name(s => s.EngineType))
+                    .Keyword(str => str.Name(s => s.NullableEngineType))))));
 
             for (int i = 0; i < 10; i++)
             {
@@ -52,6 +57,7 @@ namespace FluentNest.Tests
                     CarType = "Type" + i % 3,
                     Length = i,
                     EngineType = i % 2 == 0 ? EngineType.Diesel : EngineType.Standard,
+                    NullableEngineType = i % 2 == 0 ? EngineType.Diesel : EngineType.Standard,
                     Weight = 5,
                     ConditionalRanking = i % 2 == 0 ? null : (int?)i,
                     Description = "Desc" + i,
@@ -67,6 +73,15 @@ namespace FluentNest.Tests
         {
             var index = AddSimpleTestData();
             var result = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.EngineType == EngineType.Diesel));
+            Check.That(result.Hits.Count()).IsEqualTo(5);
+            Client.DeleteIndex(index);
+        }
+
+        [Fact]
+        public void Filtering_on_nullable_enum_property_should_work()
+        {
+            var index = AddSimpleTestData();
+            var result = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.NullableEngineType == EngineType.Diesel));
             Check.That(result.Hits.Count()).IsEqualTo(5);
             Client.DeleteIndex(index);
         }
