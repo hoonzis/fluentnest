@@ -331,8 +331,7 @@ namespace FluentNest
         public static QueryContainer AndFilteredOn<T>(this QueryContainer queryDescriptor, Expression<Func<T, bool>> filterRule) where T : class
         {
             var filterDescriptor = new QueryContainerDescriptor<T>();
-            var binaryExpression = filterRule.Body as BinaryExpression;
-            var newPartOfQuery = GenerateFilterDescription<T>(binaryExpression);
+            var newPartOfQuery = GenerateFilterDescription<T>(filterRule.Body);
             return filterDescriptor.Bool(x => x.Must(queryDescriptor, newPartOfQuery));            
         }
 
