@@ -23,6 +23,7 @@ before_test:
   - ps: .\run_es.ps1
 
 for:
+-
   branches:
     only:
       - master
