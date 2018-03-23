@@ -1,31 +1,39 @@
-branches:
-  only:
-    - master
+skip_tags: true
 
-version: 5.0.{build}
+version: 6.0.{build}
 
-os: Visual Studio 2015
+os: Visual Studio 2017
 
+# Done here so that the ES server has the time to initialize fully
 install:
   - ps: .\run_es.ps1
 
-assembly_info:
+configuration: release
+
+dotnet_csproj:
   patch: true
-  file: AssemblyInfo.*
-  assembly_version: "{version}"
-  assembly_file_version: "{version}"
-  assembly_informational_version: "{version}"
+  file: 'Directory.build.props'
+  package_version: '{version}'
+  assembly_version: '{version}'
 
 before_build:
   - cmd: paket restore
 
-build:
-  publish_nuget: true
-  project: FluentNest.sln
+build_script:
+  - cmd: build.cmd
 
-deploy:
-  provider: NuGet
-  api_key:
-    secure: Ax/Zt3hfzLf7jMzb9VqiCsTtGCr3c+sf6pozg3KrCm/d+qZnY2IWFmmbQYws5Frh
-  skip_symbols: true
-  artifact: /.*\.nupkg/
+artifacts:
+  - path: 'FluentNest\**\*.nupkg'
+
+for:
+-
+  branches:
+    only:
+      - master
+
+  deploy:
+    provider: NuGet
+    api_key:
+      secure: Ax/Zt3hfzLf7jMzb9VqiCsTtGCr3c+sf6pozg3KrCm/d+qZnY2IWFmmbQYws5Frh
+    skip_symbols: true
+    artifact: /.*\.nupkg/

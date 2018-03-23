@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Elasticsearch.Net;
 using Nest;
@@ -42,9 +43,11 @@ namespace Tests
             }
         }
 
+        private static readonly string AssemblyPath = Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath);
+
         public Dictionary<string, string> LoadTestResults(string className)
         {
-            var fileName = className + ".txt";
+            var fileName = Path.Combine(AssemblyPath, className + ".txt");
             if (!File.Exists(fileName))
             {
                 return new Dictionary<string, string>();
