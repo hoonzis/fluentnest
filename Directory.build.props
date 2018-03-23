@@ -6,5 +6,7 @@
         <PackageProjectUrl>https://github.com/hoonzis/fluentnest</PackageProjectUrl>
         <Copyright>Copyright © Jan Fajfr 2015</Copyright>
         <Tags>ElasticSearch search NEST</Tags>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <PackageVersion>1.0.0.0</PackageVersion>
     </PropertyGroup>
 </Project>
