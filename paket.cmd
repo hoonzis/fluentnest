@@ -1,4 +1,3 @@
 @echo off
 
-.paket\paket.bootstrapper.exe
-.paket\paket.exe %1
+"%~dp0\.paket\paket.exe" %1
