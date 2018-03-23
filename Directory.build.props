@@ -1,0 +1,10 @@
+<Project>
+    <PropertyGroup>
+        <Title>FluentNest</Title>
+        <Authors>Jan Fajfr</Authors>
+        <Description>Fluent query language for ElasticSearch</Description>
+        <PackageProjectUrl>https://github.com/hoonzis/fluentnest</PackageProjectUrl>
+        <Copyright>Copyright © Jan Fajfr 2015</Copyright>
+        <Tags>ElasticSearch search NEST</Tags>
+    </PropertyGroup>
+</Project>
