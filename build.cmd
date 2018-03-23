@@ -4,4 +4,4 @@ setlocal
 
 call %~dp0\paket.cmd restore --silent
 
-dotnet build
+dotnet pack
