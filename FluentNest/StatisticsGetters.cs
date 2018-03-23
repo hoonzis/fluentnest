@@ -11,12 +11,16 @@ namespace FluentNest
 {
     public static class StatisticsGetters
     {
-
         /// <summary>
         /// Takes a value metric and forces a conversion to certain type
         /// </summary>
         private static TK ValueAsUndType<TK>(ValueAggregate agg)
         {
+            if (agg == null)
+            {
+                return (TK)(object)null;
+            }
+
             var type = typeof(TK);
 
             Type targetType;
@@ -44,7 +48,7 @@ namespace FluentNest
             return (TK)(object)null;
         }
 
-        public static AggregationsHelper GetAggregationContainingResult<T>(this AggregationsHelper aggs,
+        public static AggregateDictionary GetAggregationContainingResult<T>(this AggregateDictionary aggs,
             Expression<Func<T, object>> filterRule = null)
         {
             if (filterRule == null)
@@ -57,7 +61,7 @@ namespace FluentNest
             return aggs.Filter(filterName);
         }
 
-        public static int GetCardinality<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        public static int GetCardinality<T>(this AggregateDictionary aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
             var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Cardinality);
@@ -66,7 +70,7 @@ namespace FluentNest
             return (int)itemsTerms.Value.Value;
         }
 
-        public static TK GetSum<T,TK>(this AggregationsHelper aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        public static TK GetSum<T,TK>(this AggregateDictionary aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
             var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Sum);
@@ -75,7 +79,7 @@ namespace FluentNest
             return ValueAsUndType<TK>(sumAgg);
         }
 
-        public static TK GetFirstBy<T,TK>(this AggregationsHelper aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        public static TK GetFirstBy<T,TK>(this AggregateDictionary aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
             var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.First);
@@ -84,7 +88,7 @@ namespace FluentNest
             return Filters.StringToAnything<TK>(termsAgg.Buckets.First().Key);
         }
 
-        public static TK GetAverage<T,TK>(this AggregationsHelper aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        public static TK GetAverage<T,TK>(this AggregateDictionary aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
             var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Average);
@@ -93,7 +97,7 @@ namespace FluentNest
             return ValueAsUndType<TK>(avgAgg);
         }
 
-        public static TK GetMin<T,TK>(this AggregationsHelper aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        public static TK GetMin<T,TK>(this AggregateDictionary aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
             var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Min);
@@ -102,7 +106,7 @@ namespace FluentNest
             return ValueAsUndType<TK>(minAgg);
         }
 
-        public static TK GetMax<T,TK>(this AggregationsHelper aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        public static TK GetMax<T,TK>(this AggregateDictionary aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
             var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Max);
@@ -111,7 +115,7 @@ namespace FluentNest
             return ValueAsUndType<TK>(maxAgg);
         }
 
-        public static IList<PercentileItem> GetPercentile<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        public static IList<PercentileItem> GetPercentile<T>(this AggregateDictionary aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
             var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Percentile);
@@ -120,7 +124,7 @@ namespace FluentNest
             return itemsTerms.Items;
         }
 
-        public static StatsAggregate GetStats<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        public static StatsAggregate GetStats<T>(this AggregateDictionary aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
             var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Stats);
@@ -129,7 +133,7 @@ namespace FluentNest
             return itemsTerms;
         }
 
-        public static int? GetCount<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        public static int? GetCount<T>(this AggregateDictionary aggs, Expression<Func<T, object>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
             var aggWithResult = GetAggregationContainingResult(aggs, filterRule);
             var aggName = fieldGetter.GetAggName(AggType.Count);
@@ -140,7 +144,7 @@ namespace FluentNest
             return (int)itemsTerms.Value;
         }
 
-        public static IEnumerable<V> GetDistinct<T, V>(this AggregationsHelper aggs, Expression<Func<T, V>> fieldGetter)
+        public static IEnumerable<V> GetDistinct<T, V>(this AggregateDictionary aggs, Expression<Func<T, V>> fieldGetter)
         {
             var aggName = fieldGetter.GetAggName(AggType.Distinct);
             var itemsTerms = aggs.Terms(aggName);
@@ -163,13 +167,13 @@ namespace FluentNest
             throw new NotImplementedException("You can get only distinct values of Strings, Enums, ints or long");
         }
 
-        public static IEnumerable<T> GetTopHits<T>(this AggregationsHelper aggs) where T:class 
+        public static IEnumerable<T> GetTopHits<T>(this AggregateDictionary aggs) where T:class 
         {
             var topHits = aggs.TopHits(AggType.TopHits.ToString());
             return topHits.Hits<T>().Select(x => x.Source);
         }
 
-        public static IEnumerable<T> GetSortedTopHits<T>(this AggregationsHelper aggs, Expression<Func<T, object>> sorter, SortType sortType) where T : class
+        public static IEnumerable<T> GetSortedTopHits<T>(this AggregateDictionary aggs, Expression<Func<T, object>> sorter, SortType sortType) where T : class
         {
             var aggName = sortType + sorter.GetAggName(AggType.TopHits);
             var topHits = aggs.TopHits(aggName);

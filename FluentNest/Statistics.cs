@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using Nest;
 
@@ -106,6 +107,18 @@ namespace FluentNest
             return agg.TopHits(aggName, x => x.Size(size).Source(i=>i.Includes(f=>f.Fields(fieldGetter))));
         }
 
+        private class PromiseValue<T> : IPromise<T> where T : class
+        {
+            private readonly T value;
+
+            public PromiseValue(T value)
+            {
+                this.value = value;
+            }
+
+            T IPromise<T>.Value => value;
+        }
+
         public static AggregationContainerDescriptor<T> SortedTopHits<T>(this AggregationContainerDescriptor<T> agg, int size, Expression<Func<T, object>> fieldSort,SortType sorttype, params Expression<Func<T, object>>[] fieldGetter) where T : class
         {
             var aggName = sorttype + fieldSort.GetAggName(AggType.TopHits);
@@ -119,7 +132,13 @@ namespace FluentNest
             {
                 sortFieldDescriptor = sortFieldDescriptor.Descending();
             }
-            return agg.TopHits(aggName, x => x.Size(size).Source(i => i.Includes(f=>f.Fields(fieldGetter))).Sort(s=>sortFieldDescriptor));
+            return agg.TopHits(
+                aggName,
+                x =>
+                    x
+                        .Size(size)
+                        .Source(i => i.Includes(f=>f.Fields(fieldGetter)))
+                        .Sort(s => new PromiseValue<IList<ISort>>(new List<ISort> {sortFieldDescriptor})));
         }
     }
 }
