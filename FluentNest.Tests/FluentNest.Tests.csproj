@@ -5,6 +5,11 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="*.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\FluentNest\FluentNest.csproj" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
