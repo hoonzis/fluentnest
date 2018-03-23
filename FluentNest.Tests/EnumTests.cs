@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Elasticsearch.Net;
 using FluentNest.Tests.Model;
 using Nest;
+using Nest.JsonNetSerializer;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using NFluent;
@@ -13,25 +15,21 @@ namespace FluentNest.Tests
 {
     public class EnumTests : TestsBase
     {
-        private class StringEnumContractSerializer : JsonNetSerializer
+        private class StringEnumContractSerializer : ConnectionSettingsAwareSerializerBase
         {
-            private readonly List<Func<Type, JsonConverter>> contractConverters = new List<Func<Type, JsonConverter>>()
+            public StringEnumContractSerializer(IElasticsearchSerializer builtinSerializer, IConnectionSettingsValues connectionSettings)
+                : base(builtinSerializer, connectionSettings)
             {
-                t => t.IsEnum || (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>) && t.GetGenericArguments().First().IsEnum) ? new StringEnumConverter() : null
-            };
-
-            public StringEnumContractSerializer(IConnectionSettingsValues settings)
-                : base(settings)
-            {
-
             }
 
-            protected override IList<Func<Type, JsonConverter>> ContractConverters
-                => contractConverters;
+            protected override IEnumerable<JsonConverter> CreateJsonConverters()
+            {
+                return base.CreateJsonConverters().Concat(new[] {new StringEnumConverter()});
+            }
         }
 
         public EnumTests()
-            : base(x => new StringEnumContractSerializer(x))
+            : base((builtIn, values) => new StringEnumContractSerializer(builtIn, values))
         {
 
         }

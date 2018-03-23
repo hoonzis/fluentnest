@@ -85,14 +85,14 @@ namespace FluentNest
             return histogramItem.Buckets;
         }
 
-        public static IReadOnlyCollection<DateHistogramBucket> GetDateHistogram<T>(this AggregationsHelper aggs,
+        public static IReadOnlyCollection<DateHistogramBucket> GetDateHistogram<T>(this AggregateDictionary aggs,
             Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = aggs.DateHistogram(GetName(fieldGetter));
             return histogramItem.Buckets;
         }
 
-        public static IReadOnlyCollection<KeyedBucket<double>> GetHistogram<T>(this AggregationsHelper aggs,
+        public static IReadOnlyCollection<KeyedBucket<double>> GetHistogram<T>(this AggregateDictionary aggs,
             Expression<Func<T, Object>> fieldGetter)
         {
             var histogramItem = aggs.Histogram(GetName(fieldGetter));
@@ -387,7 +387,7 @@ namespace FluentNest
             return (T)Enum.Parse(typeof(T), value);
         }
 
-        public static AggsContainer<T> AsContainer<T> (this AggregationsHelper aggs)
+        public static AggsContainer<T> AsContainer<T> (this AggregateDictionary aggs)
         {
             return new AggsContainer<T>(aggs);
         }

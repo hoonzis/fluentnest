@@ -1,11 +1,9 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using Elasticsearch.Net;
-using FluentNest.Tests.Model;
 using Nest;
 using NFluent;
 
@@ -17,12 +15,14 @@ namespace Tests
 
         private readonly Dictionary<string, string> testResults;
 
-        public TestsBase(Func<ConnectionSettings, IElasticsearchSerializer> serializerFactory = null, Func<ConnectionSettings, ConnectionSettings> additionalSettings = null)
+        public TestsBase(ConnectionSettings.SourceSerializerFactory serializerFactory = null, Func<ConnectionSettings, ConnectionSettings> additionalSettings = null)
         {
             var node = new Uri("http://localhost:9200");
             var connectionPool = new SingleNodeConnectionPool(node);
 
-            var settings = new ConnectionSettings(connectionPool, serializerFactory).DefaultIndex("fluentnesttests");
+            var settings = new ConnectionSettings(connectionPool, serializerFactory)
+                .DefaultIndex("fluentnesttests")
+                .ThrowExceptions();
             if (additionalSettings != null)
             {
                 settings = additionalSettings(settings);
@@ -37,7 +37,7 @@ namespace Tests
         {
             using (var ms = new MemoryStream())
             {
-                Client.Serializer.Serialize(entity, ms);
+                Client.SourceSerializer.Serialize(entity, ms);
                 return Encoding.UTF8.GetString(ms.ToArray());
             }
         }

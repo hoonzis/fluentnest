@@ -56,7 +56,7 @@ namespace FluentNest
         /// <summary>
         /// Retrieves the terms aggregation just by it's name
         /// </summary>
-        public static IReadOnlyCollection<KeyedBucket<string>> GetGroupBy(this AggregationsHelper aggs, string aggName)
+        public static IReadOnlyCollection<KeyedBucket<string>> GetGroupBy(this AggregateDictionary aggs, string aggName)
         {
             aggs.CheckForAggregationInResult(aggName);
             var itemsTerms = aggs.Terms(aggName);
@@ -66,7 +66,7 @@ namespace FluentNest
         /// <summary>
         /// Retrieves the list of buckets if terms aggregation is present
         /// </summary>
-        public static IEnumerable<KeyedBucket<string>> GetGroupBy<T>(this AggregationsHelper aggs, Expression<Func<T, object>> fieldGetter)
+        public static IEnumerable<KeyedBucket<string>> GetGroupBy<T>(this AggregateDictionary aggs, Expression<Func<T, object>> fieldGetter)
         {
             var aggName = fieldGetter.GetAggName(AggType.GroupBy);
             return aggs.GetGroupBy(aggName);
@@ -75,16 +75,16 @@ namespace FluentNest
         /// <summary>
         /// Checks if aggregation with given name is available on the result and throws if not
         /// </summary>
-        public static void CheckForAggregationInResult(this AggregationsHelper aggs, string aggName)
+        public static void CheckForAggregationInResult(this AggregateDictionary aggs, string aggName)
         {
-            if (aggs.Aggregations == null || aggs.Aggregations.Count == 0)
+            if (aggs == null || aggs.Count == 0)
             {
                 throw new InvalidOperationException("No aggregations available on the result");
             }
 
-            if (!aggs.Aggregations.ContainsKey(aggName))
+            if (!aggs.ContainsKey(aggName))
             {
-                var availableAggregations = aggs.Aggregations.Select(x => x.Key).Aggregate((agg, x) => agg + "m" + x);
+                var availableAggregations = aggs.Select(x => x.Key).Aggregate((agg, x) => agg + "m" + x);
                 throw new InvalidOperationException($"Aggregation {aggName} not in the result. Available aggregations: {availableAggregations}");
             }
         }

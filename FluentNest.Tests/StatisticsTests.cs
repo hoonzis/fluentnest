@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using FluentNest.Tests.Model;
-using Nest;
 using NFluent;
 using Tests;
 using Xunit;
@@ -10,15 +9,22 @@ namespace FluentNest.Tests
 {
     public class StatisticsTests : TestsBase
     {
-        public string AddSimpleTestData()
+        public string CreateTestIndex()
         {
             var indexName = "index_" + Guid.NewGuid();
             Client.CreateIndex(indexName, x => x.Mappings(
                 m => m.Map<Car>(t => t
-            .Properties(prop => prop.Keyword(str => str.Name(s => s.EngineType)))
-            .Properties(prop => prop.Text(str => str.Name(s => s.CarType).Fielddata()))
-            .Properties(prop => prop.Text(str => str.Name(s => s.Name).Fielddata()))
-            )));
+                    .Properties(prop => prop.Keyword(str => str.Name(s => s.EngineType)))
+                    .Properties(prop => prop.Text(str => str.Name(s => s.CarType).Fielddata()))
+                    .Properties(prop => prop.Text(str => str.Name(s => s.Name).Fielddata()))
+                )));
+
+            return indexName;
+        }
+
+        public string AddSimpleTestData()
+        {
+            var indexName = CreateTestIndex();
 
             for (int i = 0; i < 10; i++)
             {
@@ -62,12 +68,12 @@ namespace FluentNest.Tests
                 )
             );
 
-            var sumAgg = result.Aggs.Filter("filterOne");
+            var sumAgg = result.Aggregations.Filter("filterOne");
             Check.That(sumAgg).IsNotNull();
             var sumValue = sumAgg.Sum("sumAgg");
             Check.That(sumValue.Value).Equals(50d);
 
-            var sumAgg2 = result.Aggs.Filter("filterTwo");
+            var sumAgg2 = result.Aggregations.Filter("filterTwo");
             Check.That(sumAgg2).IsNotNull();
             var sumValue2 = sumAgg2.Sum("sumAgg");
             Check.That(sumValue2.Value).Equals(30d);
@@ -82,9 +88,9 @@ namespace FluentNest.Tests
                 .CountBy(x=>x.Price)
                 .CardinalityBy(x => x.EngineType)
             ));
-            var val = result.Aggs.GetCount<Car>(x => x.Price);
+            var val = result.Aggregations.GetCount<Car>(x => x.Price);
             Check.That(val).Equals(10);
-            var card = result.Aggs.GetCardinality<Car>(x => x.EngineType);
+            var card = result.Aggregations.GetCardinality<Car>(x => x.EngineType);
             Check.That(card).Equals(2);
             Client.DeleteIndex(index);
         }
@@ -97,8 +103,8 @@ namespace FluentNest.Tests
                 .CardinalityBy(x => x.EngineType, x => x.EngineType == EngineType.Standard)
             ));
 
-            var container = result.Aggs.AsContainer<Car>();
-            var card = result.Aggs.GetCardinality<Car>(x => x.EngineType, x => x.EngineType == EngineType.Standard);
+            var container = result.Aggregations.AsContainer<Car>();
+            var card = result.Aggregations.GetCardinality<Car>(x => x.EngineType, x => x.EngineType == EngineType.Standard);
             Check.That(card).Equals(1);
             Check.That(container.GetCardinality(x => x.EngineType, x => x.EngineType == EngineType.Standard)).Equals(1);
         }
@@ -112,7 +118,7 @@ namespace FluentNest.Tests
                 .SumBy(x => x.Price, x => x.Sold == true)
             ));
 
-            var sum = result.Aggs.GetSum<Car,decimal>(x => x.Price, x => x.Sold == true);
+            var sum = result.Aggregations.GetSum<Car,decimal>(x => x.Price, x => x.Sold == true);
             Check.That(sum).Equals(50m);
             Client.DeleteIndex(index);
         }
@@ -130,11 +136,11 @@ namespace FluentNest.Tests
                 .CardinalityBy(x => x.EngineType))
             );
 
-            var priceSum = result.Aggs.GetSum<Car,decimal>(x => x.Price);
-            var avgLength = result.Aggs.GetAverage<Car,double>(x => x.Length);
-            var count = result.Aggs.GetCount<Car>(x => x.CarType);
-            var typeOneCount = result.Aggs.GetCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
-            var engineCardinality = result.Aggs.GetCardinality<Car>(x => x.EngineType);
+            var priceSum = result.Aggregations.GetSum<Car,decimal>(x => x.Price);
+            var avgLength = result.Aggregations.GetAverage<Car,double>(x => x.Length);
+            var count = result.Aggregations.GetCount<Car>(x => x.CarType);
+            var typeOneCount = result.Aggregations.GetCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
+            var engineCardinality = result.Aggregations.GetCardinality<Car>(x => x.EngineType);
 
             Check.That(priceSum).Equals(100m);
             Check.That(avgLength).Equals(4.5d);
@@ -157,13 +163,13 @@ namespace FluentNest.Tests
                 .SumBy(x => x.Price, c => c.CarType == "type1")
             ));
             
-            var priceSum = result.Aggs.GetSum<Car, decimal>(x => x.Price);
-            var avgLength = result.Aggs.GetAverage<Car,double>(x => x.Length);
-            var count = result.Aggs.GetCount<Car>(x => x.CarType);
-            var typeOneCount = result.Aggs.GetCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
-            var car1PriceSum = result.Aggs.GetSum<Car,decimal>(x => x.Price, x => x.CarType == "type1");
+            var priceSum = result.Aggregations.GetSum<Car, decimal>(x => x.Price);
+            var avgLength = result.Aggregations.GetAverage<Car,double>(x => x.Length);
+            var count = result.Aggregations.GetCount<Car>(x => x.CarType);
+            var typeOneCount = result.Aggregations.GetCount<Car>(x => x.Name, x => x.EngineType == EngineType.Diesel);
+            var car1PriceSum = result.Aggregations.GetSum<Car,decimal>(x => x.Price, x => x.CarType == "type1");
 
-            var aggsContainer = result.Aggs.AsContainer<Car>();
+            var aggsContainer = result.Aggregations.AsContainer<Car>();
             var priceSum2 = aggsContainer.GetSum(x => x.Price);
             var avgLength2 = aggsContainer.GetAverage(x => x.Length);
             var count2 = aggsContainer.GetCount(x => x.CarType);
@@ -190,9 +196,9 @@ namespace FluentNest.Tests
         {
             var index = AddSimpleTestData();
             var result = Client.Search<Car>(sc => sc.Index(index).Aggregations(agg => agg.SumBy(x => x.Weight)));
-            var sum = result.Aggs.GetSum<Car,decimal?>(x => x.Weight);
+            var sum = result.Aggregations.GetSum<Car,decimal?>(x => x.Weight);
 
-            var container = result.Aggs.AsContainer<Car>();
+            var container = result.Aggregations.AsContainer<Car>();
 
             var sum2 = container.GetSum(x => x.Weight);
 
@@ -210,9 +216,9 @@ namespace FluentNest.Tests
                 .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue)
             ));
 
-            var sum = result.Aggs.GetSum<Car,decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
+            var sum = result.Aggregations.GetSum<Car,decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
 
-            var container = result.Aggs.AsContainer<Car>();
+            var container = result.Aggregations.AsContainer<Car>();
 
             var sum2 = container.GetSum(x => x.Weight,c=>c.ConditionalRanking.HasValue);
 
@@ -231,8 +237,8 @@ namespace FluentNest.Tests
                 .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue && x.CarType == "Type1")
             ));
 
-            var sum = result.Aggs.GetSum<Car,decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
-            var sum2 = result.Aggs.GetSum<Car, decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue && c.CarType == "Type1");
+            var sum = result.Aggregations.GetSum<Car,decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
+            var sum2 = result.Aggregations.GetSum<Car, decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue && c.CarType == "Type1");
 
             Check.That(sum).Equals(25m);
             Check.That(sum2).Equals(0m);
@@ -248,8 +254,8 @@ namespace FluentNest.Tests
                 .PercentilesBy(x=>x.Price)
             ));
 
-            var percentiles = result.Aggs.GetPercentile<Car>(x => x.Price);
-            var container = result.Aggs.AsContainer<Car>();
+            var percentiles = result.Aggregations.GetPercentile<Car>(x => x.Price);
+            var container = result.Aggregations.AsContainer<Car>();
 
             Check.That(percentiles).HasSize(7);
             Check.That(container.GetPercentile(x => x.Price)).HasSize(7);
@@ -268,7 +274,7 @@ namespace FluentNest.Tests
                 .MaxBy(x=> x.Length))
             );
 
-            var container = result.Aggs.AsContainer<Car>();
+            var container = result.Aggregations.AsContainer<Car>();
             var min = container.GetMin(x => x.Length);
             var max = container.GetMax(x => x.Length);
 
@@ -287,7 +293,7 @@ namespace FluentNest.Tests
                 .MaxBy(x => x.Timestamp))
             );
 
-            var container = result.Aggs.AsContainer<Car>();
+            var container = result.Aggregations.AsContainer<Car>();
             var min = container.GetMin(x => x.Timestamp);
             var max = container.GetMax(x => x.Timestamp);
 
@@ -306,7 +312,7 @@ namespace FluentNest.Tests
                 .MaxBy(x => x.LastControlCheck))
             );
 
-            var container = result.Aggs.AsContainer<Car>();
+            var container = result.Aggregations.AsContainer<Car>();
             var min = container.GetMin(x => x.LastControlCheck);
             var max = container.GetMax(x => x.LastControlCheck);
 
@@ -325,7 +331,7 @@ namespace FluentNest.Tests
                 .MaxBy(x => x.LastAccident))
             );
 
-            var container = result.Aggs.AsContainer<Car>();
+            var container = result.Aggregations.AsContainer<Car>();
             var min = container.GetMin(x => x.LastAccident);
             var max = container.GetMax(x => x.LastAccident);
 
@@ -347,7 +353,7 @@ namespace FluentNest.Tests
                             .MaxBy(x=>x.PriceLimit)
                             .PercentilesBy(x=> x.PriceLimit)));
 
-            var container = result.Aggs.AsContainer<Car>();
+            var container = result.Aggregations.AsContainer<Car>();
             var min = container.GetMin(x => x.PriceLimit);
             Check.That(min).IsNull();
 
@@ -369,7 +375,7 @@ namespace FluentNest.Tests
                             .MaxBy(x => x.Length)
                             .StatsBy(x => x.Length)));
 
-            var container = result.Aggs.AsContainer<Car>();
+            var container = result.Aggregations.AsContainer<Car>();
             var min = container.GetMin(x => x.Length);
             var max = container.GetMax(x => x.Length);
             var stats = container.GetStats(x => x.Length);
@@ -393,20 +399,20 @@ namespace FluentNest.Tests
                 .FirstBy(x => x.Length)
             ));
 
-            var sum = result.Aggs.GetSum<Car, decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
-            var engineType = result.Aggs.GetFirstBy<Car,EngineType>(x => x.EngineType, c => c.EngineType == EngineType.Diesel);
+            var sum = result.Aggregations.GetSum<Car, decimal?>(x => x.Weight, c => c.ConditionalRanking.HasValue);
+            var engineType = result.Aggregations.GetFirstBy<Car,EngineType>(x => x.EngineType, c => c.EngineType == EngineType.Diesel);
 
             //car type of first sold car
-            var carType = result.Aggs.GetFirstBy<Car, string>(x => x.CarType, c => c.Sold == true);
+            var carType = result.Aggregations.GetFirstBy<Car, string>(x => x.CarType, c => c.Sold == true);
 
-            var firstLength = result.Aggs.GetFirstBy<Car, double>(x => x.Length);
+            var firstLength = result.Aggregations.GetFirstBy<Car, double>(x => x.Length);
 
             Check.That(sum).Equals(25m);
             Check.That(engineType).Equals(EngineType.Diesel);
             Check.That(carType).Equals("type0");
             Check.That(firstLength).Equals(0d);
 
-            var container = result.Aggs.AsContainer<Car>();
+            var container = result.Aggregations.AsContainer<Car>();
             var lengthFromContainer = container.GetFirstBy(x => x.Length);
             Check.That(lengthFromContainer).Equals(0d);
             Client.DeleteIndex(index);
@@ -415,8 +421,10 @@ namespace FluentNest.Tests
         [Fact]
         public void Non_Available_Conditional_Stat()
         {
-            var result = Client.Search<Car>(search => search.Take(10).Aggregations(agg => agg));
-            var exception = Record.Exception(() => result.Aggs.GetCount<Car>(x => x.CarType));
+            var index = CreateTestIndex();
+
+            var result = Client.Search<Car>(search => search.Index(index).Take(10).Aggregations(agg => agg));
+            var exception = Record.Exception(() => result.Aggregations.GetCount<Car>(x => x.CarType));
             Assert.NotNull(exception);
             Assert.IsType<InvalidOperationException>(exception);
             Check.That(exception.Message).Contains("No aggregations");

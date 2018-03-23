@@ -1,8 +1,8 @@
 Write-Host "Starting elasticsearch script"
 
-Invoke-WebRequest "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.1.1.zip" -OutFile .\es.zip;
+Invoke-WebRequest "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.2.3.zip" -OutFile .\es.zip;
 
-$destFolder = "$pwd\elasticsearch-5.1.1";
+$destFolder = "$pwd\elasticsearch-6.2.3";
 
 $shell = new-object -com shell.application;
 
@@ -15,4 +15,4 @@ Expand-Archive -Path es.zip -DestinationPath $pwd
 
 $elasticsearch = "$destFolder\bin\elasticsearch.bat"
 $arguments = "-d"
-Start-Process -NoNewWindow $elasticsearch $arguments
+#Start-Process -NoNewWindow $elasticsearch $arguments
