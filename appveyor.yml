@@ -1,6 +1,6 @@
 branches:
   only:
-    - 5.x
+    - master
 
 version: 5.0.{build}
 
@@ -23,9 +23,9 @@ build:
   publish_nuget: true
   project: FluentNest.sln
 
-# deploy:
-#   provider: NuGet
-#   api_key:
-#     secure: Ax/Zt3hfzLf7jMzb9VqiCsTtGCr3c+sf6pozg3KrCm/d+qZnY2IWFmmbQYws5Frh
-#   skip_symbols: true
-#   artifact: /.*\.nupkg/
+deploy:
+  provider: NuGet
+  api_key:
+    secure: Ax/Zt3hfzLf7jMzb9VqiCsTtGCr3c+sf6pozg3KrCm/d+qZnY2IWFmmbQYws5Frh
+  skip_symbols: true
+  artifact: /.*\.nupkg/

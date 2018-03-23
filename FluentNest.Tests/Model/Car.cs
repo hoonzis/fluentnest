@@ -18,6 +18,7 @@ namespace FluentNest.Tests.Model
         public DateTime Timestamp { get; set; }
         public String CarType { get; set; }
         public EngineType EngineType { get; set; }
+        public EngineType? NullableEngineType { get; set; }
         public decimal? Weight { get; set; } 
         public int? ConditionalRanking { get; set; }
         public decimal? PriceLimit { get; set; }
@@ -30,7 +31,9 @@ namespace FluentNest.Tests.Model
 
         public string BIG_CASE_NAME { get; set; }
 
-        // Of course cars don't have emails, but for my tests it's usefull
+        // Of course cars don't have emails, but for my tests it's useful
         public string Email { get; set; }
+        public DateTime? LastControlCheck { get; set; }
+        public DateTime? LastAccident { get; set; }
     }
 }

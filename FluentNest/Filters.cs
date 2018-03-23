@@ -331,8 +331,7 @@ namespace FluentNest
         public static QueryContainer AndFilteredOn<T>(this QueryContainer queryDescriptor, Expression<Func<T, bool>> filterRule) where T : class
         {
             var filterDescriptor = new QueryContainerDescriptor<T>();
-            var binaryExpression = filterRule.Body as BinaryExpression;
-            var newPartOfQuery = GenerateFilterDescription<T>(binaryExpression);
+            var newPartOfQuery = GenerateFilterDescription<T>(filterRule.Body);
             return filterDescriptor.Bool(x => x.Must(queryDescriptor, newPartOfQuery));            
         }
 
@@ -363,13 +362,16 @@ namespace FluentNest
             {
                 // This is necessary in order to avoid the automatic cast of enums to the underlying integer representation
                 // In some cases the lambda comes in the shape (Convert(EngineType), 0), where 0 represents the first case of the EngineType enum
-                // In such cases, we don't wante the value in the Terms to be 0, but rather we pass the enum value (eg. EngineType.Diesel)
+                // In such cases, we don't want the value in the Terms to be 0, but rather we pass the enum value (e.g. EngineType.Diesel)
                 // and we let the serializer to do it's job and spit out Term("fieldName","diesel") or Term("fieldName","0") depending whether it is converting enums as integers or strings
                 // or anything else
                 var unaryExpression = leftHand as UnaryExpression;
-                if (unaryExpression.Operand.Type.IsEnum)
+                var operandType = unaryExpression.Operand.Type;
+                var underlyingNullableType = Nullable.GetUnderlyingType(operandType);
+                var typeToConsider = underlyingNullableType != null ? underlyingNullableType : operandType;
+                if (typeToConsider.IsEnum)
                 {
-                    valueExpression = Expression.Convert(binaryExpression.Right, unaryExpression.Operand.Type);
+                    valueExpression = Expression.Convert(binaryExpression.Right, operandType);
                 }
             }
 

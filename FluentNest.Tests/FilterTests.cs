@@ -82,11 +82,11 @@ namespace FluentNest.Tests
             var index = AddSimpleTestData();
 
             var carType = "Type0".ToLower();
-            //Standard Nest way of getting the docuements. Values are lowered by ES
+            // Standard Nest way of getting the documents. Values are lowered by ES
             var result = Client.Search<Car>(s => s.Index(index).Query(x => x.Term(f => f.CarType, carType)));
             Check.That(result.Documents).HasSize(5);
             
-            //Best way
+            // Best way
             result = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.CarType == carType));
             Check.That(result.Documents).HasSize(5);
             Client.DeleteIndex(index);
@@ -145,9 +145,23 @@ namespace FluentNest.Tests
 
             var cars = Client.Search<Car>(s => s.Index(index).Query(_ => filter));
             Client.DeleteIndex(index);
-            Check.That(cars.Documents).HasSize(1);            
+            Check.That(cars.Documents).HasSize(1);
         }
-        
+
+        [Fact]
+        public void TestConsecutiveFiltersOnBoolean()
+        {
+            var index = AddSimpleTestData();
+
+            var filter = Filters
+                .CreateFilter<Car>(x => x.Name == "name1" && x.Age >= 5)
+                .AndFilteredOn<Car>(x => x.Active);
+
+            var cars = Client.Search<Car>(s => s.Index(index).Query(_ => filter));
+            Client.DeleteIndex(index);
+            Check.That(cars.Documents).HasSize(1);
+        }
+
         [Fact]
         public void MultipleFiltersAndSomeAggregations()
         {
@@ -202,7 +216,7 @@ namespace FluentNest.Tests
             var allCars = Client.Search<Car>(s=>s.Index(index).FilterOn(f=>f.Active));
             Check.That(allCars.Documents).HasSize(5);
 
-            var filter = Filters.CreateFilter<Car>(x => x.Enabled == true);
+            var filter = Filters.CreateFilter<Car>(x => x.Enabled);
 
             var allCars2 = Client.Search<Car>(s => s.Index(index).Query(_ => filter));
             Check.That(allCars2.Documents).HasSize(5);
