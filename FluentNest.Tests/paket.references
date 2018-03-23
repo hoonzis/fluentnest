@@ -1,4 +1,5 @@
 NEST
+NEST.JsonNetSerializer
 NFluent
 xunit
 xunit.runner.visualstudio

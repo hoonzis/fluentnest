@@ -17,7 +17,7 @@ var result = client.Search<Car>(sc => sc.Aggregations(agg => agg
 	.CardinalityBy(x => x.EngineType)
 );
 
-var container = result.Aggs.AsContainer<Car>();
+var container = result.Aggregations.AsContainer<Car>();
 var priceSum = container.GetSum(x => x.Price);
 var engines = container.GetCardinality(x => x.EngineType);
 ```

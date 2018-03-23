@@ -21,8 +21,8 @@ namespace FluentNest.Tests
             var indexName = "index_" + Guid.NewGuid();
             Client.CreateIndex(indexName, x => x.Mappings(m => m
             .Map<Car>(t => t
-                .Properties(prop => prop.String(str => str.Name(s => s.Guid).Index(FieldIndexOption.NotAnalyzed)))
-                .Properties(prop => prop.String(str => str.Name(s => s.Email).Index(FieldIndexOption.NotAnalyzed)))
+                .Properties(prop => prop.Keyword(str => str.Name(s => s.Guid).Index()))
+                .Properties(prop => prop.Keyword(str => str.Name(s => s.Email).Index()))
             )));
 
             for (int i = 0; i < 10; i++)

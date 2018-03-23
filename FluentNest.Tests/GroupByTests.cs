@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using FluentNest.Tests.Model;
-using Nest;
 using NFluent;
 using Tests;
 using Xunit;
@@ -13,14 +11,21 @@ namespace FluentNest.Tests
 {   
     public class GroupByTests : TestsBase
     {
-        public string AddSimpleTestData()
+        public string CreateTestIndex()
         {
             var indexName = "index_" + Guid.NewGuid();
             Client.CreateIndex(indexName, x => x.Mappings(
                 m => m.Map<Car>(t => t
-            .Properties(prop => prop.Keyword(str => str.Name(s => s.EngineType)))
-            .Properties(prop => prop.Text(str => str.Name(s => s.CarType).Fielddata()))
-            )));
+                    .Properties(prop => prop.Keyword(str => str.Name(s => s.EngineType)))
+                    .Properties(prop => prop.Text(str => str.Name(s => s.CarType).Fielddata()))
+                )));
+
+            return indexName;
+        }
+
+        public string AddSimpleTestData()
+        {
+            var indexName = CreateTestIndex();
 
             for (int i = 0; i < 10; i++)
             {
@@ -66,7 +71,7 @@ namespace FluentNest.Tests
                 )
             );
 
-            var carTypesAgg = result.Aggs.Terms("firstLevel");
+            var carTypesAgg = result.Aggregations.Terms("firstLevel");
 
             foreach (var carType in carTypesAgg.Buckets)
             {
@@ -85,7 +90,7 @@ namespace FluentNest.Tests
                 .GroupBy(b => b.CarType)
             ));
 
-            var aggsContainer = result.Aggs.AsContainer<Car>();
+            var aggsContainer = result.Aggregations.AsContainer<Car>();
             var carTypes = aggsContainer.GetGroupBy(x => x.CarType).ToList();
             Check.That(carTypes).HasSize(3);
             foreach (var carType in carTypes)
@@ -113,9 +118,9 @@ namespace FluentNest.Tests
                 .GroupBy(s => s.EngineType))
             );
 
-            var aggsContainer = result.Aggs.AsContainer<Car>();
+            var aggsContainer = result.Aggregations.AsContainer<Car>();
 
-            var carTypesList = result.Aggs.GetGroupBy<Car>(x => x.EngineType);
+            var carTypesList = result.Aggregations.GetGroupBy<Car>(x => x.EngineType);
             var carTypesDictionary = aggsContainer.GetDictionary(x => x.EngineType);
             
             Check.That(carTypesDictionary).HasSize(2);
@@ -132,7 +137,7 @@ namespace FluentNest.Tests
             var result =
                 Client.Search<Car>(search => search.Index(index).Aggregations(x => x.GroupBy(s => s.Price)));
 
-            var aggsContainer = result.Aggs.AsContainer<Car>();
+            var aggsContainer = result.Aggregations.AsContainer<Car>();
             var carTypes = aggsContainer.GetDictionary(x => x.Price);
             Check.That(carTypes).HasSize(1);
             Check.That(carTypes.Keys).ContainsExactly(10m);
@@ -149,7 +154,7 @@ namespace FluentNest.Tests
                 .GroupBy("engineType")
             ));
 
-            var engineTypes = result.Aggs.GetGroupBy("engineType");
+            var engineTypes = result.Aggregations.GetGroupBy("engineType");
             Check.That(engineTypes).HasSize(2);
             Client.DeleteIndex(index);
         }
@@ -164,7 +169,7 @@ namespace FluentNest.Tests
                 .GroupBy(new List<string> { "engineType", "carType" })
             ));
 
-            var engineTypes = result.Aggs.GetGroupBy("engineType").ToList();
+            var engineTypes = result.Aggregations.GetGroupBy("engineType").ToList();
             Check.That(engineTypes).HasSize(2);
 
             foreach (var engineType in engineTypes)
@@ -186,9 +191,9 @@ namespace FluentNest.Tests
                 .DistinctBy(x => x.EngineType)
             ));
             
-            var engineTypes = result.Aggs.GetDistinct<Car, EngineType>(x => x.EngineType).ToList();
+            var engineTypes = result.Aggregations.GetDistinct<Car, EngineType>(x => x.EngineType).ToList();
 
-            var container = result.Aggs.AsContainer<Car>();
+            var container = result.Aggregations.AsContainer<Car>();
             var distinctCarTypes = container.GetDistinct(x => x.CarType).ToList();
 
             Check.That(distinctCarTypes).IsNotNull();
@@ -214,8 +219,8 @@ namespace FluentNest.Tests
                 )
             );
 
-            var distinctCarTypes = result.Aggs.GetDistinct<Car, string>(x => x.CarType).ToList();
-            var engineTypes = result.Aggs.GetDistinct<Car, EngineType>(x => x.EngineType).ToList();
+            var distinctCarTypes = result.Aggregations.GetDistinct<Car, string>(x => x.CarType).ToList();
+            var engineTypes = result.Aggregations.GetDistinct<Car, EngineType>(x => x.EngineType).ToList();
 
             Check.That(distinctCarTypes).IsNotNull();
             Check.That(distinctCarTypes).HasSize(1);
@@ -240,8 +245,8 @@ namespace FluentNest.Tests
                 .DistinctBy(x => x.EngineType)
             ));
 
-            var distinctCarTypes = result.Aggs.GetDistinct<Car, string>(x => x.CarType).ToList();
-            var engineTypes = result.Aggs.GetDistinct<Car, EngineType>(x => x.EngineType).ToList();
+            var distinctCarTypes = result.Aggregations.GetDistinct<Car, string>(x => x.CarType).ToList();
+            var engineTypes = result.Aggregations.GetDistinct<Car, EngineType>(x => x.EngineType).ToList();
 
             Check.That(distinctCarTypes).IsNotNull();
             Check.That(distinctCarTypes).HasSize(1);
@@ -258,7 +263,7 @@ namespace FluentNest.Tests
         {
             var index = CreateUsersIndex(200, 20);
             var result = Client.Search<User>(sc => sc.Index(index).Aggregations(agg => agg.DistinctBy(x=>x.Nationality)));
-            var nationalities = result.Aggs.GetDistinct<User, string>(x => x.Nationality).ToList();
+            var nationalities = result.Aggregations.GetDistinct<User, string>(x => x.Nationality).ToList();
 
             Check.That(nationalities).IsNotNull();
             Check.That(nationalities).HasSize(20);
@@ -275,7 +280,7 @@ namespace FluentNest.Tests
             ));
 
 
-            var carTypes = result.Aggs.GetGroupBy<Car>(x => x.CarType).ToList();
+            var carTypes = result.Aggregations.GetGroupBy<Car>(x => x.CarType).ToList();
             Check.That(carTypes).HasSize(3);
             foreach (var carType in carTypes)
             {
@@ -300,7 +305,7 @@ namespace FluentNest.Tests
                 .GroupBy(b => b.CarType))
             );
             
-            var carTypes = result.Aggs.GetGroupBy<Car>(x => x.CarType).ToList();
+            var carTypes = result.Aggregations.GetGroupBy<Car>(x => x.CarType).ToList();
             Check.That(carTypes).HasSize(3);
             foreach (var carType in carTypes)
             {
@@ -324,7 +329,7 @@ namespace FluentNest.Tests
                 .GroupBy(b => b.Nationality))
             );
 
-            var userByNationality = result.Aggs.GetGroupBy<User>(x => x.Nationality).ToList();
+            var userByNationality = result.Aggregations.GetGroupBy<User>(x => x.Nationality).ToList();
             Check.That(userByNationality).HasSize(2);
             foreach (var nationality in userByNationality)
             {
@@ -385,7 +390,7 @@ namespace FluentNest.Tests
                 .GroupBy(b => b.Nationality))
             );
 
-            var userByNationality = result.Aggs.GetGroupBy<User>(x => x.Nationality).ToList();
+            var userByNationality = result.Aggregations.GetGroupBy<User>(x => x.Nationality).ToList();
             Check.That(userByNationality).HasSize(10);
             var firstNotionality = userByNationality.Single(x => x.Key == "nationality0");
             
@@ -412,13 +417,13 @@ namespace FluentNest.Tests
         [Fact]
         public void GettingNonExistingGroup_Test()
         {
-            var index = AddSimpleTestData();
+            var index = CreateTestIndex();
 
             var result = Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg
                 .GroupBy(b => b.Emissions)
             ));
 
-            var exception = Record.Exception(() => result.Aggs.GetGroupBy<Car>(x => x.CarType));
+            var exception = Record.Exception(() => result.Aggregations.GetGroupBy<Car>(x => x.CarType));
 
             Assert.NotNull(exception);
             Assert.IsType<InvalidOperationException>(exception);
@@ -428,12 +433,12 @@ namespace FluentNest.Tests
         [Fact]
         public void NoAggregations_On_The_Result_Test()
         {
-            // no data - no aggregations on the result
-            var result = Client.Search<Car>(search => search.Aggregations(agg => agg
-                .GroupBy(b => b.Emissions)
-            ));
+            var index = CreateTestIndex();
 
-            var exception = Record.Exception(() => result.Aggs.GetGroupBy<Car>(x => x.CarType));
+            // no data - no aggregations on the result
+            var result = Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg));
+
+            var exception = Record.Exception(() => result.Aggregations.GetGroupBy<Car>(x => x.EngineType));
 
             Assert.NotNull(exception);
             Assert.IsType<InvalidOperationException>(exception);

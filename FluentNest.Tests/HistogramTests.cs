@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using FluentNest.Tests.Model;
 using Nest;
 using NFluent;
@@ -49,7 +47,7 @@ namespace FluentNest.Tests
                 .GroupBy(x => x.CarType))
             );
 
-            var aggsContainer = histogram.Aggs.AsContainer<Car>();
+            var aggsContainer = histogram.Aggregations.AsContainer<Car>();
 
             var carTypes = aggsContainer.GetDictionary(x => x.CarType, v => v.GetDateHistogram<Car>(f => f.Timestamp));
 
@@ -84,7 +82,7 @@ namespace FluentNest.Tests
                        .Aggregations(
                            aggs => aggs.Sum("priceSum", dField => dField.Field(field => field.Price))))));
 
-            var histogram = result.Aggs.DateHistogram("by_month");
+            var histogram = result.Aggregations.DateHistogram("by_month");
             Check.That(histogram.Buckets).HasSize(10);
             var firstMonth = histogram.Buckets.First();
             var priceSum = firstMonth.Sum("priceSum");
@@ -97,7 +95,7 @@ namespace FluentNest.Tests
                 .IntoDateHistogram(date => date.Timestamp, DateInterval.Month))
             );
 
-            var histogram2 = result.Aggs.GetDateHistogram<Car>(x => x.Timestamp);
+            var histogram2 = result.Aggregations.GetDateHistogram<Car>(x => x.Timestamp);
             Check.That(histogram2).HasSize(10);
             Check.That(histogram2.All(x => x.GetSum<Car, decimal>(s => s.Price) == 10m)).IsTrue();
         }
@@ -116,7 +114,7 @@ namespace FluentNest.Tests
                     .IntoDateHistogram(date => date.Timestamp, DateInterval.Month)
                 ));
 
-            var histogram = result.Aggs.GetDateHistogram<Car>(x => x.Timestamp);
+            var histogram = result.Aggregations.GetDateHistogram<Car>(x => x.Timestamp);
 
             Check.That(histogram).HasSize(3);
             Client.DeleteIndex(index);
@@ -133,7 +131,7 @@ namespace FluentNest.Tests
                     .IntoHistogram(y => y.Length, 5)
                 ));
 
-            var histogram = result.Aggs.GetHistogram<Car>(x => x.Length);
+            var histogram = result.Aggregations.GetHistogram<Car>(x => x.Length);
             Check.That(histogram).HasSize(4);
             Client.DeleteIndex(index);
         }

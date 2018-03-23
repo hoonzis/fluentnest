@@ -178,9 +178,9 @@ namespace FluentNest.Tests
                 .SumBy(x=>x.Age)
             ));
 
-            var sumValue = result.Aggs.GetSum<Car, int>(x => x.Age);
+            var sumValue = result.Aggregations.GetSum<Car, int>(x => x.Age);
 
-            var aggsContainer = result.Aggs.AsContainer<Car>();
+            var aggsContainer = result.Aggregations.AsContainer<Car>();
             var sum2 = aggsContainer.GetSum(x => x.Age);
             Client.DeleteIndex(index);
             Check.That(sumValue).Equals(8);

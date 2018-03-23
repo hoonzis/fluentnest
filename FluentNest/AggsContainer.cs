@@ -8,9 +8,9 @@ namespace FluentNest
 {
     public class AggsContainer<T>
     {
-        private readonly AggregationsHelper aggs;
+        private readonly AggregateDictionary aggs;
 
-        public AggsContainer(AggregationsHelper aggs)
+        public AggsContainer(AggregateDictionary aggs)
         {
             this.aggs = aggs;
         }
@@ -20,22 +20,22 @@ namespace FluentNest
             return aggs.GetCardinality(fieldGetter, filterRule);
         }
 
-        public K GetSum<K>(Expression<Func<T, K>> fieldGetter, Expression<Func<T, object>> filterRule = null)
+        public TValue GetSum<TValue>(Expression<Func<T, TValue>> fieldGetter, Expression<Func<T, object>> filterRule = null)
         {
             return aggs.GetSum(fieldGetter, filterRule);
         }
 
-        public K GetAverage<K>(Expression<Func<T, K>> fieldGetter)
+        public TValue GetAverage<TValue>(Expression<Func<T, TValue>> fieldGetter)
         {
             return aggs.GetAverage(fieldGetter);
         }
 
-        public K GetMin<K>(Expression<Func<T, K>> fieldGetter)
+        public TValue GetMin<TValue>(Expression<Func<T, TValue>> fieldGetter)
         {
             return aggs.GetMin(fieldGetter);
         }
 
-        public K GetMax<K>(Expression<Func<T, K>> fieldGetter)
+        public TValue GetMax<TValue>(Expression<Func<T, TValue>> fieldGetter)
         {
             return aggs.GetMax(fieldGetter);
         }
@@ -45,22 +45,22 @@ namespace FluentNest
             return aggs.GetCount(fieldGetter, filterRule);
         }
 
-        public IEnumerable<V> GetDistinct<V>(Expression<Func<T, V>> fieldGetter)
+        public IEnumerable<TV> GetDistinct<TV>(Expression<Func<T, TV>> fieldGetter)
         {
             return aggs.GetDistinct(fieldGetter);
         }
 
-        public IList<PercentileItem> GetPercentile(Expression<Func<T, Object>> fieldGetter)
+        public IList<PercentileItem> GetPercentile(Expression<Func<T, object>> fieldGetter)
         {
-            return aggs.GetPercentile<T>(fieldGetter);
+            return aggs.GetPercentile(fieldGetter);
         }
 
-        public StatsAggregate GetStats(Expression<Func<T, Object>> fieldGetter)
+        public StatsAggregate GetStats(Expression<Func<T, object>> fieldGetter)
         {
             return aggs.GetStats(fieldGetter);
         }
 
-        public K GetFirstBy<K>(Expression<Func<T, K>> fieldGetter,
+        public TValue GetFirstBy<TValue>(Expression<Func<T, TValue>> fieldGetter,
             Expression<Func<T, object>> filterRule = null)
         {
             return aggs.GetFirstBy(fieldGetter, filterRule);
@@ -71,24 +71,24 @@ namespace FluentNest
             return aggs.GetGroupBy(fieldGetter);
         }
 
-        public IEnumerable<TO> GetGroupBy<TO>(Expression<Func<T, object>> fieldGetter, Func<KeyedBucket<string>, TO> objectTransformer)
+        public IEnumerable<TItem> GetGroupBy<TItem>(Expression<Func<T, object>> fieldGetter, Func<KeyedBucket<string>, TItem> objectTransformer)
         {
             var buckets = aggs.GetGroupBy(fieldGetter);
             return buckets.Select(objectTransformer);
         }
 
-        public IDictionary<TK, TV> GetDictionary<TK, TV>(Expression<Func<T, TK>> keyGetter, Func<KeyedBucket<string>, TV> objectTransformer)
+        public IDictionary<TKey, TValue> GetDictionary<TKey, TValue>(Expression<Func<T, TKey>> keyGetter, Func<KeyedBucket<string>, TValue> objectTransformer)
         {
             var aggName = keyGetter.GetAggName(AggType.GroupBy);
             var buckets = aggs.GetGroupBy(aggName);
-            return buckets.ToDictionary(x => Filters.StringToAnything<TK>(x.Key), objectTransformer);
+            return buckets.ToDictionary(x => Filters.StringToAnything<TKey>(x.Key), objectTransformer);
         }
 
-        public IDictionary<TK, KeyedBucket<string>> GetDictionary<TK>(Expression<Func<T, TK>> keyGetter)
+        public IDictionary<TKey, KeyedBucket<string>> GetDictionary<TKey>(Expression<Func<T, TKey>> keyGetter)
         {
             var aggName = keyGetter.GetAggName(AggType.GroupBy);
             var buckets = aggs.GetGroupBy(aggName);
-            return buckets.ToDictionary(x => Filters.StringToAnything<TK>(x.Key));
+            return buckets.ToDictionary(x => Filters.StringToAnything<TKey>(x.Key));
         }
     }
 }
