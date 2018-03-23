@@ -15,4 +15,4 @@ Expand-Archive -Path es.zip -DestinationPath $pwd
 
 $elasticsearch = "$destFolder\bin\elasticsearch.bat"
 $arguments = "-d"
-#Start-Process -NoNewWindow $elasticsearch $arguments
+Start-Process -NoNewWindow $elasticsearch $arguments
