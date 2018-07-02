@@ -15,7 +15,7 @@ namespace FluentNest.Tests
         private string AddSimpleTestData()
         {
             var indexName = "index_" + Guid.NewGuid();
-       
+
             Client.CreateIndex(indexName, x => x.Mappings(m => m
             .Map<Car>(t => t
                 .Properties(prop => prop.Keyword(str => str.Name(s => s.Guid)))
@@ -38,7 +38,8 @@ namespace FluentNest.Tests
                     Email = "Email@email" + i % 2 + ".com",
                     Age = i + 1,
                     Enabled = i % 2 == 0,
-                    Active = i % 2 == 0
+                    Active = i % 2 == 0,
+                    Weight = i % 3 == 0 ? 10m : (decimal?)null
                 };
                 if (i == 1)
                 {
@@ -61,7 +62,7 @@ namespace FluentNest.Tests
             var endDate = new DateTime(2010, 3, 1);
             var result = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.Timestamp >= startDate && x.Timestamp <= endDate && x.CarType == "type0"));
             Client.DeleteIndex(index);
-            
+
             Check.That(result.Documents).HasSize(2);
         }
 
@@ -75,7 +76,7 @@ namespace FluentNest.Tests
             Client.DeleteIndex(index);
             Check.That(result.Documents).HasSize(1);
         }
-        
+
         [Fact]
         public void TestEqualityFilter()
         {
@@ -85,7 +86,7 @@ namespace FluentNest.Tests
             // Standard Nest way of getting the documents. Values are lowered by ES
             var result = Client.Search<Car>(s => s.Index(index).Query(x => x.Term(f => f.CarType, carType)));
             Check.That(result.Documents).HasSize(5);
-            
+
             // Best way
             result = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.CarType == carType));
             Check.That(result.Documents).HasSize(5);
@@ -101,7 +102,7 @@ namespace FluentNest.Tests
             var endDate = new DateTime(2010, 5, 1);
 
             var result = Client.Search<Car>(s => s.Index(index).Query(
-                q => q.Bool(b => b.Must(left => left.DateRange(f => f.Field(fd => fd.Timestamp).GreaterThan(startDate)), 
+                q => q.Bool(b => b.Must(left => left.DateRange(f => f.Field(fd => fd.Timestamp).GreaterThan(startDate)),
                                         right => right.DateRange(f => f.Field(fd => fd.Timestamp).LessThan(endDate)))
                     )
                 ));
@@ -166,11 +167,11 @@ namespace FluentNest.Tests
         public void MultipleFiltersAndSomeAggregations()
         {
             var index = AddSimpleTestData();
-            
+
             var filter = Filters
                 .CreateFilter<Car>(x => x.Name == "name1" && x.Age >= 5)
                 .AndFilteredOn<Car>(x => x.Email == "Email@email1.com");
-            
+
             var result = Client.Search<Car>(sc => sc
                 .Index(index)
                 .FilterOn(filter)
@@ -222,7 +223,35 @@ namespace FluentNest.Tests
             Check.That(allCars2.Documents).HasSize(5);
             Client.DeleteIndex(index);
         }
-        
+
+        [Fact]
+        public void Null_filter_test()
+        {
+            var index = AddSimpleTestData();
+            var allCars = Client.Search<Car>(sd => sd.Index(index).Query(x => x.Bool(b => b.MustNot(n => n.Exists(c => c.Field(s => s.Weight))))));
+            Check.That(allCars.Documents).HasSize(6);
+
+            var filter = Filters.CreateFilter<Car>(x => x.Weight == null);
+
+            var weightlessCars = Client.Search<Car>(s => s.Index(index).Query(_ => filter));
+            Check.That(weightlessCars.Documents).HasSize(6);
+            Client.DeleteIndex(index);
+        }
+
+        [Fact]
+        public void NotNull_filter_test()
+        {
+            var index = AddSimpleTestData();
+            var allCars = Client.Search<Car>(sd => sd.Index(index).Query(x => x.Bool(b => b.Must(n => n.Exists(c => c.Field(s => s.Weight))))));
+            Check.That(allCars.Documents).HasSize(4);
+
+            var filter = Filters.CreateFilter<Car>(x => x.Weight != null);
+
+            var weightlessCars = Client.Search<Car>(s => s.Index(index).Query(_ => filter));
+            Check.That(weightlessCars.Documents).HasSize(4);
+            Client.DeleteIndex(index);
+        }
+
         [Fact]
         public void Decimal_Two_Side_Range_Test()
         {
