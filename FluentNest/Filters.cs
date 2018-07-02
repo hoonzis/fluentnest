@@ -54,22 +54,30 @@ namespace FluentNest
             return agg.DateHistogram(GetName(fieldGetter), x => x.Field(fieldGetter).Interval(dateInterval));
         }
 
-        private static string GetName<T, TK>(this Expression<Func<T, TK>> exp)
+
+
+        public static string GetName<T, TK>(this Expression<Func<T, TK>> exp)
         {
-            var body = exp.Body as MemberExpression;
-
-            if (body == null)
+            var fromGetFieldName = Names.GetNameFromGetFieldNamed(exp.Body);
+            if (fromGetFieldName != null)
             {
-                var ubody = (UnaryExpression) exp.Body;
-                body = ubody.Operand as MemberExpression;
+                return fromGetFieldName;
+            }
 
-                if (body == null)
+            if (exp.Body is MemberExpression memberBody)
+            {
+                return memberBody.Member.Name;
+            }
+
+            if (exp.Body is UnaryExpression unaryBody)
+            {
+                if (unaryBody.Operand is MemberExpression unaryExpression)
                 {
-                    throw new NotImplementedException("Left side expression too complicated - could not deduce name");
+                    return unaryExpression.Member.Name;
                 }
             }
 
-            return body.Member.Name;
+            throw new NotImplementedException($"Left side expression too complicated - could not deduce name from {exp}");
         }
 
         public static string GetAggName<T, TK>(this Expression<Func<T, TK>> exp, AggType type)
@@ -105,8 +113,7 @@ namespace FluentNest
             var binaryExpression = (BinaryExpression)expression;
 
             var value = GetValue(binaryExpression);
-            var memberAccessor = binaryExpression.Left as MemberExpression;
-            var fieldName = GetFieldNameFromMember(memberAccessor);
+            var fieldName = GetFieldNameFromMemberOrGetFieldNamed(binaryExpression.Left);
             var filterDescriptor = new QueryContainerDescriptor<T>();
 
             if (value is DateTime)
@@ -126,6 +133,12 @@ namespace FluentNest
             throw new InvalidOperationException("Comparison on non-supported type");
         }
 
+        private struct FieldOrExpression<T>
+        {
+            public Field Field;
+            public Expression<Func<T, object>> Expression;
+        }
+
         public static QueryContainer GenerateEqualityFilter<T>(this BinaryExpression binaryExpression) where T : class
         {
             var value = GetValue(binaryExpression);
@@ -136,14 +149,16 @@ namespace FluentNest
 
             var queryContainerDescriptor = new QueryContainerDescriptor<T>();
             var fieldExpression = GetFieldExpression<T>(binaryExpression.Left);
-            return queryContainerDescriptor.Term(fieldExpression, value);
+            return fieldExpression.Expression != null
+                ? queryContainerDescriptor.Term(fieldExpression.Expression, value)
+                : queryContainerDescriptor.Term(fieldExpression.Field, value);
         }
 
         private static QueryContainer GenerateNonExistenceFilter<T>(BinaryExpression binaryExpression) where T : class
         {
             var queryContainerDescriptor = new QueryContainerDescriptor<T>();
             var fieldExpression = GetFieldExpression<T>(binaryExpression.Left);
-            return queryContainerDescriptor.Bool(b => b.MustNot(m => m.Exists(e => e.Field(fieldExpression))));
+            return queryContainerDescriptor.Bool(b => b.MustNot(m => m.Exists(e => e.Field(fieldExpression.Expression ?? fieldExpression.Field))));
         }
 
         public static QueryContainer GenerateNotEqualFilter<T>(this BinaryExpression expression) where T : class
@@ -160,28 +175,53 @@ namespace FluentNest
             return filterDescriptor.Term(fieldName, true);
         }
 
-        public static Expression<Func<T,object>>  GetFieldExpression<T>(this Expression expression)
+        static FieldOrExpression<T> GetFieldExpression<T>(this Expression expression)
         {
+            // We don't generalize between the member & our special method as reconstructing a "fake" expression allow
+            // NEST to use it's custom casing rules but we want a specific name in the other case
+            // (specifying the string in Field ctor)
             var memberExpression = expression as MemberExpression;
             if (memberExpression != null)
             {
-                var memberName = GetFieldNameFromMember(memberExpression);
+                var memberName = GetFieldNameFromMemberOrGetFieldNamed(memberExpression);
                 var param = Expression.Parameter(typeof(T));
                 var body = Expression.Convert(Expression.Property(param, memberName), typeof(object));
                 var exp = Expression.Lambda<Func<T, object>>(body, param);
-                return exp;
+                return new FieldOrExpression<T> {Expression = exp, Field = null};
             }
+
+            if (expression is MethodCallExpression)
+            {
+                var memberName = GetFieldNameFromMemberOrGetFieldNamed(expression);
+                if (memberName != null)
+                {
+                    return new FieldOrExpression<T> {Expression = null, Field = new Field(memberName)};
+                }
+            }
+
             if (expression is UnaryExpression)
             {
                 var unary = expression as UnaryExpression;
                 return GetFieldExpression<T>(unary.Operand);
             }
+
             throw new NotImplementedException();
         }
 
-        public static string GetFieldNameFromMember(this MemberExpression expression)
+        public static string GetFieldNameFromMemberOrGetFieldNamed(this Expression expression)
         {
-            return FirstCharacterToLower(expression.Member.Name);
+            if (expression is MemberExpression memberExpression)
+            {
+                return FirstCharacterToLower(memberExpression.Member.Name);
+            }
+
+            var name = Names.GetNameFromGetFieldNamed(expression);
+            if (name != null)
+            {
+                return name;
+            }
+
+            throw new InvalidOperationException($"Can't get a field name for {expression}");
         }
 
         public static bool IsComparisonType(this ExpressionType expType)
@@ -192,8 +232,7 @@ namespace FluentNest
         public static string GetFieldName(this Expression exp)
         {
             var binary = (BinaryExpression)exp;
-            var memberAccessor = binary.Left as MemberExpression;
-            var fieldName = GetFieldNameFromMember(memberAccessor);
+            var fieldName = GetFieldNameFromMemberOrGetFieldNamed(binary.Left);
             return fieldName;
         }
 
@@ -214,8 +253,7 @@ namespace FluentNest
                         var leftBinary = (BinaryExpression)binaryExpression.Left;
                         var leftValue = GetValue(leftBinary);
 
-                        var memberAccessor = leftBinary.Left as MemberExpression;
-                        var fieldName = GetFieldNameFromMember(memberAccessor);
+                        var fieldName = GetFieldNameFromMemberOrGetFieldNamed(leftBinary.Left);
 
                         var rightBinary = (BinaryExpression)binaryExpression.Right;
                         var rightValue = GetValue(rightBinary);
@@ -284,7 +322,7 @@ namespace FluentNest
                 if (memberExpression.Member.Name == "HasValue")
                 {
                     var parentFieldExpression = (memberExpression.Expression as MemberExpression);
-                    var parentFieldName = GetFieldNameFromMember(parentFieldExpression);
+                    var parentFieldName = GetFieldNameFromMemberOrGetFieldNamed(parentFieldExpression);
 
                     var filterDescriptor = new QueryContainerDescriptor<T>();
                     return filterDescriptor.Exists(x => x.Field(parentFieldName));
@@ -299,6 +337,15 @@ namespace FluentNest
                     {
                         return GenerateBoolFilter<T>(memberExpression);
                     }
+                }
+            }
+
+            if (expType == ExpressionType.Call)
+            {
+                var callExpression = (MethodCallExpression)expression;
+                if (callExpression.Method.ReturnType == typeof(bool) && Names.GetNameFromGetFieldNamed(expression) != null)
+                {
+                    return GenerateBoolFilter<T>(callExpression);
                 }
             }
 

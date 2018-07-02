@@ -7,9 +7,50 @@ namespace FluentNest
 {
     public static class Statistics
     {
+        static Func<AggregationContainerDescriptor<T>, AggregationContainerDescriptor<T>> GetAggregationFuncFromGetFieldNamed<T>(Expression<Func<T, object>> fieldGetter, AggType aggType) where T : class
+        {
+            var name = Names.GetNameFromGetFieldNamed(fieldGetter.Body);
+
+            if (name == null)
+            {
+                return null;
+            }
+
+            var namedField = new Field(name);
+            var aggName = fieldGetter.GetAggName(aggType);
+            switch (aggType)
+            {
+                case AggType.Sum:
+                    return x => x.Sum(aggName, field => field.Field(namedField));
+                case AggType.Count:
+                    return x => x.ValueCount(aggName, field => field.Field(namedField));
+                case AggType.Average:
+                    return x => x.Average(aggName, field => field.Field(namedField));
+                case AggType.Cardinality:
+                    return x => x.Cardinality(aggName, field => field.Field(namedField));
+                case AggType.Stats:
+                    return x => x.Stats(aggName, field => field.Field(namedField));
+                case AggType.Max:
+                    return x => x.Max(aggName, field => field.Field(namedField));
+                case AggType.Min:
+                    return x => x.Min(aggName, field => field.Field(namedField));
+                case AggType.First:
+                    return x => x.Terms(aggName, field => field.Field(namedField));
+                case AggType.Percentile:
+                    return x => x.Percentiles(aggName, field => field.Field(namedField));
+            }
+
+            throw new NotImplementedException();
+        }
 
         public static Func<AggregationContainerDescriptor<T>, AggregationContainerDescriptor<T>>  GetAggregationFunc<T>(Expression<Func<T, object>> fieldGetter, AggType aggType) where T : class
         {
+            var fromGetFieldNamed = GetAggregationFuncFromGetFieldNamed(fieldGetter, aggType);
+            if (fromGetFieldNamed != null)
+            {
+                return fromGetFieldNamed;
+            }
+
             var aggName = fieldGetter.GetAggName(aggType);
             switch (aggType)
             {
@@ -54,7 +95,7 @@ namespace FluentNest
         {
             return agg.GetStatsDescriptor(fieldGetter, AggType.Sum, filterRule);
         }
-        
+
         public static AggregationContainerDescriptor<T> CountBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
         {
             return agg.GetStatsDescriptor(fieldGetter, AggType.Count, filterRule);
@@ -64,7 +105,7 @@ namespace FluentNest
         {
             return agg.GetStatsDescriptor(fieldGetter, AggType.Cardinality, filterRule);
         }
-        
+
         public static AggregationContainerDescriptor<T> AverageBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, Expression<Func<T, bool>> filterRule = null) where T : class
         {
             return agg.GetStatsDescriptor(fieldGetter, AggType.Average, filterRule);
