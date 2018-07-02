@@ -127,11 +127,23 @@ namespace FluentNest
         }
 
         public static QueryContainer GenerateEqualityFilter<T>(this BinaryExpression binaryExpression) where T : class
-        {           
+        {
             var value = GetValue(binaryExpression);
+            if (value == null)
+            {
+                return GenerateNonExistenceFilter<T>(binaryExpression);
+            }
+
             var queryContainerDescriptor = new QueryContainerDescriptor<T>();
             var fieldExpression = GetFieldExpression<T>(binaryExpression.Left);
             return queryContainerDescriptor.Term(fieldExpression, value);
+        }
+
+        private static QueryContainer GenerateNonExistenceFilter<T>(BinaryExpression binaryExpression) where T : class
+        {
+            var queryContainerDescriptor = new QueryContainerDescriptor<T>();
+            var fieldExpression = GetFieldExpression<T>(binaryExpression.Left);
+            return queryContainerDescriptor.Bool(b => b.MustNot(m => m.Exists(e => e.Field(fieldExpression))));
         }
 
         public static QueryContainer GenerateNotEqualFilter<T>(this BinaryExpression expression) where T : class
@@ -147,7 +159,7 @@ namespace FluentNest
             var fieldName = expression.GenerateFilterName();
             return filterDescriptor.Term(fieldName, true);
         }
-        
+
         public static Expression<Func<T,object>>  GetFieldExpression<T>(this Expression expression)
         {
             var memberExpression = expression as MemberExpression;
@@ -184,11 +196,11 @@ namespace FluentNest
             var fieldName = GetFieldNameFromMember(memberAccessor);
             return fieldName;
         }
-        
+
         public static QueryContainer GenerateFilterDescription<T>(this Expression expression) where T:class
         {
             var expType = expression.NodeType;
-            
+
             if (expType == ExpressionType.AndAlso)
             {
                 var binaryExpression = (BinaryExpression)expression;
@@ -201,7 +213,7 @@ namespace FluentNest
                         //we supose that on left hand and right hand we have a binary expressions
                         var leftBinary = (BinaryExpression)binaryExpression.Left;
                         var leftValue = GetValue(leftBinary);
-                        
+
                         var memberAccessor = leftBinary.Left as MemberExpression;
                         var fieldName = GetFieldNameFromMember(memberAccessor);
 
@@ -214,7 +226,7 @@ namespace FluentNest
                 var rightFilter = GenerateFilterDescription<T>(binaryExpression.Right);
                 var filterDescriptor = new QueryContainerDescriptor<T>();
 
-                
+
                 // Detecting a series of And filters
                 var leftSide = binaryExpression.Left;
                 var accumulatedExpressions = new List<Expression>();
@@ -245,7 +257,7 @@ namespace FluentNest
                 var leftFilter = GenerateFilterDescription<T>(binaryExpression.Left);
                 return filterDescriptor.Bool(s => s.Must(leftFilter, rightFilter));
             }
-            
+
             if (expType == ExpressionType.Or || expType == ExpressionType.OrElse)
             {
                 var binaryExpression = (BinaryExpression)expression;
@@ -300,10 +312,10 @@ namespace FluentNest
             {
                 return GenerateNotEqualFilter<T>(expression as BinaryExpression);
             }
-            
+
             throw  new NotImplementedException();
         }
-        
+
         public static SearchDescriptor<T> FilterOn<T>(this SearchDescriptor<T> searchDescriptor, Expression<Func<T, bool>> filterRule) where T : class
         {
             var filterDescriptor = GenerateFilterDescription<T>(filterRule.Body);
@@ -332,7 +344,7 @@ namespace FluentNest
         {
             var filterDescriptor = new QueryContainerDescriptor<T>();
             var newPartOfQuery = GenerateFilterDescription<T>(filterRule.Body);
-            return filterDescriptor.Bool(x => x.Must(queryDescriptor, newPartOfQuery));            
+            return filterDescriptor.Bool(x => x.Must(queryDescriptor, newPartOfQuery));
         }
 
         public static QueryContainer AndValueWithin<T>(this QueryContainer queryDescriptor, Expression<Func<T, Object>> fieldGetter, IEnumerable<string> list) where T : class
