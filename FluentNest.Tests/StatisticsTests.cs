@@ -44,7 +44,7 @@ namespace FluentNest.Tests
             Client.Flush(indexName);
             return indexName;
         }
-        
+
         [Fact]
         public void ConditionalStats_Without_FluentNest()
         {
@@ -52,7 +52,7 @@ namespace FluentNest.Tests
             var result = Client.Search<Car>(search => search.Index(index)
                 .Aggregations(agg => agg
                     .Filter("filterOne", f => f.Filter(innerFilter => innerFilter.Term(fd => fd.EngineType, EngineType.Diesel))
-                    .Aggregations(innerAgg => innerAgg.Sum("sumAgg", innerField => 
+                    .Aggregations(innerAgg => innerAgg.Sum("sumAgg", innerField =>
                         innerField.Field(field => field.Price)))
                     )
                     .Filter("filterTwo", f => f.Filter(innerFilter => innerFilter.Term(fd => fd.CarType, "type1"))
@@ -121,7 +121,7 @@ namespace FluentNest.Tests
         public void MultipleAggregationsInSingleAggregation()
         {
             var index = AddSimpleTestData();
-            
+
             var result = Client.Search<Car>(s => s.Index(index).Aggregations(agg => agg
                 .CountBy(x => x.Name, c => c.EngineType == EngineType.Diesel)
                 .SumBy(x => x.Price)
@@ -148,7 +148,7 @@ namespace FluentNest.Tests
         public void MultipleAggregationsInSingleAggregation_ReversingOrder()
         {
             var index = AddSimpleTestData();
-            
+
             var result = Client.Search<Car>(s => s.Index(index).Aggregations(agg => agg
                 .SumBy(x => x.Price)
                 .AverageBy(x => x.Length)
@@ -156,7 +156,7 @@ namespace FluentNest.Tests
                 .CountBy(x => x.Name, c => c.EngineType == EngineType.Diesel)
                 .SumBy(x => x.Price, c => c.CarType == "type1")
             ));
-            
+
             var priceSum = result.Aggs.GetSum<Car, decimal>(x => x.Price);
             var avgLength = result.Aggs.GetAverage<Car,double>(x => x.Length);
             var count = result.Aggs.GetCount<Car>(x => x.CarType);
@@ -202,10 +202,27 @@ namespace FluentNest.Tests
         }
 
         [Fact]
+        public void SumOfNamedField()
+        {
+            var index = AddSimpleTestData();
+            var sc = new SearchDescriptor<Car>().Index(index).Aggregations(agg => agg.SumBy(x => x.GetFieldNamed<decimal?>("weight")));
+            var result = Client.Search<Car>(sc);
+            var sum = result.Aggs.GetSum<Car, decimal?>(x => x.GetFieldNamed<decimal?>("weight"));
+
+            var container = result.Aggs.AsContainer<Car>();
+
+            var sum2 = container.GetSum(x => x.GetFieldNamed<decimal?>("weight"));
+
+            Check.That(sum).Equals(50m);
+            Check.That(sum2).Equals(50m);
+            Client.DeleteIndex(index);
+        }
+
+        [Fact]
         public void Condition_Equals_Not_Null_Test()
         {
             var index = AddSimpleTestData();
-            
+
             var result = Client.Search<Car>(sc => sc.Index(index).Aggregations(agg => agg
                 .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue)
             ));
@@ -225,7 +242,7 @@ namespace FluentNest.Tests
         public void Two_Conditional_Sums_Similar_Condition_One_More_Restrained()
         {
             var index = AddSimpleTestData();
-            
+
             var result = Client.Search<Car>(sc => sc.Index(index).Aggregations(agg => agg
                 .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue)
                 .SumBy(x => x.Weight, x => x.ConditionalRanking.HasValue && x.CarType == "Type1")
@@ -243,7 +260,7 @@ namespace FluentNest.Tests
         public void Percentiles_Test()
         {
             var index = AddSimpleTestData();
-            
+
             var result = Client.Search<Car>(sc => sc.Index(index).Aggregations(agg => agg
                 .PercentilesBy(x=>x.Price)
             ));
@@ -379,7 +396,7 @@ namespace FluentNest.Tests
             Check.That(max).Equals(9d);
             Client.DeleteIndex(index);
         }
-        
+
         [Fact]
         public void FirstByTests()
         {
