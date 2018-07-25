@@ -30,12 +30,49 @@ namespace FluentNest
                 return null;
             }
 
-            if (!(methodCall.Arguments[1] is ConstantExpression nameParam) || nameParam.Type != typeof(string))
+            if (!(methodCall.Arguments[1] is Expression nameParam) || nameParam.Type != typeof(string))
             {
                 return null;
             }
 
-            return (string)nameParam.Value;
+            return GetStringOf(nameParam);
+        }
+
+        private static string GetStringOf(Expression expr)
+        {
+            if (expr.Type != typeof(string))
+            {
+                throw new InvalidOperationException("string only");
+            }
+
+            if (expr is ConstantExpression constant)
+            {
+                return (string)constant.Value;
+            }
+
+            if (expr is MemberExpression memberExpr && memberExpr.Expression is ConstantExpression target)
+            {
+                if (memberExpr.Member.MemberType == MemberTypes.Field)
+                {
+                    FieldInfo fi = (FieldInfo)memberExpr.Member;
+                    return (string)fi.GetValue(target.Value);
+                }
+                else
+                {
+                    PropertyInfo pi = (PropertyInfo)memberExpr.Member;
+                    return (string)pi.GetValue(target.Value);
+                }
+            }
+
+            if (expr is BinaryExpression methodCall && methodCall.NodeType == ExpressionType.Add)
+            {
+                var left = GetStringOf(methodCall.Left);
+                var right = GetStringOf(methodCall.Right);
+                return left + right;
+            }
+
+            var lambda = (Expression<Func<string>>)Expression.Lambda(expr);
+            return lambda.Compile().Invoke();
         }
 
         public static string GenerateFilterName(this Expression expression)

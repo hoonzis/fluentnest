@@ -306,6 +306,20 @@ namespace FluentNest.Tests
             var sc = new SearchDescriptor<Car>().FilterOn(x => x.GetFieldNamed<bool>("sold") && x.GetFieldNamed<int>("age") < 6 && x.GetFieldNamed<decimal>("emissions") < 5);
             CheckSD(sc, "Three_Ands_Test");
         }
+
+        [Fact]
+        public void Concatenated_custom_Field_Name_Test()
+        {
+            var old = "old";
+
+            DoTest(old);
+
+            void DoTest(string o)
+            {
+                var sc = new SearchDescriptor<Car>().FilterOn(x => x.GetFieldNamed<bool>("s" + o) && x.GetFieldNamed<int>("age") < 6 && x.GetFieldNamed<decimal>("emissions") < 5);
+                CheckSD(sc, "Three_Ands_Test");
+            }
+        }
     }
 }
 
