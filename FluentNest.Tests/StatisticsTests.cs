@@ -219,6 +219,29 @@ namespace FluentNest.Tests
         }
 
         [Fact]
+        public void SumOfConcatenatedNamedField()
+        {
+            DoTest("eight");
+
+            void DoTest(string s)
+            {
+                var index = AddSimpleTestData();
+                var sc = new SearchDescriptor<Car>().Index(index)
+                    .Aggregations(agg => agg.SumBy(x => x.GetFieldNamed<decimal?>("w" + s)));
+                var result = Client.Search<Car>(sc);
+                var sum = result.Aggs.GetSum<Car, decimal?>(x => x.GetFieldNamed<decimal?>("w" + s));
+
+                var container = result.Aggs.AsContainer<Car>();
+
+                var sum2 = container.GetSum(x => x.GetFieldNamed<decimal?>("w" + s));
+
+                Check.That(sum).Equals(50m);
+                Check.That(sum2).Equals(50m);
+                Client.DeleteIndex(index);
+            }
+        }
+
+        [Fact]
         public void Condition_Equals_Not_Null_Test()
         {
             var index = AddSimpleTestData();
