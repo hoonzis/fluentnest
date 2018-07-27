@@ -280,7 +280,7 @@ namespace FluentNest.Tests
         [Fact]
         public void Three_Ands_Test()
         {
-            var sc = new SearchDescriptor<Car>().FilterOn(x => x.Sold == true && x.Age < 6 && x.Emissions < 5);
+            var sc = new SearchDescriptor<Car>().FilterOn(x => x.Sold && x.Age < 6 && x.Emissions < 5);
             CheckSD(sc, "Three_Ands_Test");
         }
 
@@ -298,6 +298,27 @@ namespace FluentNest.Tests
             var filter = Filters.CreateFilter<Car>(x => x.Age > 8);
             var sc = new SearchDescriptor<Car>().FilterOn(filter.AndValueWithin<Car>(x=>x.Name, new List<string> { "name1", "name2" } ));
             CheckSD(sc, "Filter_ValueWithin_AddedOnExistingFilter");
+        }
+
+        [Fact]
+        public void Custom_Field_Name_Test()
+        {
+            var sc = new SearchDescriptor<Car>().FilterOn(x => x.GetFieldNamed<bool>("sold") && x.GetFieldNamed<int>("age") < 6 && x.GetFieldNamed<decimal>("emissions") < 5);
+            CheckSD(sc, "Three_Ands_Test");
+        }
+
+        [Fact]
+        public void Concatenated_custom_Field_Name_Test()
+        {
+            var old = "old";
+
+            DoTest(old);
+
+            void DoTest(string o)
+            {
+                var sc = new SearchDescriptor<Car>().FilterOn(x => x.GetFieldNamed<bool>("s" + o) && x.GetFieldNamed<int>("age") < 6 && x.GetFieldNamed<decimal>("emissions") < 5);
+                CheckSD(sc, "Three_Ands_Test");
+            }
         }
     }
 }
