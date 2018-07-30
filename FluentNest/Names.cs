@@ -11,7 +11,7 @@ namespace FluentNest
             throw new InvalidOperationException("This method should be used in extensions.");
         }
 
-        private static MethodInfo getFieldNamedMethod = typeof(Names).GetMethod("GetFieldNamed");
+        private static readonly MethodInfo getFieldNamedMethod = typeof(Names).GetMethod("GetFieldNamed");
 
         public static string GetNameFromGetFieldNamed(Expression expression)
         {
