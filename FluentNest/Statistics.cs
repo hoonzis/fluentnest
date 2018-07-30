@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.Remoting.Messaging;
 using Nest;
@@ -139,29 +140,44 @@ namespace FluentNest
         public static AggregationContainerDescriptor<T> DistinctBy<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter) where T : class
         {
             var aggName = fieldGetter.GetAggName(AggType.Distinct);
+            var namedField = Names.GetNameFromGetFieldNamed(fieldGetter.Body);
+
+            if (namedField != null)
+            {
+                return agg.Terms(aggName, x => x.Field(namedField).Size(int.MaxValue));
+            }
+
             return agg.Terms(aggName, x => x.Field(fieldGetter).Size(int.MaxValue));
         }
 
-        public static AggregationContainerDescriptor<T> TopHits<T>(this AggregationContainerDescriptor<T> agg, int size, params Expression<Func<T, object>>[] fieldGetter) where T : class
+        public static AggregationContainerDescriptor<T> TopHits<T>(this AggregationContainerDescriptor<T> agg, int size, params Expression<Func<T, object>>[] fieldGetters) where T : class
         {
             var aggName = AggType.TopHits.ToString();
-            return agg.TopHits(aggName, x => x.Size(size).Source(i=>i.Includes(f=>f.Fields(fieldGetter))));
+
+            var namedFields = fieldGetters.Select(x => Names.GetNameFromGetFieldNamed(x.Body)).Where(x => !string.IsNullOrEmpty(x)).ToArray();
+            var fieldGettersWithoutNamedFields = fieldGetters.Where(x => Names.GetNameFromGetFieldNamed(x.Body) == null).ToArray();
+
+            return agg.TopHits(aggName, x => x.Size(size).Source(i => i.Includes(f => f.Fields(fieldGettersWithoutNamedFields).Fields(namedFields))));
         }
 
         public static AggregationContainerDescriptor<T> SortedTopHits<T>(this AggregationContainerDescriptor<T> agg, int size, Expression<Func<T, object>> fieldSort,SortType sorttype, params Expression<Func<T, object>>[] fieldGetter) where T : class
         {
             var aggName = sorttype + fieldSort.GetAggName(AggType.TopHits);
             var sortFieldDescriptor = new SortFieldDescriptor<T>();
-            sortFieldDescriptor = sortFieldDescriptor.Field(fieldSort);
-            if (sorttype == SortType.Ascending)
+            var name = Names.GetNameFromGetFieldNamed(fieldSort.Body);
+
+            if (name != null)
             {
-                sortFieldDescriptor = sortFieldDescriptor.Ascending();
+                var namedField = new Field(name);
+                sortFieldDescriptor = sortFieldDescriptor.Field(namedField);
             }
             else
             {
-                sortFieldDescriptor = sortFieldDescriptor.Descending();
+                sortFieldDescriptor = sortFieldDescriptor.Field(fieldSort);
             }
-            return agg.TopHits(aggName, x => x.Size(size).Source(i => i.Includes(f=>f.Fields(fieldGetter))).Sort(s=>sortFieldDescriptor));
+
+            sortFieldDescriptor = sorttype == SortType.Ascending ? sortFieldDescriptor.Ascending() : sortFieldDescriptor.Descending();
+            return agg.TopHits(aggName, x => x.Size(size).Source(i => i.Includes(f => f.Fields(fieldGetter))).Sort(s => sortFieldDescriptor));
         }
     }
 }
