@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using FluentNest.Tests.Model;
+using Nest;
 using NFluent;
 using Tests;
 using Xunit;
