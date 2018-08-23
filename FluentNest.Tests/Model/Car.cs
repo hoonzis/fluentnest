@@ -35,5 +35,7 @@ namespace FluentNest.Tests.Model
         public string Email { get; set; }
         public DateTime? LastControlCheck { get; set; }
         public DateTime? LastAccident { get; set; }
+
+        public string[] PreviousOwners { get; set; }
     }
 }
