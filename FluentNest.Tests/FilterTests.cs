@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using FluentNest.Tests.Model;
 using Nest;
 using NFluent;
@@ -20,6 +21,7 @@ namespace FluentNest.Tests
             .Map<Car>(t => t
                 .Properties(prop => prop.Keyword(str => str.Name(s => s.Guid)))
                 .Properties(prop => prop.Keyword(str => str.Name(s => s.Email)))
+                .Properties(prop => prop.Keyword(str => str.Name(s => s.PreviousOwners)))
             )));
 
             var cars = new List<Car>();
@@ -39,7 +41,8 @@ namespace FluentNest.Tests
                     Age = i + 1,
                     Enabled = i % 2 == 0,
                     Active = i % 2 == 0,
-                    Weight = i % 3 == 0 ? 10m : (decimal?)null
+                    Weight = i % 3 == 0 ? 10m : (decimal?)null,
+                    PreviousOwners = i % 2 == 0 ? null : i % 3 == 0 ? new string[0] : Enumerable.Range(0, i).Select(n => $"Owner n°{n}").ToArray()
                 };
                 if (i == 1)
                 {
@@ -267,6 +270,36 @@ namespace FluentNest.Tests
             var index = AddSimpleTestData();
             var result = Client.Search<Car>(sc => sc.Index(index).FilterOn(x => x.Guid == MyFavoriteGuid));
             Check.That(result.Documents).HasSize(1);
+            Client.DeleteIndex(index);
+        }
+
+        [Fact]
+        public void Filter_ValueWithin_SingleItem()
+        {
+            var item = "Owner n°0";
+            var index = AddSimpleTestData();
+            var result = Client.Search<Car>(sc => sc.Index(index).FilterOn(Filters.ValueWithin<Car>(x => x.PreviousOwners, item)));
+            Check.That(result.Documents).Not.HasSize(0);
+            foreach (var previousOwners in result.Documents.Select(d => d.PreviousOwners))
+            {
+                Check.That(previousOwners).Contains(item);
+            }
+
+            Client.DeleteIndex(index);
+        }
+
+        [Fact]
+        public void Filter_ValueWithin_MultipleItems()
+        {
+            var items = new[] { "Owner n°0", "Onwer n°1" };
+            var index = AddSimpleTestData();
+            var result = Client.Search<Car>(sc => sc.Index(index).FilterOn(Filters.ValueWithin<Car>(x => x.PreviousOwners, items)));
+            Check.That(result.Documents).Not.HasSize(0);
+            foreach (var previousOwners in result.Documents.Select(d => d.PreviousOwners))
+            {
+                Check.That(previousOwners.Join(items, a => a, b => b, (a, b) => 0)).Not.HasSize(0);
+            }
+
             Client.DeleteIndex(index);
         }
 

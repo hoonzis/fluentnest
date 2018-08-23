@@ -402,6 +402,14 @@ namespace FluentNest
             return filterDescriptor.Bool(x => x.Must(queryDescriptor, newPartOfQuery));
         }
 
+        public static QueryContainer AndValueWithin<T>(this QueryContainer queryDescriptor, Expression<Func<T, Object>> fieldGetter, string item) where T : class
+        {
+            var filterDescriptor = new QueryContainerDescriptor<T>();
+            var newFilter = new QueryContainerDescriptor<T>();
+            var newPartOfQuery = newFilter.Term(term => term.Value(item).Field(fieldGetter));
+            return filterDescriptor.Bool(x => x.Must(queryDescriptor, newPartOfQuery));
+        }
+
         public static QueryContainer CreateFilter<T>(Expression<Func<T, bool>> filterRule) where T : class
         {
             return GenerateFilterDescription<T>(filterRule);
@@ -410,6 +418,11 @@ namespace FluentNest
         public static QueryContainer ValueWithin<T>(Expression<Func<T, object>> propertyGetter, IEnumerable<string> list) where T : class
         {
             return new QueryContainerDescriptor<T>().AndValueWithin(propertyGetter, list);
+        }
+
+        public static QueryContainer ValueWithin<T>(Expression<Func<T, object>> propertyGetter, string item) where T : class
+        {
+            return new QueryContainerDescriptor<T>().AndValueWithin(propertyGetter, item);
         }
 
         private static object GetValue(BinaryExpression binaryExpression)
