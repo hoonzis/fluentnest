@@ -278,7 +278,7 @@ namespace FluentNest.Tests
         {
             var item = "Owner n°0";
             var index = AddSimpleTestData();
-            var result = Client.Search<Car>(sc => sc.Index(index).FilterOn(Filters.ValueWithin<Car>(x => x.PreviousOwners, item)).TypedKeys(null));
+            var result = Client.Search<Car>(sc => sc.Index(index).FilterOn(Filters.ValueWithin<Car>(x => x.PreviousOwners, item)));
             Check.That(result.Documents).Not.HasSize(0);
             foreach (var previousOwners in result.Documents.Select(d => d.PreviousOwners))
             {
@@ -293,7 +293,7 @@ namespace FluentNest.Tests
         {
             var items = new[] { "Owner n°0", "Onwer n°1" };
             var index = AddSimpleTestData();
-            var result = Client.Search<Car>(sc => sc.Index(index).FilterOn(Filters.ValueWithin<Car>(x => x.PreviousOwners, items)).TypedKeys(null));
+            var result = Client.Search<Car>(sc => sc.Index(index).FilterOn(Filters.ValueWithin<Car>(x => x.PreviousOwners, items)));
             Check.That(result.Documents).Not.HasSize(0);
             foreach (var previousOwners in result.Documents.Select(d => d.PreviousOwners))
             {
