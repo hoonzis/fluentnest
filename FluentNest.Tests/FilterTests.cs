@@ -55,13 +55,26 @@ namespace FluentNest.Tests
             return indexName;
         }
 
-
         [Fact]
         public void DateComparisonAndTerm()
         {
             var index = AddSimpleTestData();
 
             var startDate = new DateTime(2010, 1, 1);
+            var endDate = new DateTime(2010, 3, 1);
+            var result = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.Timestamp >= startDate && x.Timestamp <= endDate && x.CarType == "type0"));
+            Client.DeleteIndex(index);
+
+            Check.That(result.Documents).HasSize(2);
+        }
+
+
+        [Fact]
+        public void NullableDateComparisonAndTerm()
+        {
+            var index = AddSimpleTestData();
+
+            DateTime? startDate = null;
             var endDate = new DateTime(2010, 3, 1);
             var result = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.Timestamp >= startDate && x.Timestamp <= endDate && x.CarType == "type0"));
             Client.DeleteIndex(index);
