@@ -113,23 +113,28 @@ namespace FluentNest
             var binaryExpression = (BinaryExpression)expression;
 
             var value = GetValue(binaryExpression);
+
+            if (value == null)
+            {
+                // if the value is null, no filters are added
+                return new QueryContainer();
+            }
+
             var fieldName = GetFieldNameFromMemberOrGetFieldNamed(binaryExpression.Left);
             var filterDescriptor = new QueryContainerDescriptor<T>();
 
-            if (value is DateTime)
+            switch (value)
             {
-                return filterDescriptor.DateRange(x => x.RangeOnDate(type, (DateTime)value).Field(fieldName));
+                case DateTime time:
+                    return filterDescriptor.DateRange(x => x.RangeOnDate(type, time).Field(fieldName));
+                case double _:
+                case decimal _:
+                    return filterDescriptor.Range(x => x.RangeOnNumber(type, Convert.ToDouble(value)).Field(fieldName));
+                case int _:
+                case long _:
+                    return filterDescriptor.Range(x => x.RangeOnNumber(type, Convert.ToInt64(value)).Field(fieldName));
             }
 
-            if (value is double || value is decimal)
-            {
-                return filterDescriptor.Range(x => x.RangeOnNumber(type, Convert.ToDouble(value)).Field(fieldName));
-            }
-
-            if (value is int || value is long)
-            {
-                return filterDescriptor.Range(x => x.RangeOnNumber(type, Convert.ToInt64(value)).Field(fieldName));
-            }
             throw new InvalidOperationException("Comparison on non-supported type");
         }
 
@@ -210,9 +215,12 @@ namespace FluentNest
 
         public static string GetFieldNameFromMemberOrGetFieldNamed(this Expression expression)
         {
-            if (expression is MemberExpression memberExpression)
+            switch (expression)
             {
-                return FirstCharacterToLower(memberExpression.Member.Name);
+                case UnaryExpression unaryExpression when unaryExpression.NodeType == ExpressionType.Convert:
+                    return GetFieldNameFromMemberOrGetFieldNamed(unaryExpression.Operand);
+                case MemberExpression memberExpression:
+                    return FirstCharacterToLower(memberExpression.Member.Name);
             }
 
             var name = Names.GetNameFromGetFieldNamed(expression);
