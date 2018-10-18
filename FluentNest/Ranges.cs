@@ -1,9 +1,9 @@
-﻿using System;
-using System.Linq.Expressions;
-using Nest;
-
-namespace FluentNest
+﻿namespace FluentNest
 {
+    using System;
+    using System.Linq.Expressions;
+    using Nest;
+
     public static class Ranges
     {
         public static DateRangeQueryDescriptor<T> RangeOnDate<T>(this DateRangeQueryDescriptor<T> filterDescriptor, ExpressionType type, DateTime value) where T : class

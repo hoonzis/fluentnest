@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
-using Nest;
-
-namespace FluentNest
+﻿namespace FluentNest
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Linq.Expressions;
+    using Nest;
+
     public static class StatisticsGetters
     {
         /// <summary>
@@ -85,7 +82,7 @@ namespace FluentNest
             var aggName = fieldGetter.GetAggName(AggType.First);
             aggWithResult.CheckForAggregationInResult(aggName);
             var termsAgg = aggWithResult.Terms(aggName);
-            return Filters.StringToAnything<TK>(termsAgg.Buckets.First().Key);
+            return termsAgg.Buckets.First().Key.StringToAnything<TK>();
         }
 
         public static TK GetAverage<T,TK>(this AggregateDictionary aggs, Expression<Func<T, TK>> fieldGetter, Expression<Func<T, object>> filterRule = null)
@@ -151,7 +148,7 @@ namespace FluentNest
             var targetType = typeof(V);
             if (targetType.IsEnum)
             {
-                return itemsTerms.Buckets.Select((x => Filters.Parse<V>(x.Key)));
+                return itemsTerms.Buckets.Select((x => x.Key.ParseEnum<V>()));
             }
 
             if (targetType == typeof(string))

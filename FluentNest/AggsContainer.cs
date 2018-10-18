@@ -81,14 +81,14 @@ namespace FluentNest
         {
             var aggName = keyGetter.GetAggName(AggType.GroupBy);
             var buckets = aggs.GetGroupBy(aggName);
-            return buckets.ToDictionary(x => Filters.StringToAnything<TKey>(x.Key), objectTransformer);
+            return buckets.ToDictionary(x => x.Key.StringToAnything<TKey>(), objectTransformer);
         }
 
         public IDictionary<TKey, KeyedBucket<string>> GetDictionary<TKey>(Expression<Func<T, TKey>> keyGetter)
         {
             var aggName = keyGetter.GetAggName(AggType.GroupBy);
             var buckets = aggs.GetGroupBy(aggName);
-            return buckets.ToDictionary(x => Filters.StringToAnything<TKey>(x.Key));
+            return buckets.ToDictionary(x => x.Key.StringToAnything<TKey>());
         }
     }
 }
