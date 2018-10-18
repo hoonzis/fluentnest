@@ -1,15 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using Nest;
+﻿
 
 namespace FluentNest
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq.Expressions;
+    using Nest;
+
     public static class Statistics
     {
         static Func<AggregationContainerDescriptor<T>, AggregationContainerDescriptor<T>> GetAggregationFuncFromGetFieldNamed<T>(Expression<Func<T, object>> fieldGetter, AggType aggType) where T : class
         {
-            var name = Names.GetNameFromGetFieldNamed(fieldGetter.Body);
+            var name = fieldGetter.Body.GetNameFromGetFieldNamed();
 
             if (name == null)
             {

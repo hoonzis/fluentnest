@@ -291,7 +291,7 @@ namespace FluentNest.Tests
         {
             var item = "Owner n°0";
             var index = AddSimpleTestData();
-            var result = Client.Search<Car>(sc => sc.Index(index).FilterOn(Filters.ValueWithin<Car>(x => x.PreviousOwners, item)).TypedKeys(null));
+            var result = Client.Search<Car>(sc => sc.Index(index).FilterOn(ExpressionFuncNestExtension.ValueWithin<Car>(x => x.PreviousOwners, item)).TypedKeys(null));
             Check.That(result.Documents).Not.HasSize(0);
             foreach (var previousOwners in result.Documents.Select(d => d.PreviousOwners))
             {
@@ -306,7 +306,7 @@ namespace FluentNest.Tests
         {
             var items = new[] { "Owner n°0", "Onwer n°1" };
             var index = AddSimpleTestData();
-            var result = Client.Search<Car>(sc => sc.Index(index).FilterOn(Filters.ValueWithin<Car>(x => x.PreviousOwners, items)).TypedKeys(null));
+            var result = Client.Search<Car>(sc => sc.Index(index).FilterOn(ExpressionFuncNestExtension.ValueWithin<Car>(x => x.PreviousOwners, items)).TypedKeys(null));
             Check.That(result.Documents).Not.HasSize(0);
             foreach (var previousOwners in result.Documents.Select(d => d.PreviousOwners))
             {
@@ -334,7 +334,7 @@ namespace FluentNest.Tests
         public void Filter_ValueWithin_Test()
         {
             var list = new List<string> {"name1", "name2"};
-            var sc = new SearchDescriptor<Car>().FilterOn(Filters.ValueWithin<Car>(x => x.Name, list));
+            var sc = new SearchDescriptor<Car>().FilterOn(ExpressionFuncNestExtension.ValueWithin<Car>(x => x.Name, list));
             CheckSD(sc, "Filter_ValueWithin_Test");
         }
 
