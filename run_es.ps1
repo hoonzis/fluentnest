@@ -1,8 +1,8 @@
 Write-Host "Starting elasticsearch script"
 
-Invoke-WebRequest "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.2.3.zip" -OutFile .\es.zip;
+Invoke-WebRequest "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.4.0.zip" -OutFile .\es.zip;
 
-$destFolder = "$pwd\elasticsearch-6.2.3";
+$destFolder = "$pwd\elasticsearch-6.4.0";
 
 $shell = new-object -com shell.application;
 
