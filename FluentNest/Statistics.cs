@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using Nest;
 
@@ -43,7 +44,7 @@ namespace FluentNest
             throw new NotImplementedException();
         }
 
-        public static Func<AggregationContainerDescriptor<T>, AggregationContainerDescriptor<T>>  GetAggregationFunc<T>(Expression<Func<T, object>> fieldGetter, AggType aggType) where T : class
+        private static Func<AggregationContainerDescriptor<T>, AggregationContainerDescriptor<T>>  GetAggregationFunc<T>(Expression<Func<T, object>> fieldGetter, AggType aggType) where T : class
         {
             var fromGetFieldNamed = GetAggregationFuncFromGetFieldNamed(fieldGetter, aggType);
             if (fromGetFieldNamed != null)
@@ -71,15 +72,15 @@ namespace FluentNest
                 case AggType.First:
                     return x => x.Terms(aggName, field => field.Field(fieldGetter));
                 case AggType.Percentile:
-                    return x => x. Percentiles(aggName, field => field.Field(fieldGetter));
+                    return x => x.Percentiles(aggName, field => field.Field(fieldGetter));
             }
 
             throw new NotImplementedException();
         }
 
-        public static AggregationContainerDescriptor<T> GetStatsDescriptor<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, AggType aggType, Expression<Func<T, bool>> filterRule = null) where T : class
+        private static AggregationContainerDescriptor<T> GetStatsDescriptor<T>(this AggregationContainerDescriptor<T> agg, Expression<Func<T, object>> fieldGetter, AggType aggType, Expression<Func<T, bool>> filterRule = null) where T : class
         {
-            var aggFunc = GetAggregationFunc<T>(fieldGetter, aggType);
+            var aggFunc = GetAggregationFunc(fieldGetter, aggType);
 
             if (filterRule == null)
             {
@@ -164,21 +165,21 @@ namespace FluentNest
         {
             var aggName = sorttype + fieldSort.GetAggName(AggType.TopHits);
             var sortFieldDescriptor = new SortFieldDescriptor<T>();
-            sortFieldDescriptor = sortFieldDescriptor.Field(fieldSort);
-            if (sorttype == SortType.Ascending)
-            {
-                sortFieldDescriptor = sortFieldDescriptor.Ascending();
-            }
-            else
-            {
-                sortFieldDescriptor = sortFieldDescriptor.Descending();
-            }
+            var fieldSortName = Names.GetNameFromGetFieldNamed(fieldSort.Body);
+            sortFieldDescriptor = fieldSortName != null ? sortFieldDescriptor.Field(fieldSortName) : sortFieldDescriptor.Field(fieldSort);
+            sortFieldDescriptor = sorttype == SortType.Ascending ? sortFieldDescriptor.Ascending() : sortFieldDescriptor.Descending();
+
+            var fieldNames = fieldGetter.Select(x => Names.GetNameFromGetFieldNamed(x.Body)).Where(x => x != null);
+            var fieldGetters = fieldGetter.Where(x => Names.GetNameFromGetFieldNamed(x.Body) == null);
+
+            var allFields = fieldNames.Select(x => new Field(x)).Concat(fieldGetters.Select(x => new Field(x)));
+
             return agg.TopHits(
                 aggName,
                 x =>
                     x
                         .Size(size)
-                        .Source(i => i.Includes(f=>f.Fields(fieldGetter)))
+                        .Source(i => i.Includes(f=>f.Fields(allFields)))
                         .Sort(s => new PromiseValue<IList<ISort>>(new List<ISort> {sortFieldDescriptor})));
         }
     }
