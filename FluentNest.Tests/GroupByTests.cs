@@ -8,7 +8,7 @@ using Xunit;
 using User = FluentNest.Tests.Model.User;
 
 namespace FluentNest.Tests
-{   
+{
     public class GroupByTests : TestsBase
     {
         public string CreateTestIndex()
@@ -122,7 +122,7 @@ namespace FluentNest.Tests
 
             var carTypesList = result.Aggregations.GetGroupBy<Car>(x => x.EngineType);
             var carTypesDictionary = aggsContainer.GetDictionary(x => x.EngineType);
-            
+
             Check.That(carTypesDictionary).HasSize(2);
             Check.That(carTypesList).HasSize(2);
             Check.That(carTypesDictionary.Keys).ContainsExactly(EngineType.Diesel, EngineType.Standard);
@@ -148,7 +148,7 @@ namespace FluentNest.Tests
         public void GroupByStringKeys()
         {
             var index = AddSimpleTestData();
-            
+
             var result = Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg
                 .SumBy(s => s.Price)
                 .GroupBy("engineType")
@@ -163,7 +163,7 @@ namespace FluentNest.Tests
         public void DynamicGroupByListOfKeys()
         {
             var index = AddSimpleTestData();
-            
+
             var result = Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg
                 .SumBy(s => s.Price)
                 .GroupBy(new List<string> { "engineType", "carType" })
@@ -185,12 +185,12 @@ namespace FluentNest.Tests
         public void Distinct_Test()
         {
             var index = AddSimpleTestData();
-            
+
             var result = Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg
                 .DistinctBy(x => x.CarType)
                 .DistinctBy(x => x.EngineType)
             ));
-            
+
             var engineTypes = result.Aggregations.GetDistinct<Car, EngineType>(x => x.EngineType).ToList();
 
             var container = result.Aggregations.AsContainer<Car>();
@@ -210,7 +210,7 @@ namespace FluentNest.Tests
         public void Simple_Filtered_Distinct_Test()
         {
             var index = AddSimpleTestData();
-            
+
             var result = Client.Search<Car>(search => search.Index(index)
                 .FilterOn(f=> f.CarType == "type0")
                 .Aggregations(agg => agg
@@ -236,7 +236,7 @@ namespace FluentNest.Tests
         public void Distinct_Time_And_Term_Filter_Test()
         {
             var index = AddSimpleTestData();
-            
+
             var filter = Filters.CreateFilter<Car>(x => x.Timestamp > new DateTime(2010,2,1) && x.Timestamp < new DateTime(2010, 8, 1))
                 .AndFilteredOn<Car>(x => x.CarType == "type0");
 
@@ -274,7 +274,7 @@ namespace FluentNest.Tests
             var index = AddSimpleTestData();
 
             var result = Client.Search<Car>(search => search.Index(index).Aggregations(agg => agg
-                //get name and weight for each retrived document
+                //get name and weight for each retrieved document
                 .TopHits(3, x => x.Name, x => x.Weight)
                 .GroupBy(b => b.CarType)
             ));
@@ -299,12 +299,12 @@ namespace FluentNest.Tests
         public void GroupBy_With_TopHits_NoProperties_GetsWholeSource()
         {
             var index = AddSimpleTestData();
-            
+
             var result = Client.Search<Car>(search => search.Index(index).Aggregations(x => x
                 .TopHits(3)
                 .GroupBy(b => b.CarType))
             );
-            
+
             var carTypes = result.Aggregations.GetGroupBy<Car>(x => x.CarType).ToList();
             Check.That(carTypes).HasSize(3);
             foreach (var carType in carTypes)
@@ -317,14 +317,14 @@ namespace FluentNest.Tests
             }
             Client.DeleteIndex(index);
         }
-        
+
         [Fact]
         public void TopHits_In_Double_GroupBy()
         {
             var indexName = CreateUsersIndex(250, 2);
 
             var result = Client.Search<User>(search => search.Index(indexName).Aggregations(agg => agg
-                .TopHits(40, x => x.Name) 
+                .TopHits(40, x => x.Name)
                 .GroupBy(b => b.Active)
                 .GroupBy(b => b.Nationality))
             );
@@ -384,27 +384,27 @@ namespace FluentNest.Tests
             var index = CreateUsersIndex(100, 10);
             var result = Client.Search<User>(search => search.Index(index).Aggregations(agg => agg
                 // get 40 first users, sort by name. for each user retrieve name and email
-                .SortedTopHits(40, x=>x.Name, SortType.Ascending, x => x.Name, y=>y.Email)
-                .SortedTopHits(40, x=>x.Name, SortType.Descending, x=>x.Name, y=>y.Email)
-                .SumBy(x=>x.Age)
+                .SortedTopHits(40, x => x.Name, SortType.Ascending, x => x.Name, y => y.Email)
+                .SortedTopHits(40, x => x.Name, SortType.Descending, x => x.Name, y => y.Email)
+                .SumBy(x => x.Age)
                 .GroupBy(b => b.Nationality))
             );
 
             var userByNationality = result.Aggregations.GetGroupBy<User>(x => x.Nationality).ToList();
             Check.That(userByNationality).HasSize(10);
-            var firstNotionality = userByNationality.Single(x => x.Key == "nationality0");
-            
-            var ascendingHits = firstNotionality.GetSortedTopHits<User>(x => x.Name, SortType.Ascending).ToList();
+            var firstNationality = userByNationality.Single(x => x.Key == "nationality0");
+
+            var ascendingHits = firstNationality.GetSortedTopHits<User>(x => x.Name, SortType.Ascending).ToList();
             Check.That(ascendingHits).HasSize(10);
             Check.That(ascendingHits[0].Name).IsNotNull();
 
-            Check.That(firstNotionality.GetSum<User, int>(x => x.Age)).Equals(10);
+            Check.That(firstNationality.GetSum<User, int>(x => x.Age)).Equals(10);
             Check.That(ascendingHits[0].Name).Equals("User0");
             Check.That(ascendingHits[1].Name).Equals("User10");
             Check.That(ascendingHits[2].Name).Equals("User20");
             Check.That(ascendingHits[3].Name).Equals("User30");
 
-            var descendingHits = firstNotionality.GetSortedTopHits<User>(x => x.Name, SortType.Descending).ToList();
+            var descendingHits = firstNationality.GetSortedTopHits<User>(x => x.Name, SortType.Descending).ToList();
             Check.That(descendingHits).HasSize(10);
             Check.That(descendingHits[0].Name).IsNotNull();
 
@@ -412,6 +412,28 @@ namespace FluentNest.Tests
             Check.That(descendingHits[1].Name).Equals("User80");
             Check.That(descendingHits[2].Name).Equals("User70");
             Check.That(descendingHits[3].Name).Equals("User60");
+        }
+
+        [Fact]
+        public void TopHits_Sorted_Supports_Named_Fields()
+        {
+            var index = CreateUsersIndex(100, 10);
+            var result = Client.Search<User>(search => search
+                .Index(index)
+                .Aggregations(agg => agg
+                    // get 40 first users, sort by name. for each user retrieve name and email
+                    .SortedTopHits(40, x => x.GetFieldNamed<string>("name"), SortType.Ascending, x => x.GetFieldNamed<string>("name"), y => y.Email)
+                    .SumBy(x => x.Age)
+                    .GroupBy(b => b.Nationality))
+            );
+
+            var userByNationality = result.Aggregations.GetGroupBy<User>(x => x.Nationality).ToList();
+            Check.That(userByNationality).HasSize(10);
+            var firstNotionality = userByNationality.Single(x => x.Key == "nationality0");
+
+            var ascendingHits = firstNotionality.GetSortedTopHits<User>(x => x.GetFieldNamed<string>("name"), SortType.Ascending).ToList();
+            Check.That(ascendingHits).HasSize(10);
+            Check.That(ascendingHits[0].Name).IsNotNull();
         }
 
         [Fact]
