@@ -368,7 +368,8 @@ namespace FluentNest.Tests
                     Name = "User" + i,
                     Nationality = "Nationality" + i % nationalitiesCount,
                     Active = i%3 == 0,
-                    Age =  (i + 1) % 10
+                    Age =  (i + 1) % 10,
+                    Email = "user@" + i
                 };
 
                 users.Add(user);
@@ -434,6 +435,7 @@ namespace FluentNest.Tests
             var ascendingHits = firstNotionality.GetSortedTopHits<User>(x => x.GetFieldNamed<string>("name"), SortType.Ascending).ToList();
             Check.That(ascendingHits).HasSize(10);
             Check.That(ascendingHits[0].Name).IsNotNull();
+            Check.That(ascendingHits[0].Email).IsNotNull();
         }
 
         [Fact]

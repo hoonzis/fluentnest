@@ -170,7 +170,7 @@ namespace FluentNest
             sortFieldDescriptor = sorttype == SortType.Ascending ? sortFieldDescriptor.Ascending() : sortFieldDescriptor.Descending();
 
             var fieldNames = fieldGetter.Select(x => Names.GetNameFromGetFieldNamed(x.Body)).Where(x => x != null);
-            var fieldGetters = fieldGetter.Where(x => Names.GetNameFromGetFieldNamed(x) == null);
+            var fieldGetters = fieldGetter.Where(x => Names.GetNameFromGetFieldNamed(x.Body) == null);
 
             var allFields = fieldNames.Select(x => new Field(x)).Concat(fieldGetters.Select(x => new Field(x)));
 
