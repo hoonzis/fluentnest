@@ -30,7 +30,8 @@ namespace FluentNest.Tests
                 var car = new Car
                 {
                     Id = Guid.NewGuid(),
-                    BIG_CASE_NAME = "big" + i % 3
+                    BIG_CASE_NAME = "big" + i % 3,
+                    UPPERCASE_TIMESTAMP = new DateTime(2010, 1, 1)
                 };
 
                 Client.Index(car, ind => ind.Index(indexName));
@@ -45,11 +46,24 @@ namespace FluentNest.Tests
             var indexName = AddSimpleTestData();
             var filter = Filters.CreateFilter<Car>(f => f.BIG_CASE_NAME == "big1");
             filter = filter.AndFilteredOn<Car>(f => f.BIG_CASE_NAME != "big2");
-            var sc = new SearchDescriptor<Car>().Index(indexName).FilterOn(filter);           
+            var sc = new SearchDescriptor<Car>().Index(indexName).FilterOn(filter);
             var query = Serialize(sc);
             Check.That(query).Contains("BIG_CASE_NAME");
             var cars = Client.Search<Car>(sc).Hits.Select(h => h.Source);
             Check.That(cars).HasSize(3);
+            Client.DeleteIndex(indexName);
+        }
+
+        [Fact]
+        public void TestCasingComparison()
+        {
+            var indexName = AddSimpleTestData();
+            var filter = Filters.CreateFilter<Car>(f => f.UPPERCASE_TIMESTAMP < new DateTime(2010, 1, 2));
+            var sc = new SearchDescriptor<Car>().Index(indexName).FilterOn(filter);
+            var query = Serialize(sc);
+            Check.That(query).Contains("UPPERCASE_TIMESTAMP");
+            var cars = Client.Search<Car>(sc).Hits.Select(h => h.Source);
+            Check.That(cars).HasSize(10);
             Client.DeleteIndex(indexName);
         }
     }
