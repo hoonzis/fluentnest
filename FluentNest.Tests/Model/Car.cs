@@ -19,7 +19,7 @@ namespace FluentNest.Tests.Model
         public String CarType { get; set; }
         public EngineType EngineType { get; set; }
         public EngineType? NullableEngineType { get; set; }
-        public decimal? Weight { get; set; } 
+        public decimal? Weight { get; set; }
         public int? ConditionalRanking { get; set; }
         public decimal? PriceLimit { get; set; }
         public decimal Emissions { get; set; }
@@ -30,6 +30,8 @@ namespace FluentNest.Tests.Model
         public bool Enabled { get; set; }
 
         public string BIG_CASE_NAME { get; set; }
+
+        public DateTime UPPERCASE_TIMESTAMP { get; set; }
 
         // Of course cars don't have emails, but for my tests it's useful
         public string Email { get; set; }
