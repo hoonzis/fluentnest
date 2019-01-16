@@ -1,5 +1,7 @@
 # FluentNest
 
+[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/fluentnest/community)
+
 Fluent way to query ElasticSearch from C# based on  [NEST](https://github.com/elastic/elasticsearch-net).
 
 | Elastic Search & Nest Version | Build | Nuget | Branch |
