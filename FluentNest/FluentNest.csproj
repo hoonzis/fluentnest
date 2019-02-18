@@ -7,4 +7,7 @@
     <WarningsNotAsErrors>CS1591;CS0618</WarningsNotAsErrors>
   </PropertyGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <Compile Remove="Class1.cs" />
+  </ItemGroup>
 </Project>

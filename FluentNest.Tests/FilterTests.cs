@@ -6,22 +6,31 @@ using Nest;
 using NFluent;
 using Tests;
 using Xunit;
+using Elasticsearch.Net;
 
 namespace FluentNest.Tests
 {
     public class FilterTests : TestsBase
     {
         private const string MyFavoriteGuid = "test-test";
+       
 
         private string AddSimpleTestData()
         {
             var indexName = "index_" + Guid.NewGuid();
+
+            if (Client.IndexExists(Indices.Parse(indexName)).Exists)
+            {
+                Client.DeleteIndex(Indices.Parse(indexName));
+            }
+
 
             Client.CreateIndex(indexName, x => x.Mappings(m => m
             .Map<Car>(t => t
                 .Properties(prop => prop.Keyword(str => str.Name(s => s.Guid)))
                 .Properties(prop => prop.Keyword(str => str.Name(s => s.Email)))
                 .Properties(prop => prop.Keyword(str => str.Name(s => s.PreviousOwners)))
+                .Properties(prop => prop.Nested<Tyres>(str => str.Name(s => s.TyresInstalled).AutoMap()))
             )));
 
             var cars = new List<Car>();
@@ -42,18 +51,98 @@ namespace FluentNest.Tests
                     Enabled = i % 2 == 0,
                     Active = i % 2 == 0,
                     Weight = i % 3 == 0 ? 10m : (decimal?)null,
-                    PreviousOwners = i % 2 == 0 ? null : i % 3 == 0 ? new string[0] : Enumerable.Range(0, i).Select(n => $"Owner n°{n}").ToArray()
+                    PreviousOwners = i % 2 == 0 ? null : i % 3 == 0 ? new string[0] : Enumerable.Range(0, i).Select(n => $"Owner n°{n}").ToArray(),
+                    TyresInstalled = GetTyres("Default",1,false,5m)
                 };
+
                 if (i == 1)
                 {
                     car.Guid = MyFavoriteGuid;
                 }
                 cars.Add(car);
             }
+
             Client.Bulk(x => x.CreateMany(cars).Index(indexName));
             Client.Flush(indexName);
             return indexName;
         }
+
+        private List<Tyres> GetTyres(string company,int companyid, bool isPunctured, decimal weight,int tyresCount=4)
+        {
+            var typres = new List<Tyres>();
+            for(int i = 0; i < tyresCount;i++)
+            {
+                typres.Add(
+                    new Tyres()
+                    {
+                        Age = i + 1,
+                        Company = company,
+                        CompanyId = companyid,
+                        InstallationDate = new DateTime(2010, (i % 12) + 1, 1),
+                        IsPuncture = isPunctured,
+                        Weight = weight,
+                    });
+            }
+
+            return typres;
+        }
+
+
+        [Fact]
+        public void NestedComparisonAndTerm()
+        {
+            var index= AddSimpleTestData();
+            int i = 5;
+
+            var tyres = GetTyres("Default", 1, false, 5m,3);
+            tyres.AddRange(GetTyres("MRF", 1, true, 5m, 1));
+            
+           var indexResponse= Client.Index(new Car()
+            {
+                Id = Guid.NewGuid(),
+                Timestamp = new DateTime(2010, (i % 12) + 1, 1),
+                Name = "name" + i ,
+                Price = 10,
+                Sold = i % 2 == 0,
+                CarType = "Type" + i ,
+                Emissions = i + 1,
+                Guid = "test-" + i,
+                Email = "Email@email" + i % 2 + ".com",
+                Age = i + 1,
+                Enabled = i % 2 == 0,
+                Active = i % 2 == 0,
+                Weight = i % 3 == 0 ? 10m : (decimal?) null,
+                PreviousOwners = i % 2 == 0 ? null :
+                    i % 3 == 0 ? new string[0] : Enumerable.Range(0, i).Select(n => $"Owner n°{n}").ToArray(),
+                TyresInstalled = tyres
+            }, x=>x.Index(index));
+
+            indexResponse= Client.Index(new Car()
+            {
+                Id = Guid.NewGuid(),
+                Timestamp = new DateTime(2010, (i % 12) + 1, 1),
+                Name = "name" + i % 3,
+                Price = 10,
+                Sold = i % 2 == 0,
+                CarType = "Type" + i % 2,
+                Emissions = i + 1,
+                Guid = "test-" + i,
+                Email = "Email@email" + i % 2 + ".com",
+                Age = i + 1,
+                Enabled = i % 2 == 0,
+                Active = i % 2 == 0,
+                Weight = i % 3 == 0 ? 10m : (decimal?)null,
+                PreviousOwners = i % 2 == 0 ? null :
+                    i % 3 == 0 ? new string[0] : Enumerable.Range(0, i).Select(n => $"Owner n°{n}").ToArray(),
+                TyresInstalled = tyres
+            }, x => x.Index(index));
+            Client.Flush(index);
+
+            var result = Client.Search<Car>(s => s.Index(index).FilterOn(x => x.TyresInstalled.Any(t=>t.IsPuncture)));
+            Check.That(result.Documents).HasSize(2);
+            Client.DeleteIndex(index);
+        }
+
 
         [Fact]
         public void DateComparisonAndTerm()
