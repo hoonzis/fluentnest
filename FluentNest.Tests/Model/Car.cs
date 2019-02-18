@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace FluentNest.Tests.Model
 {
@@ -10,6 +11,11 @@ namespace FluentNest.Tests.Model
 
     public class Car
     {
+        public Car()
+        {
+            TyresInstalled = new List<Tyres>();
+        }
+
         public Guid Id { get; set; }
         public String Name { get; set; }
         public decimal Price { get; set; }
@@ -37,5 +43,22 @@ namespace FluentNest.Tests.Model
         public DateTime? LastAccident { get; set; }
 
         public string[] PreviousOwners { get; set; }
+
+        public List<Tyres> TyresInstalled { get; set; }
+    }
+
+    public class Tyres
+    {
+        public int CompanyId { get; set; }
+
+        public string Company { get; set; }
+
+        public DateTime InstallationDate { get; set; }
+
+        public bool IsPuncture { get; set; }
+
+        public int Age { get; set; }
+
+        public decimal? Weight { get; set; }
     }
 }
