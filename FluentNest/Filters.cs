@@ -8,6 +8,8 @@ using Nest;
 
 namespace FluentNest
 {
+
+    public static partial class Filters
     {
         public static string FirstCharacterToLower(this string str)
         {
@@ -350,6 +352,10 @@ namespace FluentNest
             if (expType == ExpressionType.Call)
             {
                 var callExpression = (MethodCallExpression)expression;
+                if (callExpression.Method.Name.ToLower().Equals("any"))
+                {
+                    return GenerateFilterDescriptionNestedCore<T>((MethodCallExpression)expression);
+                }
 
                 if (callExpression.Method.ReturnType == typeof(bool) && Names.GetNameFromGetFieldNamed(expression) != null)
                 {
